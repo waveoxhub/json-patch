@@ -1,0 +1,190 @@
+![SchemaJSONPatch](./banner.svg)
+
+# Schema-JSON-Patch
+
+[![npm version](https://img.shields.io/npm/v/@waveox/schema-json-patch.svg?style=flat)](https://www.npmjs.com/package/@waveox/schema-json-patch)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Test Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)](coverage)
+
+[中文文档](./README.zh-CN.md)
+
+A modern patch library designed for **fixed-structure JSON data**, like RFC 6902, providing patch generation, conflict handling, and patch application capabilities.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+    - [Define Schema](#define-schema)
+    - [Generate Patches](#generate-patches)
+    - [Apply Patches](#apply-patches)
+    - [Conflict Detection and Resolution](#conflict-detection-and-resolution)
+- [Path Features](#path-features)
+- [API Reference](#api-reference)
+- [Development & Contribution](#development--contribution)
+- [License](#license)
+
+## Features
+
+- 🔍 **Schema-Based** - Define data structure through schema, generate semantic paths
+- 🔄 **Structured Array Handling** - Use primary key ($pk) to locate objects in arrays, no need to worry about order changes
+- 🛠️ **Conflict Detection & Resolution** - Automatically detect conflicts between multiple patches and support conflict resolution
+- 🔒 **Type Safety** - Fully developed using TypeScript, providing type definitions
+
+## Installation
+
+```bash
+# NPM
+npm install @waveox/schema-json-patch
+
+# Yarn
+yarn add @waveox/schema-json-patch
+
+# PNPM
+pnpm add @waveox/schema-json-patch
+```
+
+## Usage Guide
+
+### Define Schema
+
+First, you need to define the schema structure of your data:
+
+```typescript
+import { Schema } from '@waveox/schema-json-patch';
+
+const schema: Schema = {
+    $type: 'object',
+    $fields: {
+        city: { $type: 'string' },
+        items: {
+            $type: 'array',
+            $item: {
+                $type: 'object',
+                $pk: 'id', // Primary key, used to identify objects in the array
+                $fields: {
+                    id: { $type: 'string' },
+                    name: { $type: 'string' },
+                },
+            },
+        },
+    },
+};
+```
+
+### Generate Patches
+
+```typescript
+import { generatePatches } from '@waveox/schema-json-patch';
+
+const original = {
+    city: 'Beijing',
+    items: [{ id: '1', name: 'Project A' }],
+};
+
+const modified = {
+    city: 'Shanghai',
+    items: [{ id: '1', name: 'Project A Modified' }],
+};
+
+// Generate patches from original to modified
+const patches = generatePatches(original, modified, schema);
+
+console.log(patches);
+// Output:
+// [
+//   { op: "replace", path: "city", value: "Shanghai" },
+//   { op: "replace", path: "items/id1/name", value: "Project A Modified" }
+// ]
+```
+
+### Apply Patches
+
+```typescript
+import { applyPatches } from '@waveox/schema-json-patch';
+
+// Apply patches to the original data
+const result = applyPatches(original, patches, schema);
+// result now equals modified
+```
+
+### Conflict Detection and Resolution
+
+Handle conflicts between patches from different sources:
+
+```typescript
+import { detectConflicts, resolveConflicts } from '@waveox/schema-json-patch';
+
+// Two different sets of patches
+const patches1 = [{ op: 'replace', path: 'city', value: 'Shanghai' }];
+const patches2 = [{ op: 'replace', path: 'city', value: 'Guangzhou' }];
+
+// Detect conflicts
+const conflictResult = detectConflicts([patches1, patches2]);
+
+if (conflictResult.hasConflicts) {
+    // Resolve conflicts, choose the solution from the second set of patches
+    const resolutions = {
+        city: 1, // Select the second patch group (index starts from 0)
+    };
+
+    // Apply resolution
+    const resolvedPatches = resolveConflicts(conflictResult, resolutions);
+
+    // Apply the resolved patches
+    const result = applyPatches(original, resolvedPatches, schema);
+}
+```
+
+## Path Features
+
+SchemaJSONPatch uses semantic paths. For object members in arrays, it uses the specified `$pk` as the path identifier instead of array indices.
+
+For example, to modify the `name` field:
+
+- Traditional JSON Patch path: `items/0/name`
+- SchemaJSONPatch path: `items/id1/name`
+
+**Advantage**: Even if the order of array elements changes, the patch can still be applied to the target object correctly.
+
+## API Reference
+
+### Core Functions
+
+- **generatePatches(original, modified, schema)** - Generate patches from source state to target state
+- **applyPatches(state, patches, schema)** - Apply patches to data state
+- **detectConflicts(patchGroups)** - Detect conflicts between multiple sets of patches
+- **resolveConflicts(conflictResult, resolutions)** - Merge conflicting patches according to resolution plan
+
+### Type Definitions
+
+- **Schema** - Data structure definition
+- **Patch** - Patch operation object
+- **PatchConflictResult** - Conflict detection result
+- **ConflictResolutions** - Conflict resolution plan
+
+## Development & Contribution
+
+You're welcome to participate in project development:
+
+```bash
+# Clone repository
+git clone https://github.com/waveoxhub/json-patch
+cd json-patch/schema-json-patch
+
+# Install dependencies
+pnpm install
+
+# Build project
+pnpm build
+
+# Run tests
+pnpm test
+
+# View test coverage
+pnpm coverage
+```
+
+## License
+
+[MIT](LICENSE)

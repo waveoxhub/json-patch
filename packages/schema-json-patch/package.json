@@ -1,0 +1,59 @@
+{
+    "name": "@waveox/schema-json-patch",
+    "version": "0.1.0",
+    "description": "处理固定结构JSON数据的现代补丁库，提供补丁生成、冲突处理和补丁应用能力",
+    "type": "module",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/cjs/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc && tsc -p tsconfig.cjs.json",
+        "lint": "eslint src",
+        "format": "prettier --check .",
+        "format:fix": "prettier --write .",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:ui": "vitest --ui --coverage",
+        "coverage": "vitest run --coverage",
+        "prepublishOnly": "npm run test && npm run build"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "README-EN.md",
+        "LICENSE"
+    ],
+    "keywords": [
+        "json",
+        "patch",
+        "schema",
+        "diff",
+        "rfc6902",
+        "jsonpatch"
+    ],
+    "author": "WaveOX",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/waveox/schema-json-patch"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {
+        "@vitest/ui": "^3.0.9",
+        "eslint": "^9.23.0",
+        "prettier": "^3.5.3",
+        "typescript": "~5.8.2",
+        "typescript-eslint": "^8.27.0",
+        "vitest": "^3.0.9"
+    }
+}
