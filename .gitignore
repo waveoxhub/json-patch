@@ -27,4 +27,4 @@ dist-ssr
 packages/schema-json-patch/coverage
 
 # cursor
-.curosr
+.cursor
