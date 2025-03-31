@@ -1,7 +1,7 @@
 {
     "name": "@waveox/schema-json-patch",
-    "version": "0.1.0",
-    "description": "处理固定结构JSON数据的现代补丁库，提供补丁生成、冲突处理和补丁应用能力",
+    "version": "0.1.2",
+    "description": "Patch libraries for handling fixed-structure JSON data, providing patch generation, conflict handling, and patch application capabilities",
     "type": "module",
     "main": "./dist/cjs/index.js",
     "module": "./dist/index.js",
@@ -43,7 +43,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/waveox/schema-json-patch"
+        "url": "https://github.com/waveoxhub/schema-json-patch"
     },
     "publishConfig": {
         "access": "public"
