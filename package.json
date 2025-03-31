@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
+    "build:package": "pnpm -F @waveox/schema-json-patch build",
     "dev": "pnpm -F @schema-json-patch/demo dev",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",

@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
       - name: Build
-        run: pnpm build
+        run: pnpm build:package
       - name: Test
         run: pnpm -F @waveox/schema-json-patch test
 
@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
       - name: Build
-        run: pnpm build
+        run: pnpm build:package
       - name: Publish schema-json-patch
         run: cd packages/schema-json-patch && pnpm publish --access public --no-git-checks
         env:
