@@ -21,6 +21,7 @@ A modern patch library designed for **fixed-structure JSON data**, like RFC 6902
     - [Conflict Detection and Resolution](#conflict-detection-and-resolution)
 - [Path Features](#path-features)
 - [API Reference](#api-reference)
+- [Demo](#demo)
 - [Development & Contribution](#development--contribution)
 - [License](#license)
 
@@ -184,6 +185,10 @@ pnpm test
 # View test coverage
 pnpm coverage
 ```
+
+## Demo
+
+Try the live demo: [https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)
 
 ## License
 

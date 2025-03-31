@@ -12,6 +12,10 @@
 
 - [@waveox/schema-json-patch 文档](./packages/schema-json-patch/README.zh-CN.md)
 
+## 📝 在线体验
+
+点击查看功能演示: [https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)
+
 ## 📄 许可证
 
 [MIT](LICENSE) 

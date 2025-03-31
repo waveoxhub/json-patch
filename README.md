@@ -16,6 +16,10 @@ For detailed usage instructions, please refer to each package's documentation:
 
 - [@waveox/schema-json-patch Documentation](./packages/schema-json-patch/README.md)
 
+## 📝 Demo
+
+Try the live demo: [https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)
+
 ## 📄 License
 
 [MIT](LICENSE)

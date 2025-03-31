@@ -19,6 +19,7 @@
     - [冲突检测与解决](#冲突检测与解决)
 - [路径特性](#路径特性)
 - [API参考](#api参考)
+- [功能体验](#功能体验)
 - [开发与贡献](#开发与贡献)
 - [许可证](#许可证)
 
@@ -182,6 +183,10 @@ pnpm test
 # 查看测试覆盖率
 pnpm coverage
 ```
+
+## 功能体验
+
+点击查看功能演示: [https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)
 
 ## 许可证
 
