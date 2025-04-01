@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Collapse, Row, Col, Radio, Space, Button, Input, Tabs, Typography } from 'antd';
-import { WarningOutlined, CheckOutlined, MergeCellsOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import {
+    WarningOutlined,
+    CheckOutlined,
+    MergeCellsOutlined,
+    CheckCircleOutlined,
+} from '@ant-design/icons';
 import { ConflictDetail, Patch, CustomResolution } from '@waveox/schema-json-patch';
 
 const { Text } = Typography;
@@ -31,14 +36,14 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
     // 初始化合并文本
     useEffect(() => {
         const initialMergeTexts: Record<string, string> = {};
-        
+
         conflicts.forEach((conflict, index) => {
             // 生成类似Git冲突标记的文本
             let mergeText = '';
             conflict.operations.forEach((operation, opIndex) => {
                 const patch = conflict.patches[opIndex] || { value: null };
                 const label = getTargetLabel(operation.groupIndex);
-                
+
                 if (opIndex === 0) {
                     mergeText += `<<<<<<< ${label}\n`;
                     mergeText += JSON.stringify(patch.value, null, 2);
@@ -51,10 +56,10 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                     mergeText += '\n=======\n';
                 }
             });
-            
+
             initialMergeTexts[index.toString()] = mergeText;
         });
-        
+
         setMergeTexts(initialMergeTexts);
     }, [conflicts]);
 
@@ -79,13 +84,13 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
             ...mergeTexts,
             [conflictIndex.toString()]: value,
         });
-        
+
         // 尝试解析修改后的文本作为JSON
         try {
             // 移除冲突标记并只保留编辑后的内容
             const cleanedValue = cleanMergeText(value);
             const parsedValue = JSON.parse(cleanedValue);
-            
+
             // 更新为自定义解决方案
             onResolutionChange(conflictIndex, -1); // 选择自定义选项
             onCustomResolutionChange(conflictIndex, parsedValue);
@@ -93,7 +98,7 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
             // 如果格式不正确，不进行处理
         }
     };
-    
+
     // 清理合并文本，移除冲突标记
     const cleanMergeText = (mergeText: string): string => {
         // 这里实现一个简单的解析器，移除Git风格的冲突标记
@@ -104,7 +109,7 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                 // 如果没有冲突标记，直接返回
                 return mergeText;
             }
-            
+
             // 否则，尝试提取用户选择的部分（最后一个冲突标记之后的内容）
             const lastMarkerIndex = mergeText.lastIndexOf('>>>>>>> ');
             if (lastMarkerIndex !== -1) {
@@ -112,7 +117,7 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                 const selectedContent = mergeText.substring(lineEndIndex + 1);
                 return selectedContent.trim();
             }
-            
+
             // 如果无法确定，返回原始内容
             return mergeText;
         } catch (err) {
@@ -130,11 +135,11 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
             children: (
                 <Row gutter={[16, 16]}>
                     <Col span={24}>
-                        <Tabs 
+                        <Tabs
                             defaultActiveKey="1"
                             items={[
                                 {
-                                    key: "1",
+                                    key: '1',
                                     label: (
                                         <span>
                                             <CheckCircleOutlined />
@@ -150,21 +155,32 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                             </div>
                                             <Radio.Group
                                                 value={resolution}
-                                                onChange={e => onResolutionChange(index, e.target.value)}
+                                                onChange={e =>
+                                                    onResolutionChange(index, e.target.value)
+                                                }
                                                 style={{ marginBottom: 16 }}
                                             >
                                                 <Space direction="vertical">
                                                     {conflict.operations.map(
                                                         (
-                                                            operation: { groupIndex: number; operation: string },
+                                                            operation: {
+                                                                groupIndex: number;
+                                                                operation: string;
+                                                            },
                                                             opIndex: number
                                                         ) => {
                                                             const patch = conflict.patches[opIndex];
                                                             return (
-                                                                <Radio key={opIndex} value={opIndex}>
+                                                                <Radio
+                                                                    key={opIndex}
+                                                                    value={opIndex}
+                                                                >
                                                                     <div>
                                                                         <div>
-                                                                            {getTargetLabel(operation.groupIndex)}的版本:{' '}
+                                                                            {getTargetLabel(
+                                                                                operation.groupIndex
+                                                                            )}
+                                                                            的版本:{' '}
                                                                             {operation.operation}
                                                                         </div>
                                                                         <div
@@ -183,7 +199,10 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                                                 marginLeft: '23px',
                                                                             }}
                                                                         >
-                                                                            值: {JSON.stringify(patch.value)}
+                                                                            值:{' '}
+                                                                            {JSON.stringify(
+                                                                                patch.value
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </Radio>
@@ -193,10 +212,10 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                 </Space>
                                             </Radio.Group>
                                         </>
-                                    )
+                                    ),
                                 },
                                 {
-                                    key: "2",
+                                    key: '2',
                                     label: (
                                         <span>
                                             <MergeCellsOutlined />
@@ -208,22 +227,26 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                             <div style={{ marginBottom: 8 }}>
                                                 <Text type="secondary">
                                                     您可以直接编辑下方内容，解决冲突后的最终值将用于应用补丁。
-                                                    保留需要的部分，移除冲突标记(<Text code>{"<<<<<<< "}</Text>, 
-                                                    <Text code>=======</Text>, <Text code>{">>>>>>> "}</Text>)。
+                                                    保留需要的部分，移除冲突标记(
+                                                    <Text code>{'<<<<<<< '}</Text>,
+                                                    <Text code>=======</Text>,{' '}
+                                                    <Text code>{'>>>>>>> '}</Text>)。
                                                 </Text>
                                             </div>
                                             <Input.TextArea
                                                 value={mergeText}
-                                                onChange={e => handleMergeTextChange(index, e.target.value)}
+                                                onChange={e =>
+                                                    handleMergeTextChange(index, e.target.value)
+                                                }
                                                 autoSize={{ minRows: 10, maxRows: 20 }}
-                                                style={{ 
+                                                style={{
                                                     fontFamily: 'monospace',
-                                                    width: '100%'
+                                                    width: '100%',
                                                 }}
                                             />
                                         </>
-                                    )
-                                }
+                                    ),
+                                },
                             ]}
                         />
                     </Col>

@@ -46,7 +46,7 @@ const JsonPatchDemo: React.FC = () => {
         resolvedPatches: [],
     });
     const [conflictResolutions, setConflictResolutions] = useState<ConflictResolutions>({});
-    
+
     // 添加自定义解决方案状态
     const [customResolutions, setCustomResolutions] = useState<CustomResolution[]>([]);
 
@@ -179,43 +179,41 @@ const JsonPatchDemo: React.FC = () => {
         const newResolutions = { ...conflictResolutions };
         newResolutions[conflictIndex.toString()] = resolution;
         setConflictResolutions(newResolutions);
-        
+
         // 如果不是选择自定义，则移除该冲突的自定义解决方案（如果有的话）
         if (resolution !== -1) {
-            setCustomResolutions(prev => 
-                prev.filter(item => 
-                    !item.path.startsWith(conflictResult.conflicts[conflictIndex].path)
+            setCustomResolutions(prev =>
+                prev.filter(
+                    item => !item.path.startsWith(conflictResult.conflicts[conflictIndex].path)
                 )
             );
         }
     };
-    
+
     // 处理自定义解决方案
     const handleCustomResolution = (conflictIndex: number, customValue: any) => {
         const conflict = conflictResult.conflicts[conflictIndex];
         if (!conflict) return;
-        
+
         // 创建自定义解决方案补丁
         const customPatch: Patch = {
             op: 'replace', // 默认使用替换操作
             path: conflict.path,
-            value: customValue
+            value: customValue,
         };
-        
+
         // 更新自定义解决方案
         setCustomResolutions(prev => {
             // 移除此冲突路径的任何现有解决方案
-            const filtered = prev.filter(item => 
-                !item.path.startsWith(conflict.path)
-            );
-            
+            const filtered = prev.filter(item => !item.path.startsWith(conflict.path));
+
             // 添加新的解决方案
             return [
                 ...filtered,
                 {
                     path: conflict.path,
-                    patch: customPatch
-                }
+                    patch: customPatch,
+                },
             ];
         });
     };
