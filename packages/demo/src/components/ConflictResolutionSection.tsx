@@ -37,6 +37,8 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
         return targetLabels[groupIndex] || `目标 ${groupIndex + 1}`;
     };
 
+    console.log('conflicts', conflicts);
+
     const collapseItems = conflicts.map((conflict, index) => {
         const resolution = resolutions[index.toString()] ?? 0;
 

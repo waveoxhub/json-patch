@@ -4,7 +4,7 @@ import { EditOutlined, CheckOutlined, WarningOutlined, AppstoreOutlined } from '
 import {
     Patch,
     ConflictResolutions,
-    PatchConflictResult,
+    ConflictResult,
     Schema,
     generatePatches,
     applyPatches,
@@ -38,7 +38,7 @@ const JsonPatchDemo: React.FC = () => {
     const [patchStrings, setPatchStrings] = useState<string[]>([]);
 
     // 冲突相关
-    const [conflictResult, setConflictResult] = useState<PatchConflictResult>({
+    const [conflictResult, setConflictResult] = useState<ConflictResult>({
         hasConflicts: false,
         conflicts: [],
         resolvedPatches: [],

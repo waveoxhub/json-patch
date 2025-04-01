@@ -2,36 +2,9 @@ import {
     Patch,
     ConflictDetail,
     ConflictResolutions,
-    PatchConflictResult,
+    ConflictResult,
     CustomResolution,
 } from './types/patch';
-
-/**
- * Process patch conflicts and generate conflict result
- * @param patches Multiple patch groups
- * @param conflicts Conflict details array
- * @returns Result object containing conflict information
- */
-export const processConflicts = (
-    patches: ReadonlyArray<ReadonlyArray<Patch>>,
-    conflicts: ReadonlyArray<ConflictDetail>
-): PatchConflictResult => {
-    if (conflicts.length === 0) {
-        // No conflicts, return flattened array of all patches
-        const allPatches = patches.flat();
-        return {
-            hasConflicts: false,
-            conflicts: [],
-            resolvedPatches: allPatches,
-        };
-    }
-
-    return {
-        hasConflicts: true,
-        conflicts: conflicts as ConflictDetail[],
-        resolvedPatches: [], // Empty by default, filled after conflict resolution
-    };
-};
 
 /**
  * Apply conflict resolutions to generate processed patch set
@@ -80,6 +53,33 @@ export const resolveConflicts = (
 };
 
 /**
+ * Process patch conflicts and generate conflict result
+ * @param patches Multiple patch groups
+ * @param conflicts Conflict details array
+ * @returns Result object containing conflict information
+ */
+export const processConflicts = (
+    patches: ReadonlyArray<ReadonlyArray<Patch>>,
+    conflicts: ReadonlyArray<ConflictDetail>
+): ConflictResult => {
+    if (conflicts.length === 0) {
+        // No conflicts, return flattened array of all patches
+        const allPatches = patches.flat();
+        return {
+            hasConflicts: false,
+            conflicts: [],
+            resolvedPatches: allPatches,
+        };
+    }
+
+    return {
+        hasConflicts: true,
+        conflicts: conflicts as ConflictDetail[],
+        resolvedPatches: [], // Empty by default, filled after conflict resolution
+    };
+};
+
+/**
  * Generate merged patch after conflict resolution
  * @param patches Original patch array (multiple groups)
  * @param conflicts Conflict details array
@@ -92,7 +92,7 @@ export const generateResolvedPatch = (
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
     customResolutions: ReadonlyArray<CustomResolution> = []
-): PatchConflictResult => {
+): ConflictResult => {
     // Flatten all patches
     const allPatches = patches.flat();
 

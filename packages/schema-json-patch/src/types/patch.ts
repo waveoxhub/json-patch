@@ -1,12 +1,10 @@
 /**
  * JSON Patch operation types
- * Compliant with RFC 6902 standard
  */
 export type PatchOperation = 'add' | 'remove' | 'replace';
 
 /**
  * JSON Patch object
- * Supports semantic paths
  */
 export type Patch = {
     readonly op: PatchOperation;
@@ -15,7 +13,7 @@ export type Patch = {
 };
 
 /**
- * Patch conflict details, records conflicting path and operation information
+ * Patch conflict details
  */
 export type ConflictDetail = {
     readonly path: string;
@@ -36,7 +34,7 @@ export type ConflictResolutions = Record<string, number>;
 /**
  * Patch conflict processing result
  */
-export type PatchConflictResult = {
+export type ConflictResult = {
     readonly hasConflicts: boolean;
     readonly conflicts: Array<ConflictDetail>;
     readonly resolvedPatches: Array<Patch>;
