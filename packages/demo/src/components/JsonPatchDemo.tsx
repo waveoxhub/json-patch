@@ -14,6 +14,7 @@ import {
     initializeResolutions,
     generateResolvedPatch,
     ConflictDetail,
+    CustomResolution,
 } from '@waveox/schema-json-patch';
 import JsonPatchEditor from './JsonPatchEditor';
 import ConflictResolutionSection from './ConflictResolutionSection';
@@ -45,6 +46,9 @@ const JsonPatchDemo: React.FC = () => {
         resolvedPatches: [],
     });
     const [conflictResolutions, setConflictResolutions] = useState<ConflictResolutions>({});
+    
+    // 添加自定义解决方案状态
+    const [customResolutions, setCustomResolutions] = useState<CustomResolution[]>([]);
 
     // 结果相关
     const [resultJson, setResultJson] = useState<string>('');
@@ -175,6 +179,45 @@ const JsonPatchDemo: React.FC = () => {
         const newResolutions = { ...conflictResolutions };
         newResolutions[conflictIndex.toString()] = resolution;
         setConflictResolutions(newResolutions);
+        
+        // 如果不是选择自定义，则移除该冲突的自定义解决方案（如果有的话）
+        if (resolution !== -1) {
+            setCustomResolutions(prev => 
+                prev.filter(item => 
+                    !item.path.startsWith(conflictResult.conflicts[conflictIndex].path)
+                )
+            );
+        }
+    };
+    
+    // 处理自定义解决方案
+    const handleCustomResolution = (conflictIndex: number, customValue: any) => {
+        const conflict = conflictResult.conflicts[conflictIndex];
+        if (!conflict) return;
+        
+        // 创建自定义解决方案补丁
+        const customPatch: Patch = {
+            op: 'replace', // 默认使用替换操作
+            path: conflict.path,
+            value: customValue
+        };
+        
+        // 更新自定义解决方案
+        setCustomResolutions(prev => {
+            // 移除此冲突路径的任何现有解决方案
+            const filtered = prev.filter(item => 
+                !item.path.startsWith(conflict.path)
+            );
+            
+            // 添加新的解决方案
+            return [
+                ...filtered,
+                {
+                    path: conflict.path,
+                    patch: customPatch
+                }
+            ];
+        });
     };
 
     // 应用冲突解决方案
@@ -185,7 +228,7 @@ const JsonPatchDemo: React.FC = () => {
                 patches,
                 conflictResult.conflicts,
                 conflictResolutions,
-                [] // 自定义解决方案未实现，暂时传空数组
+                customResolutions // 传入自定义解决方案
             );
 
             if (resolvedResult.resolvedPatches.length === 0) {
@@ -213,6 +256,7 @@ const JsonPatchDemo: React.FC = () => {
             resolvedPatches: [],
         });
         setConflictResolutions({});
+        setCustomResolutions([]); // 重置自定义解决方案
         setResultJson('');
         setError(null);
         setSchemaString(JSON.stringify(defaultSchema, null, 2));
@@ -327,6 +371,8 @@ const JsonPatchDemo: React.FC = () => {
                     onApply={applyResolutions}
                     onBack={() => setActiveTab('edit')}
                     targetLabels={targetJsons.map((_, index) => `目标 ${index + 1}`)}
+                    customResolutions={customResolutions}
+                    onCustomResolutionChange={handleCustomResolution}
                 />
             ),
         },
