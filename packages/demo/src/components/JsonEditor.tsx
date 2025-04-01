@@ -15,13 +15,13 @@ interface JsonEditorProps {
     showFormatButton?: boolean;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ 
-    value, 
-    onChange, 
-    placeholder, 
+const JsonEditor: React.FC<JsonEditorProps> = ({
+    value,
+    onChange,
+    placeholder,
     style = {},
     title,
-    showFormatButton = true
+    showFormatButton = true,
 }) => {
     const [error, setError] = useState<string | null>(null);
 
@@ -48,12 +48,14 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     return (
         <div style={{ ...style }}>
             {(title || showFormatButton) && (
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    marginBottom: 8 
-                }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 8,
+                    }}
+                >
                     {title && <Text strong>{title}</Text>}
                     {showFormatButton && (
                         <Button
@@ -65,7 +67,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
                     )}
                 </div>
             )}
-            
+
             {error && (
                 <div style={{ marginBottom: 8 }}>
                     <Text type="danger">{error}</Text>

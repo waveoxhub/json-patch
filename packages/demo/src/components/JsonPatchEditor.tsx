@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Row, Col, Space, Typography, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
-import {
-    PlusOutlined,
-    DeleteOutlined,
-    SyncOutlined,
-    CheckCircleOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SyncOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import JsonEditor from './JsonEditor';
 import { Patch } from '@waveox/schema-json-patch';
 
@@ -91,10 +86,10 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
         children: (
             <JsonEditor
                 value={targetJson}
-                onChange={(value) => onTargetChange(index, value)}
+                onChange={value => onTargetChange(index, value)}
                 placeholder={`请输入目标 ${index + 1} 的JSON数据`}
             />
-        )
+        ),
     }));
 
     // 创建补丁预览标签页的items配置
@@ -113,7 +108,7 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
                     >
                         {renderPatchContent(patchString)}
                     </div>
-                )
+                ),
             };
         })
         .filter(Boolean) as TabsProps['items'];
@@ -124,8 +119,8 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
     return (
         <Row gutter={[16, 16]}>
             <Col span={24}>
-                <Card 
-                    title="JSON补丁编辑器" 
+                <Card
+                    title="JSON补丁编辑器"
                     size="small"
                     extra={
                         <Space>
@@ -158,12 +153,12 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
                                 />
                             </Card>
                         </Col>
-                        
+
                         <Col span={12}>
                             <Card title="目标JSON" size="small">
                                 <Tabs
                                     activeKey={activeTargetIndex.toString()}
-                                    onChange={(key) => onTargetSelect(parseInt(key))}
+                                    onChange={key => onTargetSelect(parseInt(key))}
                                     type="card"
                                     size="small"
                                     items={targetTabItems}
@@ -182,7 +177,9 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
                                                     danger
                                                     size="small"
                                                     icon={<DeleteOutlined />}
-                                                    onClick={() => onTargetRemove(activeTargetIndex)}
+                                                    onClick={() =>
+                                                        onTargetRemove(activeTargetIndex)
+                                                    }
                                                 >
                                                     删除当前
                                                 </Button>
@@ -193,18 +190,10 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
                             </Card>
                         </Col>
                     </Row>
-                    
+
                     {hasValidPatches && (
-                        <Card 
-                            title="补丁预览" 
-                            size="small" 
-                            style={{ marginTop: '16px' }}
-                        >
-                            <Tabs 
-                                type="card" 
-                                size="small"
-                                items={patchTabItems}
-                            />
+                        <Card title="补丁预览" size="small" style={{ marginTop: '16px' }}>
+                            <Tabs type="card" size="small" items={patchTabItems} />
                         </Card>
                     )}
                 </Card>
@@ -213,4 +202,4 @@ const JsonPatchEditor: React.FC<JsonPatchEditorProps> = ({
     );
 };
 
-export default JsonPatchEditor; 
+export default JsonPatchEditor;
