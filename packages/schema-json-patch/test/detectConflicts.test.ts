@@ -374,7 +374,14 @@ describe('detectConflicts', () => {
             {
                 op: 'replace',
                 path: '/contact-1',
-                value: {"id":"contact-1","name":"张三(技术总监)","phone":"13888888888","email":"zhangsan@newemail.com","tags":["同事","技术部","管理层"],"address":"北京市朝阳区"},
+                value: {
+                    id: 'contact-1',
+                    name: '张三(技术总监)',
+                    phone: '13888888888',
+                    email: 'zhangsan@newemail.com',
+                    tags: ['同事', '技术部', '管理层'],
+                    address: '北京市朝阳区',
+                },
             },
         ];
 
@@ -382,7 +389,7 @@ describe('detectConflicts', () => {
             {
                 op: 'replace',
                 path: '/contact-1/phone',
-                value: "13888888888",
+                value: '13888888888',
             },
         ];
 

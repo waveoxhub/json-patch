@@ -18,13 +18,7 @@ import JsonEditSection from './JsonEditSection';
 import ConflictResolutionSection from './ConflictResolutionSection';
 import ResultSection from './ResultSection';
 import SchemaEditSection from './SchemaEditSection';
-import {
-    original,
-    version1,
-    version2,
-    version3,
-    defaultSchemaData,
-} from '../data/sampleJsonData';
+import { original, version1, version2, version3, defaultSchemaData } from '../data/sampleJsonData';
 
 const { Title } = Typography;
 

@@ -216,37 +216,40 @@ const detectParentChildPathConflicts = (
                 // remove and replace operations affect child paths
                 if (parentOp.patch.op === 'remove' || parentOp.patch.op === 'replace') {
                     // For replace operations, check if child path values are identical to the values in the parent object
-                    if (parentOp.patch.op === 'replace' && operations.every(childOp => {
-                        // Only compare values for replace and add operations
-                        if (childOp.patch.op !== 'replace' && childOp.patch.op !== 'add') {
-                            return false;
-                        }
-                        
-                        // Extract the remaining path relative to the parent path
-                        const remainingPath = path.slice(prefix.length);
-                        
-                        // Get the value from the parent object at the corresponding child path
-                        let parentValue = parentOp.patch.value;
-                        const segments = remainingPath.split('/').filter(s => s);
-                        
-                        try {
-                            for (const segment of segments) {
-                                if (typeof parentValue !== 'object' || parentValue === null) {
-                                    return false;
-                                }
-                                parentValue = (parentValue as any)[segment];
+                    if (
+                        parentOp.patch.op === 'replace' &&
+                        operations.every(childOp => {
+                            // Only compare values for replace and add operations
+                            if (childOp.patch.op !== 'replace' && childOp.patch.op !== 'add') {
+                                return false;
                             }
-                            
-                            // Compare values for equality
-                            return deepEqual(parentValue, childOp.patch.value);
-                        } catch (e) {
-                            return false;
-                        }
-                    })) {
+
+                            // Extract the remaining path relative to the parent path
+                            const remainingPath = path.slice(prefix.length);
+
+                            // Get the value from the parent object at the corresponding child path
+                            let parentValue = parentOp.patch.value;
+                            const segments = remainingPath.split('/').filter(s => s);
+
+                            try {
+                                for (const segment of segments) {
+                                    if (typeof parentValue !== 'object' || parentValue === null) {
+                                        return false;
+                                    }
+                                    parentValue = (parentValue as any)[segment];
+                                }
+
+                                // Compare values for equality
+                                return deepEqual(parentValue, childOp.patch.value);
+                            } catch (e) {
+                                return false;
+                            }
+                        })
+                    ) {
                         // If all child operations have values identical to the parent object, don't mark as conflict
                         continue;
                     }
-                    
+
                     if (!conflictsByPath[path]) {
                         conflictsByPath[path] = {
                             path,
@@ -301,9 +304,7 @@ const addOperationToConflict = (
     const globalIndex = groupStartIndices[op.groupIndex] + op.patchIndex;
 
     // Check if operation already in conflict
-    const exists = conflict.operations.some(
-        existingOp => existingOp.index === globalIndex
-    );
+    const exists = conflict.operations.some(existingOp => existingOp.index === globalIndex);
 
     if (!exists) {
         conflict.operations.push({

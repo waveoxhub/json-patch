@@ -129,7 +129,11 @@ describe('patchGenerator', () => {
 
             const patches = generatePatches(schema, source, target);
             expect(patches.length).toBe(1);
-            expect(patches[0]).toEqual({ op: 'replace', path: '/profile/address', value: 'Shanghai' });
+            expect(patches[0]).toEqual({
+                op: 'replace',
+                path: '/profile/address',
+                value: 'Shanghai',
+            });
         });
 
         it('should handle complete nested object replacement', () => {
