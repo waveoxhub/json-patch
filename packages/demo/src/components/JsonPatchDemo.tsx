@@ -220,19 +220,6 @@ const JsonPatchDemo: React.FC = () => {
         setActiveTab('schema');
     };
 
-    // 检查是否存在有效的补丁
-    const isPatchesEmpty = () => {
-        if (patches.length === 0) return true;
-
-        for (const patchArray of patches) {
-            if (patchArray && patchArray.length > 0) {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
     // 初始化示例数据
     useEffect(() => {
         setSchema(defaultSchema);
