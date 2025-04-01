@@ -13,7 +13,6 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': resolve(__dirname, './src'),
-            '@waveox/schema-json-patch': resolve(__dirname, '../schema-json-patch/src'),
         },
     },
 });
