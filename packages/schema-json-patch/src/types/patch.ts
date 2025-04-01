@@ -26,12 +26,6 @@ export type ConflictDetail = {
 };
 
 /**
- * Conflict resolution type
- * Records index of each conflict and chosen resolution
- */
-export type ConflictResolutions = Record<string, number>;
-
-/**
  * Patch conflict processing result
  */
 export type ConflictResult = {
@@ -39,6 +33,12 @@ export type ConflictResult = {
     readonly conflicts: Array<ConflictDetail>;
     readonly resolvedPatches: Array<Patch>;
 };
+
+/**
+ * Conflict resolution type
+ * Records index of each conflict and chosen resolution
+ */
+export type ConflictResolutions = Record<string, number>;
 
 /**
  * Custom resolution type

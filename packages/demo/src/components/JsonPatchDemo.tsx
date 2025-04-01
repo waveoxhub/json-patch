@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import { EditOutlined, CheckOutlined, WarningOutlined, AppstoreOutlined } from '@ant-design/icons';
 import {
     Patch,
@@ -14,7 +15,7 @@ import {
     generateResolvedPatch,
     ConflictDetail,
 } from '@waveox/schema-json-patch';
-import JsonEditSection from './JsonEditSection';
+import JsonPatchEditor from './JsonPatchEditor';
 import ConflictResolutionSection from './ConflictResolutionSection';
 import ResultSection from './ResultSection';
 import SchemaEditSection from './SchemaEditSection';
@@ -44,7 +45,6 @@ const JsonPatchDemo: React.FC = () => {
         resolvedPatches: [],
     });
     const [conflictResolutions, setConflictResolutions] = useState<ConflictResolutions>({});
-    const [customResolutions, setCustomResolutions] = useState<Record<string, string>>({});
 
     // 结果相关
     const [resultJson, setResultJson] = useState<string>('');
@@ -144,7 +144,6 @@ const JsonPatchDemo: React.FC = () => {
             // 初始化冲突解决方案（默认选择第一个选项）
             const initialResolutions = initializeResolutions(conflicts);
             setConflictResolutions(initialResolutions);
-            setCustomResolutions({});
 
             // 切换到冲突解决界面
             setActiveTab('conflicts');
@@ -178,13 +177,6 @@ const JsonPatchDemo: React.FC = () => {
         setConflictResolutions(newResolutions);
     };
 
-    // 自定义冲突解决方案更新
-    const handleCustomResolutionChange = (conflictIndex: number, value: string) => {
-        const newCustomResolutions = { ...customResolutions };
-        newCustomResolutions[conflictIndex.toString()] = value;
-        setCustomResolutions(newCustomResolutions);
-    };
-
     // 应用冲突解决方案
     const applyResolutions = () => {
         try {
@@ -200,8 +192,6 @@ const JsonPatchDemo: React.FC = () => {
                 setError('解决冲突后没有有效的补丁可应用');
                 return;
             }
-
-            console.log('resolvedResult.resolvedPatches', resolvedResult.resolvedPatches);
 
             // 应用解决后的补丁
             applyAllPatches(resolvedResult.resolvedPatches);
@@ -223,7 +213,6 @@ const JsonPatchDemo: React.FC = () => {
             resolvedPatches: [],
         });
         setConflictResolutions({});
-        setCustomResolutions({});
         setResultJson('');
         setError(null);
         setSchemaString(JSON.stringify(defaultSchema, null, 2));
@@ -243,29 +232,6 @@ const JsonPatchDemo: React.FC = () => {
 
         return true;
     };
-
-    // 监听标签页切换，当切换到编辑与预览页面时自动生成补丁
-    useEffect(() => {
-        if (activeTab === 'edit') {
-            // 检查源和目标数据是否有效
-            try {
-                if (sourceJson.trim() && targetJsons.some(json => json.trim())) {
-                    // 这里不再自动调用generatePatches，避免与JsonEditSection中重复生成
-                    // JsonEditSection中的useEffect已经处理了自动生成补丁的逻辑
-                    // 只有在初次加载时才调用一次
-                    if (isPatchesEmpty()) {
-                        // 延迟一点执行，确保组件已完全渲染
-                        const timer = setTimeout(() => {
-                            generatePatchesCallback();
-                        }, 500);
-                        return () => clearTimeout(timer);
-                    }
-                }
-            } catch {
-                // 忽略错误，generatePatches会处理
-            }
-        }
-    }, [activeTab, patches, sourceJson, targetJsons, generatePatchesCallback]);
 
     // 初始化示例数据
     useEffect(() => {
@@ -314,7 +280,7 @@ const JsonPatchDemo: React.FC = () => {
     };
 
     // 构建标签页配置
-    const tabItems = [
+    const tabItems: TabsProps['items'] = [
         {
             key: 'schema',
             label: (
@@ -340,18 +306,17 @@ const JsonPatchDemo: React.FC = () => {
                 </span>
             ),
             children: (
-                <JsonEditSection
+                <JsonPatchEditor
                     sourceJson={sourceJson}
                     targetJsons={targetJsons}
                     activeTargetIndex={activeTargetIndex}
                     onSourceChange={setSourceJson}
                     onTargetChange={updateTargetJson}
+                    onTargetSelect={setActiveTargetIndex}
                     onTargetAdd={addTargetJson}
                     onTargetRemove={removeTargetJson}
-                    onTargetSelect={setActiveTargetIndex}
                     onGeneratePatches={generatePatchesCallback}
                     onCheckForConflicts={checkForConflicts}
-                    error={error}
                     patchStrings={patchStrings}
                 />
             ),
@@ -371,9 +336,7 @@ const JsonPatchDemo: React.FC = () => {
                         patches: (conflict.patches || []) as Patch[],
                     }))}
                     resolutions={conflictResolutions}
-                    customResolutions={customResolutions}
                     onResolutionChange={handleConflictResolution}
-                    onCustomResolutionChange={handleCustomResolutionChange}
                     onApply={applyResolutions}
                     onBack={() => setActiveTab('edit')}
                     targetLabels={targetJsons.map((_, index) => `目标 ${index + 1}`)}

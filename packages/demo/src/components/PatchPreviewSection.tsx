@@ -3,10 +3,8 @@ import { Card, Button, Alert, Space, Tabs } from 'antd';
 import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
 import { copyToClipboard } from './utils';
 import type { TabsProps } from 'antd';
-import { Patch } from '@waveox/schema-json-patch';
 
 interface PatchPreviewSectionProps {
-    patches: Patch[][];
     patchStrings: string[];
     onApplyPatches: () => void;
     onBack: () => void;

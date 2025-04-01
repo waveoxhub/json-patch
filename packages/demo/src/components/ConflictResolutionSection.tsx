@@ -6,9 +6,7 @@ import { ConflictDetail, Patch } from '@waveox/schema-json-patch';
 interface ConflictResolutionSectionProps {
     conflicts: Array<ConflictDetail & { patches: Array<Patch> }>;
     resolutions: Record<string, number>;
-    customResolutions: Record<string, string>;
     onResolutionChange: (conflictIndex: number, selectedOperationIndex: number) => void;
-    onCustomResolutionChange: (conflictIndex: number, value: string) => void;
     onApply: () => void;
     onBack: () => void;
     targetLabels?: string[];
@@ -36,8 +34,6 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
     const getTargetLabel = (groupIndex: number) => {
         return targetLabels[groupIndex] || `目标 ${groupIndex + 1}`;
     };
-
-    console.log('conflicts', conflicts);
 
     const collapseItems = conflicts.map((conflict, index) => {
         const resolution = resolutions[index.toString()] ?? 0;

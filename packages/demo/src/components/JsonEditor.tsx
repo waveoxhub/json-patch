@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Input, Typography } from 'antd';
+import { Input, Typography, Button } from 'antd';
+import { FormatPainterOutlined } from '@ant-design/icons';
+import { formatJson } from './utils';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -9,9 +11,18 @@ interface JsonEditorProps {
     onChange: (value: string) => void;
     placeholder?: string;
     style?: React.CSSProperties;
+    title?: string;
+    showFormatButton?: boolean;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, placeholder, style = {} }) => {
+const JsonEditor: React.FC<JsonEditorProps> = ({ 
+    value, 
+    onChange, 
+    placeholder, 
+    style = {},
+    title,
+    showFormatButton = true
+}) => {
     const [error, setError] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -30,8 +41,31 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, placeholder, s
         }
     };
 
+    const handleFormat = () => {
+        formatJson(value, onChange);
+    };
+
     return (
         <div style={{ ...style }}>
+            {(title || showFormatButton) && (
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: 8 
+                }}>
+                    {title && <Text strong>{title}</Text>}
+                    {showFormatButton && (
+                        <Button
+                            icon={<FormatPainterOutlined />}
+                            size="small"
+                            onClick={handleFormat}
+                            title="格式化JSON"
+                        />
+                    )}
+                </div>
+            )}
+            
             {error && (
                 <div style={{ marginBottom: 8 }}>
                     <Text type="danger">{error}</Text>
