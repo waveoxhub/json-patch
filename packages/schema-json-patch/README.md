@@ -180,33 +180,33 @@ For example, to modify the `name` field:
 
 ### Core Functions
 
-| Function | Description |
-|----------|-------------|
-| `generatePatches(original, modified, schema)` | Generate patches from source state to target state |
-| `applyPatches(state, patches, schema)` | Apply patches to data state |
-| `detectConflicts(patchGroups)` | Detect conflicts between multiple sets of patches |
+| Function                                        | Description                                            |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| `generatePatches(original, modified, schema)`   | Generate patches from source state to target state     |
+| `applyPatches(state, patches, schema)`          | Apply patches to data state                            |
+| `detectConflicts(patchGroups)`                  | Detect conflicts between multiple sets of patches      |
 | `resolveConflicts(conflictResult, resolutions)` | Merge conflicting patches according to resolution plan |
 
 ### Validation Functions
 
-| Function | Description |
-|----------|-------------|
-| `validateJson(jsonString)` | Validate if a JSON string is valid |
-| `validatePatches(patches)` | Validate if a patch array is valid |
-| `validatePatchGroups(patchGroups)` | Validate if a patch group array is valid |
-| `validateResolutions(conflicts, resolutions, customResolutions)` | Validate if resolutions are valid |
+| Function                                                                        | Description                                                      |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `validateJson(jsonString)`                                                      | Validate if a JSON string is valid                               |
+| `validatePatches(patches)`                                                      | Validate if a patch array is valid                               |
+| `validatePatchGroups(patchGroups)`                                              | Validate if a patch group array is valid                         |
+| `validateResolutions(conflicts, resolutions, customResolutions)`                | Validate if resolutions are valid                                |
 | `validateResolvedConflicts(patches, conflicts, resolutions, customResolutions)` | Validate if there are still conflicts after applying resolutions |
-| `validatePatchApplication(jsonString, patches, schema)` | Validate if JSON patch operations can be applied to a JSON |
+| `validatePatchApplication(jsonString, patches, schema)`                         | Validate if JSON patch operations can be applied to a JSON       |
 
 ### Type Definitions
 
-| Type | Description |
-|------|-------------|
-| `Schema` | Data structure definition |
-| `Patch` | Patch operation object |
-| `PatchConflictResult` | Conflict detection result |
-| `ConflictResolutions` | Conflict resolution plan |
-| `ValidationResult` | Result of validation operations |
+| Type                  | Description                     |
+| --------------------- | ------------------------------- |
+| `Schema`              | Data structure definition       |
+| `Patch`               | Patch operation object          |
+| `PatchConflictResult` | Conflict detection result       |
+| `ConflictResolutions` | Conflict resolution plan        |
+| `ValidationResult`    | Result of validation operations |
 
 ## Development & Contribution
 
