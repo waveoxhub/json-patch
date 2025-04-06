@@ -241,7 +241,7 @@ const detectParentChildPathConflicts = (
 
                                 // Compare values for equality
                                 return deepEqual(parentValue, childOp.patch.value);
-                            } catch (e) {
+                            } catch {
                                 return false;
                             }
                         })

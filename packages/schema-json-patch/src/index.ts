@@ -24,6 +24,11 @@ export * from './detectConflicts';
 export * from './resolveConflicts';
 
 /**
+ * Validation functionality
+ */
+export * from './validatePatches';
+
+/**
  * Path utility functions
  */
 export * from './utils/pathUtils';
