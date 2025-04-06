@@ -19,6 +19,7 @@ A modern patch library designed for **fixed-structure JSON data**, like RFC 6902
     - [Generate Patches](#generate-patches)
     - [Apply Patches](#apply-patches)
     - [Conflict Detection and Resolution](#conflict-detection-and-resolution)
+    - [Validation](#validation)
 - [Path Features](#path-features)
 - [API Reference](#api-reference)
 - [Demo](#demo)
@@ -31,6 +32,7 @@ A modern patch library designed for **fixed-structure JSON data**, like RFC 6902
 - 🔄 **Structured Array Handling** - Use primary key ($pk) to locate objects in arrays, no need to worry about order changes
 - 🛠️ **Conflict Detection & Resolution** - Automatically detect conflicts between multiple patches and support conflict resolution
 - 🔒 **Type Safety** - Fully developed using TypeScript, providing type definitions
+- ✅ **Validation** - Validate JSON data, patches, and patch application against schema
 
 ## Installation
 
@@ -137,6 +139,32 @@ if (conflictResult.hasConflicts) {
 }
 ```
 
+### Validation
+
+Validate JSON data, patches, and conflict resolutions:
+
+```typescript
+import { validateJson, validatePatches, validatePatchApplication } from '@waveox/schema-json-patch';
+
+// Validate JSON string
+const jsonResult = validateJson(jsonString);
+if (!jsonResult.isValid) {
+    console.error('JSON validation errors:', jsonResult.errors);
+}
+
+// Validate patches
+const patchesResult = validatePatches(patches);
+if (!patchesResult.isValid) {
+    console.error('Patch validation errors:', patchesResult.errors);
+}
+
+// Validate patch application against schema
+const applicationResult = validatePatchApplication(jsonString, patches, schema);
+if (!applicationResult.isValid) {
+    console.error('Patch application errors:', applicationResult.errors);
+}
+```
+
 ## Path Features
 
 SchemaJSONPatch uses semantic paths. For object members in arrays, it uses the specified `$pk` as the path identifier instead of array indices.
@@ -152,17 +180,33 @@ For example, to modify the `name` field:
 
 ### Core Functions
 
-- **generatePatches(original, modified, schema)** - Generate patches from source state to target state
-- **applyPatches(state, patches, schema)** - Apply patches to data state
-- **detectConflicts(patchGroups)** - Detect conflicts between multiple sets of patches
-- **resolveConflicts(conflictResult, resolutions)** - Merge conflicting patches according to resolution plan
+| Function | Description |
+|----------|-------------|
+| `generatePatches(original, modified, schema)` | Generate patches from source state to target state |
+| `applyPatches(state, patches, schema)` | Apply patches to data state |
+| `detectConflicts(patchGroups)` | Detect conflicts between multiple sets of patches |
+| `resolveConflicts(conflictResult, resolutions)` | Merge conflicting patches according to resolution plan |
+
+### Validation Functions
+
+| Function | Description |
+|----------|-------------|
+| `validateJson(jsonString)` | Validate if a JSON string is valid |
+| `validatePatches(patches)` | Validate if a patch array is valid |
+| `validatePatchGroups(patchGroups)` | Validate if a patch group array is valid |
+| `validateResolutions(conflicts, resolutions, customResolutions)` | Validate if resolutions are valid |
+| `validateResolvedConflicts(patches, conflicts, resolutions, customResolutions)` | Validate if there are still conflicts after applying resolutions |
+| `validatePatchApplication(jsonString, patches, schema)` | Validate if JSON patch operations can be applied to a JSON |
 
 ### Type Definitions
 
-- **Schema** - Data structure definition
-- **Patch** - Patch operation object
-- **PatchConflictResult** - Conflict detection result
-- **ConflictResolutions** - Conflict resolution plan
+| Type | Description |
+|------|-------------|
+| `Schema` | Data structure definition |
+| `Patch` | Patch operation object |
+| `PatchConflictResult` | Conflict detection result |
+| `ConflictResolutions` | Conflict resolution plan |
+| `ValidationResult` | Result of validation operations |
 
 ## Development & Contribution
 
