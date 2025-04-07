@@ -1,6 +1,3 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
 name: Publish Schema JSON Patch
 
 on:
@@ -12,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -22,6 +22,23 @@ jobs:
           version: 8
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+      - name: Get release version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Update package version
+        run: |
+          cd packages/schema-json-patch
+          npm version ${{ steps.get_version.outputs.VERSION }} --no-git-tag-version
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      - name: Commit version update
+        run: |
+          git add packages/schema-json-patch/package.json
+          git commit -m "chore: update version to ${{ steps.get_version.outputs.VERSION }} [skip ci]"
+      - name: Push changes
+        run: git push
       - name: Clean
         run: pnpm -F @waveox/schema-json-patch clean
       - name: Build
