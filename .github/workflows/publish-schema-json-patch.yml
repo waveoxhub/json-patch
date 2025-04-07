@@ -8,26 +8,7 @@ on:
     types: [created]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-      - name: Build
-        run: pnpm build:package
-      - name: Test
-        run: pnpm -F @waveox/schema-json-patch test
-
-  publish-npm:
-    needs: build
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +24,10 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       - name: Build
         run: pnpm build:package
+      - name: Test
+        run: pnpm -F @waveox/schema-json-patch test
+      - name: Check for d.ts files
+        run: find packages/schema-json-patch/dist -name "*.d.ts" | sort
       - name: Publish schema-json-patch
         run: cd packages/schema-json-patch && pnpm publish --access public --no-git-checks
         env:
