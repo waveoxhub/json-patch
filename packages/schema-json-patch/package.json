@@ -16,6 +16,7 @@
     },
     "scripts": {
         "build": "tsc && tsc -p tsconfig.cjs.json",
+        "clean": "tsc --build --clean && rm -rf dist",
         "watch": "tsc -w",
         "watch:cjs": "tsc -w -p tsconfig.cjs.json",
         "dev": "concurrently \"pnpm run watch\" \"pnpm run watch:cjs\"",
