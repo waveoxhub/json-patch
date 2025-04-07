@@ -28,3 +28,6 @@ packages/schema-json-patch/coverage
 
 # cursor
 .cursor
+
+# tsbuildinfo
+**/*.tsbuildinfo
