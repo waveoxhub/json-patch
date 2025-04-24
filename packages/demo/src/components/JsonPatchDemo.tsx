@@ -103,6 +103,7 @@ const JsonPatchDemo: React.FC = () => {
 
                     // 生成补丁
                     const generatedPatches = generatePatches(schema, sourceJson, targetJson);
+                    console.log('generatedPatches', generatedPatches);
                     newPatches[index] = [...generatedPatches];
                     newPatchStrings[index] = JSON.stringify(generatedPatches, null, 2);
                 } catch (err) {
