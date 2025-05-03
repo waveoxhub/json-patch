@@ -6,6 +6,7 @@ import {
     initializeResolutions,
 } from '../src/resolveConflicts';
 import { ConflictDetail, Patch, ConflictResolutions, CustomResolution } from '../src/types/patch';
+import { detectConflicts } from '../src';
 
 describe('resolveConflicts', () => {
     it('should resolve property conflicts using specified strategy', () => {
@@ -22,23 +23,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
         const resolutions: ConflictResolutions = {
             '0': 1, // Select second operation
@@ -68,23 +53,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
         const resolutions: ConflictResolutions = {};
 
@@ -122,38 +91,10 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-            {
-                path: '/age',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 2,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 3,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts([
+            [patches[0], patches[2]],
+            [patches[1], patches[3]]
+        ]);
 
         const resolutions: ConflictResolutions = {
             '0': 0, // Select first patch for name
@@ -212,23 +153,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
         const resolutions: ConflictResolutions = {
             '0': 0, // Select first operation
@@ -283,33 +208,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/items/0',
-                operations: [
-                    {
-                        operation: 'remove',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                    {
-                        operation: 'add',
-                        index: 2,
-                        groupIndex: 2,
-                    },
-                ],
-                patches: [
-                    { op: 'remove', path: '/items/0' },
-                    { op: 'replace', path: '/items/0', value: 'new value' },
-                    { op: 'add', path: '/items/0', value: 'another new value' },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts([[patches[0]], [patches[1]], [patches[2]]]);
 
         // Select third operation (add)
         const resolutions: ConflictResolutions = {
@@ -375,23 +274,7 @@ describe('processConflicts', () => {
             ],
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts(patches);
 
         const result = processConflicts(patches, conflicts);
 
@@ -460,23 +343,7 @@ describe('generateResolvedPatch', () => {
             ],
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts(patches);
 
         const resolutions: ConflictResolutions = {
             '0': 1, // Select second operation
@@ -512,23 +379,7 @@ describe('generateResolvedPatch', () => {
             ],
         ];
 
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    {
-                        operation: 'replace',
-                        index: 0,
-                        groupIndex: 0,
-                    },
-                    {
-                        operation: 'replace',
-                        index: 1,
-                        groupIndex: 1,
-                    },
-                ],
-            },
-        ];
+        const conflicts = detectConflicts(patches);
 
         const resolutions: ConflictResolutions = {
             '0': 0, // Select first operation
@@ -565,22 +416,18 @@ describe('generateResolvedPatch', () => {
 
 describe('initializeResolutions', () => {
     it('should create default solution for each conflict (select first operation)', () => {
-        const conflicts: ConflictDetail[] = [
-            {
-                path: '/name',
-                operations: [
-                    { operation: 'replace', index: 0, groupIndex: 0 },
-                    { operation: 'replace', index: 1, groupIndex: 1 },
-                ],
-            },
-            {
-                path: '/age',
-                operations: [
-                    { operation: 'replace', index: 2, groupIndex: 0 },
-                    { operation: 'replace', index: 3, groupIndex: 1 },
-                ],
-            },
+        const patches: Patch[][] = [
+            [
+                { op: 'replace', path: '/name', value: 'patch1Name' },
+                { op: 'replace', path: '/age', value: 25 },
+            ],
+            [
+                { op: 'replace', path: '/name', value: 'patch2Name' },
+                { op: 'replace', path: '/age', value: 30 },
+            ],
         ];
+        
+        const conflicts = detectConflicts(patches);
 
         const resolutions = initializeResolutions(conflicts);
 
