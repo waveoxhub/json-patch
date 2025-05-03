@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ..:/workspace:cached
+      - ..:/workspace:delegated
       - ./scripts:/scripts
       - maven-cache:/root/.m2
       - cursor_cache:/root/.cursor-server
