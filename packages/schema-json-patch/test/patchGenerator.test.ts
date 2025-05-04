@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generatePatches } from '../src/patchGenerator';
 import { Schema } from '../src/types/schema';
+import { generatePatchOptionHash } from '../src/utils/hashUtils';
 
 describe('patchGenerator', () => {
     describe('Single Objects', () => {
@@ -19,12 +20,15 @@ describe('patchGenerator', () => {
             const source = JSON.stringify([{ name: 'xiaoming', age: 25 }]);
             const target = JSON.stringify([{ name: 'xiaoming', age: 30 }]);
             const patches = generatePatches(schema, source, target);
-            console.log(JSON.stringify(patches, null, 2));
+            const result_op = 'replace'
+            const result_path = '/xiaoming/age'
+            const result_value = 30
             expect(patches).toHaveLength(1);
             expect(patches[0]).toEqual({
-                op: 'replace',
-                path: '/xiaoming/age',
-                value: 30,
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -41,8 +45,16 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'newName', age: 25 });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/name';
+            const result_value = 'newName';
             expect(patches).toHaveLength(1);
-            expect(patches[0]).toEqual({ op: 'replace', path: '/name', value: 'newName' });
+            expect(patches[0]).toEqual({ 
+                op: result_op, 
+                path: result_path, 
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
+            });
         });
 
         it('should update single-property object', () => {
@@ -56,8 +68,16 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'newName' });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/name';
+            const result_value = 'newName';
             expect(patches).toHaveLength(1);
-            expect(patches[0]).toEqual({ op: 'replace', path: '/name', value: 'newName' });
+            expect(patches[0]).toEqual({ 
+                op: result_op, 
+                path: result_path, 
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
+            });
         });
 
         it('should add new property', () => {
@@ -74,11 +94,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', age: 25, address: 'Beijing' });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'add';
+            const result_path = '/address';
+            const result_value = 'Beijing';
             expect(patches).toHaveLength(1);
             expect(patches[0]).toEqual({
-                op: 'add',
-                path: '/address',
-                value: 'Beijing',
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -95,10 +119,14 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test' });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'remove';
+            const result_path = '/age';
+            const result_value = undefined;
             expect(patches).toHaveLength(1);
             expect(patches[0]).toEqual({
-                op: 'remove',
-                path: '/age',
+                op: result_op,
+                path: result_path,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -129,11 +157,15 @@ describe('patchGenerator', () => {
             });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/profile/address';
+            const result_value = 'Shanghai';
             expect(patches.length).toBe(1);
             expect(patches[0]).toEqual({
-                op: 'replace',
-                path: '/profile/address',
-                value: 'Shanghai',
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -164,11 +196,15 @@ describe('patchGenerator', () => {
             });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/profile';
+            const result_value = { address: 'Shanghai', phone: '87654321' };
             expect(patches.length).toBe(1);
             expect(patches[0]).toEqual({
-                op: 'replace',
-                path: '/profile',
-                value: { address: 'Shanghai', phone: '87654321' },
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
     });
@@ -189,11 +225,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ items: ['item1', 'item4', 'item3'] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/items';
+            const result_value = ['item1', 'item4', 'item3'];
             expect(patches.length).toBe(1);
             expect(patches[0]).toStrictEqual({
-                op: 'replace',
-                path: '/items',
-                value: ['item1', 'item4', 'item3'],
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -216,9 +256,23 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ items: [{ name: 'item1' }, { name: 'item3' }] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op1 = 'remove';
+            const result_path1 = '/items/item2';
+            const result_op2 = 'add';
+            const result_path2 = '/items/item3';
+            const result_value2 = { name: 'item3' };
             expect(patches).toStrictEqual([
-                { op: 'remove', path: '/items/item2' },
-                { op: 'add', path: '/items/item3', value: { name: 'item3' } },
+                { 
+                    op: result_op1, 
+                    path: result_path1,
+                    hash: generatePatchOptionHash(result_op1, result_path1)
+                },
+                { 
+                    op: result_op2,
+                    path: result_path2,
+                    value: result_value2,
+                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+                },
             ]);
         });
 
@@ -238,11 +292,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', items: ['item1', 'item3'] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/items';
+            const result_value = ['item1', 'item3'];
             expect(patches.length).toBe(1);
             expect(patches[0]).toStrictEqual({
-                op: 'replace',
-                path: '/items',
-                value: ['item1', 'item3'],
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -262,11 +320,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', items: ['item1', 'item2', 'item3'] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/items';
+            const result_value = ['item1', 'item2', 'item3'];
             expect(patches.length).toBe(1);
             expect(patches[0]).toStrictEqual({
-                op: 'replace',
-                path: '/items',
-                value: ['item1', 'item2', 'item3'],
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -286,11 +348,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', items: ['item1', 'item3'] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/items';
+            const result_value = ['item1', 'item3'];
             expect(patches.length).toBe(1);
-            expect(patches[0]).toEqual({
-                op: 'replace',
-                path: '/items',
-                value: ['item1', 'item3'],
+            expect(patches[0]).toStrictEqual({
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -330,8 +396,16 @@ describe('patchGenerator', () => {
             });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/users/u1/age';
+            const result_value = 26;
             expect(patches.length).toBe(1);
-            expect(patches[0]).toEqual({ op: 'replace', path: '/users/u1/age', value: 26 });
+            expect(patches[0]).toEqual({ 
+                op: result_op, 
+                path: result_path, 
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
+            });
         });
     });
 
@@ -355,8 +429,16 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', data: { temp: '', newField: 'value' } });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'add';
+            const result_path = '/data/newField';
+            const result_value = 'value';
             expect(patches.length).toBe(1);
-            expect(patches[0]).toStrictEqual({ op: 'add', path: '/data/newField', value: 'value' });
+            expect(patches[0]).toStrictEqual({ 
+                op: result_op, 
+                path: result_path, 
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
+            });
         });
 
         it('should handle completely different objects', () => {
@@ -376,9 +458,24 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ data: { temp: '', field2: 'new' } });
 
             const patches = generatePatches(schema, source, target);
+            const result_op1 = 'remove';
+            const result_path1 = '/data/field1';
+            const result_value1 = undefined;
+            const result_op2 = 'add';
+            const result_path2 = '/data/field2';
+            const result_value2 = 'new';
             expect(patches).toStrictEqual([
-                { op: 'remove', path: '/data/field1' },
-                { op: 'add', path: '/data/field2', value: 'new' },
+                { 
+                    op: result_op1, 
+                    path: result_path1,
+                    hash: generatePatchOptionHash(result_op1, result_path1, result_value1)
+                },
+                { 
+                    op: result_op2, 
+                    path: result_path2, 
+                    value: result_value2,
+                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+                },
             ]);
         });
 
@@ -395,8 +492,16 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ items: ['c', 'a', 'b'] });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/items';
+            const result_value = ['c', 'a', 'b'];
             expect(patches).toStrictEqual([
-                { op: 'replace', path: '/items', value: ['c', 'a', 'b'] },
+                { 
+                    op: result_op, 
+                    path: result_path, 
+                    value: result_value,
+                    hash: generatePatchOptionHash(result_op, result_path, result_value)
+                },
             ]);
         });
     });
@@ -466,11 +571,15 @@ describe('patchGenerator', () => {
             });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/data/users/Alice/details';
+            const result_value = { age: 31, roles: ['admin', 'user', 'editor'] };
             expect(patches).toStrictEqual([
                 {
-                    op: 'replace',
-                    path: '/data/users/Alice/details',
-                    value: { age: 31, roles: ['admin', 'user', 'editor'] },
+                    op: result_op,
+                    path: result_path,
+                    value: result_value,
+                    hash: generatePatchOptionHash(result_op, result_path, result_value)
                 },
             ]);
         });
@@ -537,11 +646,13 @@ describe('patchGenerator', () => {
             expect(patches).toContainEqual({
                 op: 'remove',
                 path: '/2',
+                hash: generatePatchOptionHash('remove', '/2', undefined)
             });
             expect(patches).toContainEqual({
                 op: 'add',
                 path: '/3',
                 value: { id: '3', value: 'value3' },
+                hash: generatePatchOptionHash('add', '/3', { id: '3', value: 'value3' })
             });
         });
 
@@ -587,6 +698,27 @@ describe('patchGenerator', () => {
             const patchString = JSON.stringify(patches);
             expect(patchString).toContain('updated-item2');
             expect(patchString).toContain('item3');
+
+            // 使用具体的补丁对象断言
+            const result_op1 = 'replace';
+            const result_path1 = '/items/2/name';
+            const result_value1 = 'updated-item2';
+            const result_op2 = 'add';
+            const result_path2 = '/items/3';
+            const result_value2 = { id: '3', name: 'item3' };
+            expect(patches).toContainEqual({
+                op: result_op1,
+                path: result_path1,
+                value: result_value1,
+                hash: generatePatchOptionHash(result_op1, result_path1, result_value1)
+            });
+            
+            expect(patches).toContainEqual({
+                op: result_op2,
+                path: result_path2,
+                value: result_value2,
+                hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+            });
         });
     });
 
@@ -604,11 +736,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({ name: 'test', age: 25 });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '';
+            const result_value = { name: 'test', age: 25 };
             expect(patches).toStrictEqual([
                 {
-                    op: 'replace',
-                    path: '',
-                    value: { name: 'test', age: 25 },
+                    op: result_op,
+                    path: result_path,
+                    value: result_value,
+                    hash: generatePatchOptionHash(result_op, result_path, result_value)
                 },
             ]);
         });
@@ -626,11 +762,15 @@ describe('patchGenerator', () => {
             const target = JSON.stringify({});
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '';
+            const result_value = {};
             expect(patches.length).toBe(1);
             expect(patches[0]).toEqual({
-                op: 'replace',
-                path: '',
-                value: {},
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
 
@@ -678,11 +818,15 @@ describe('patchGenerator', () => {
             });
 
             const patches = generatePatches(schema, source, target);
+            const result_op = 'replace';
+            const result_path = '/level1/level2/level3/value';
+            const result_value = 'new';
             expect(patches.length).toBe(1);
             expect(patches[0]).toStrictEqual({
-                op: 'replace',
-                path: '/level1/level2/level3/value',
-                value: 'new',
+                op: result_op,
+                path: result_path,
+                value: result_value,
+                hash: generatePatchOptionHash(result_op, result_path, result_value)
             });
         });
     });

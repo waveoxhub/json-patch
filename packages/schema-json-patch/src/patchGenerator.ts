@@ -1,5 +1,5 @@
 import { Schema } from './types/schema';
-import { Patch } from './types/patch';
+import { PatchOperation, Patch } from './types/patch';
 import { extractPathMap } from './utils/pathUtils';
 import { deepEqual } from './utils/deepEqual';
 import { generatePatchOptionHash } from './utils/hashUtils';
@@ -11,13 +11,19 @@ import { generatePatchOptionHash } from './utils/hashUtils';
  * @param value 值(可选)
  * @returns 补丁
  */
-const createPatch = (op: 'add' | 'remove' | 'replace', path: string, value?: unknown): Patch => {
-    return {
-        op,
-        path,
-        value,
-        hash: generatePatchOptionHash(path, value)
-    };
+const createPatch = (op: PatchOperation, path: string, value?: unknown): Patch => {
+    return value !== undefined 
+        ? {
+            op,
+            path,
+            value,
+            hash: generatePatchOptionHash(op, path, value)
+        }
+        : {
+            op,
+            path,
+            hash: generatePatchOptionHash(op, path, value)
+        };
 };
 
 /**

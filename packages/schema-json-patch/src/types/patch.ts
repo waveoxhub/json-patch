@@ -10,7 +10,7 @@ export type Patch = {
     readonly op: PatchOperation;
     readonly path: string;
     readonly value?: unknown;
-    readonly hash?: string;   // 补丁的唯一哈希值
+    readonly hash: string;
 };
 
 /**
