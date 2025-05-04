@@ -29,7 +29,7 @@ export type ConflictOption = {
  */
 export type ConflictDetail = {
     readonly path: string;         // 冲突的路径
-    readonly options: Array<ConflictOption>; // 冲突选项数组
+    readonly options: Array<string>; // 冲突选项哈希数组
 };
 
 /**

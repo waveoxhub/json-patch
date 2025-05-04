@@ -1,6 +1,6 @@
 import { collectPathPrefixes } from './utils/pathUtils';
 import { deepEqual } from './utils/deepEqual';
-import { ConflictDetail, ConflictOption, Patch } from './types';
+import { ConflictDetail, Patch } from './types';
 import { generatePatchOptionHash } from './utils/hashUtils';
 
 /**
@@ -278,19 +278,13 @@ const addOperationToConflict = (
     op: PatchOperationWithIndex
 ): void => {
     // 优先使用补丁中已有的哈希值，如果没有再计算
-    const hash = op.patch.hash || generatePatchOptionHash(op.patch.path, op.patch.value);
+    const hash = op.patch.hash || generatePatchOptionHash(op.patch.op, op.patch.path, op.patch.value);
     
     // 检查是否已存在相同哈希的选项
-    const existingOption = conflict.options.find(option => option.hash === hash);
+    const existingOption = conflict.options.includes(hash);
     
     if (!existingOption) {
-        // 添加新选项
-        conflict.options.push({
-            hash,
-            operation: op.patch.op,
-            groupIndex: op.groupIndex,
-            path: op.patch.path,
-            value: op.patch.value,
-        });
+        // 添加新选项（仅哈希值）
+        conflict.options.push(hash);
     }
 };
