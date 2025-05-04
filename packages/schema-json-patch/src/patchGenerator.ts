@@ -5,27 +5,19 @@ import { deepEqual } from './utils/deepEqual';
 import { generatePatchOptionHash } from './utils/hashUtils';
 
 /**
- * 创建带有哈希值的补丁对象
+ * 创建补丁对象
  * @param op 操作类型
  * @param path 路径
  * @param value 值(可选)
- * @returns 带有哈希值的补丁
+ * @returns 补丁
  */
-const createPatchWithHash = (op: 'add' | 'remove' | 'replace', path: string, value?: unknown): Patch => {
-    // 使用类型断言解决只读属性赋值问题
-    const patch = {
+const createPatch = (op: 'add' | 'remove' | 'replace', path: string, value?: unknown): Patch => {
+    return {
         op,
-        path
-    } as Patch;
-    
-    if (value !== undefined) {
-        (patch as any).value = value;
-    }
-    
-    // 生成并添加哈希值
-    (patch as any).hash = generatePatchOptionHash(path, value);
-    
-    return patch;
+        path,
+        value,
+        hash: generatePatchOptionHash(path, value)
+    };
 };
 
 /**
@@ -37,11 +29,11 @@ interface PathProcessingState {
 }
 
 /**
- * 根据模式生成两个对象之间的补丁
+ * 根据 Schema 生成两个对象之间的补丁
  *
  * @param schema - 数据结构模式
- * @param sourceData - 源数据
- * @param targetData - 目标数据
+ * @param sourceJson - 源数据
+ * @param targetJson - 目标数据
  * @returns 补丁数组
  */
 export const generatePatches = (
@@ -49,7 +41,6 @@ export const generatePatches = (
     sourceJson: string,
     targetJson: string
 ): ReadonlyArray<Patch> => {
-    // 解析输入的JSON数据
     const sourceData = JSON.parse(sourceJson);
     const targetData = JSON.parse(targetJson);
     // 提取路径映射
@@ -76,7 +67,7 @@ export const generatePatches = (
         // 处理已删除的项目
         for (const [id] of sourceIdMap) {
             if (!targetIdMap.has(id)) {
-                patches.push(createPatchWithHash('remove', `/${id}`));
+                patches.push(createPatch('remove', `/${id}`));
             }
         }
 
@@ -87,7 +78,7 @@ export const generatePatches = (
 
             if (!sourceIdMap.has(id)) {
                 // 新项目
-                patches.push(createPatchWithHash('add', `/${id}`, item));
+                patches.push(createPatch('add', `/${id}`, item));
             } else {
                 // 修改的项目
                 const sourceIndex = sourceIdMap.get(id)!;
@@ -212,7 +203,7 @@ const generateObjectFieldPatches = (
 
         // Determine if the whole object should be replaced
         if (shouldReplaceWhole()) {
-            patches.push(createPatchWithHash('replace', path === '/' ? '' : path, targetObj));
+            patches.push(createPatch('replace', path === '/' ? '' : path, targetObj));
 
             // Mark whole object path and child paths as handled
             state.handledPaths.add(path);
@@ -238,7 +229,7 @@ const generateObjectFieldPatches = (
             // Skip already handled fields
             if (state.handledPaths.has(fieldPath)) continue;
 
-            patches.push(createPatchWithHash('remove', fieldPath));
+            patches.push(createPatch('remove', fieldPath));
             state.handledPaths.add(fieldPath);
         }
     }
@@ -251,7 +242,7 @@ const generateObjectFieldPatches = (
         if (state.handledPaths.has(fieldPath)) continue;
 
         if (!sourceKeys.includes(key)) {
-            patches.push(createPatchWithHash('add', fieldPath, targetObj[key]));
+            patches.push(createPatch('add', fieldPath, targetObj[key]));
             state.handledPaths.add(fieldPath);
         } else if (!deepEqual(sourceObj[key], targetObj[key])) {
             const sourceValue = sourceObj[key];
@@ -301,7 +292,7 @@ const generateObjectFieldPatches = (
 
                             if (state.handledPaths.has(itemPath)) continue;
 
-                            patches.push(createPatchWithHash('remove', itemPath));
+                            patches.push(createPatch('remove', itemPath));
                             state.handledPaths.add(itemPath);
                         }
                     }
@@ -315,7 +306,7 @@ const generateObjectFieldPatches = (
 
                         if (!sourceIdMap.has(id)) {
                             // Process new item
-                            patches.push(createPatchWithHash('add', itemPath, targetItem));
+                            patches.push(createPatch('add', itemPath, targetItem));
                             state.handledPaths.add(itemPath);
                         } else {
                             // Process modified item
@@ -347,7 +338,7 @@ const generateObjectFieldPatches = (
                 }
             } else {
                 // Simple value use replace operation
-                patches.push(createPatchWithHash('replace', fieldPath, targetValue));
+                patches.push(createPatch('replace', fieldPath, targetValue));
                 state.handledPaths.add(fieldPath);
             }
         }
