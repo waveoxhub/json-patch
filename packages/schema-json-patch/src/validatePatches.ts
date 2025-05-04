@@ -3,9 +3,12 @@ import { Schema } from './types/schema';
 import { isObject } from './utils/isObject';
 import { detectConflicts } from './detectConflicts';
 import { parseJsonPath } from './utils/pathUtils';
+import { collectPathPrefixes } from './utils/pathUtils';
+import { deepEqual } from './utils/deepEqual';
+import { ConflictOption } from './types/patch';
 
 /**
- * Validation result type
+ * 验证结果类型
  */
 export type ValidationResult = {
     readonly isValid: boolean;
@@ -13,9 +16,9 @@ export type ValidationResult = {
 };
 
 /**
- * Validate if a JSON string is valid
- * @param jsonString JSON string
- * @returns Validation result
+ * 验证JSON字符串是否有效
+ * @param jsonString JSON字符串
+ * @returns 验证结果
  */
 export const validateJson = (jsonString: string): ValidationResult => {
     const errors: string[] = [];
@@ -37,9 +40,9 @@ export const validateJson = (jsonString: string): ValidationResult => {
 };
 
 /**
- * Validate if a patch array is valid
- * @param patches Patch array
- * @returns Validation result
+ * 验证补丁数组是否有效
+ * @param patches 补丁数组
+ * @returns 验证结果
  */
 export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult => {
     const errors: string[] = [];
@@ -55,19 +58,19 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
             return;
         }
 
-        // Validate patch operation type
+        // 验证补丁操作类型
         if (!patch.op || !['add', 'remove', 'replace'].includes(patch.op)) {
             errors.push(`Patch #${index} has invalid operation type: ${patch.op}`);
         }
 
-        // Validate patch path
+        // 验证补丁路径
         if (!patch.path || typeof patch.path !== 'string') {
             errors.push(`Patch #${index} has invalid path`);
         } else if (!patch.path.startsWith('/') && patch.path !== '') {
             errors.push(`Patch #${index} path must start with / or be empty`);
         }
 
-        // Validate patch value
+        // 验证补丁值
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
         }
@@ -80,9 +83,9 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
 };
 
 /**
- * Validate if a patch group array is valid
- * @param patchGroups Patch group array
- * @returns Validation result
+ * 验证补丁组数组是否有效
+ * @param patchGroups 补丁组数组
+ * @returns 验证结果
  */
 export const validatePatchGroups = (
     patchGroups: ReadonlyArray<ReadonlyArray<Patch>>
@@ -116,16 +119,14 @@ export const validatePatchGroups = (
 };
 
 /**
- * Validate if resolutions are valid
- * @param conflicts Conflict details
- * @param resolutions Resolutions
- * @param customResolutions Custom resolutions
- * @returns Validation result
+ * 验证解决方案是否有效
+ * @param conflicts 冲突详情
+ * @param resolutions 基于哈希值的解决方案
+ * @returns 验证结果
  */
 export const validateResolutions = (
     conflicts: ReadonlyArray<ConflictDetail>,
-    resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    resolutions: ConflictResolutions
 ): ValidationResult => {
     const errors: string[] = [];
 
@@ -139,46 +140,27 @@ export const validateResolutions = (
         return { isValid: false, errors };
     }
 
-    // Validate that each conflict has a corresponding resolution
-    conflicts.forEach((conflict, index) => {
-        const resolutionKey = index.toString();
-
-        if (!(resolutionKey in resolutions)) {
-            errors.push(`Conflict #${index} is missing a resolution`);
-        } else {
-            const resolutionValue = resolutions[resolutionKey];
-
-            if (
-                typeof resolutionValue !== 'number' ||
-                resolutionValue < 0 ||
-                resolutionValue >= conflict.operations.length
-            ) {
-                errors.push(`Conflict #${index} has invalid resolution ${resolutionValue}`);
+    // 检查每个冲突选项是否有合法的解决方案
+    conflicts.forEach((conflict: ConflictDetail) => {
+        conflict.options.forEach((option: ConflictOption) => {
+            const hash = option.hash;
+            if (hash in resolutions) {
+                const resolutionValue = resolutions[hash];
+                
+                if (
+                    typeof resolutionValue !== 'number' ||
+                    resolutionValue < 0 ||
+                    resolutionValue >= conflict.options.length
+                ) {
+                    errors.push(
+                        `Resolution for option ${hash} at path "${conflict.path}" is invalid. ` +
+                        `Value ${resolutionValue} must be between 0 and ${conflict.options.length - 1}.`
+                    );
+                }
             }
-        }
-    });
-
-    // Validate custom resolutions
-    if (customResolutions && Array.isArray(customResolutions)) {
-        customResolutions.forEach((resolution, index) => {
-            if (!resolution || !isObject(resolution)) {
-                errors.push(`Custom resolution #${index} is not a valid object`);
-                return;
-            }
-
-            if (!resolution.path || typeof resolution.path !== 'string') {
-                errors.push(`Custom resolution #${index} is missing a valid path`);
-            }
-
-            const patchResult = validatePatches([resolution.patch]);
-            if (!patchResult.isValid) {
-                errors.push(`Custom resolution #${index} contains invalid patch:`);
-                patchResult.errors.forEach(error => {
-                    errors.push(`  - ${error}`);
-                });
-            }
+            // 如果没有为该hash提供解决方案，将使用默认值，不需要验证
         });
-    }
+    });
 
     return {
         isValid: errors.length === 0,
@@ -187,12 +169,12 @@ export const validateResolutions = (
 };
 
 /**
- * Validate if there are still conflicts after applying resolutions
- * @param patches Original patch groups
- * @param conflicts Conflict details
- * @param resolutions Resolutions
- * @param customResolutions Custom resolutions
- * @returns Validation result
+ * 验证应用解决方案后是否仍存在冲突
+ * @param patches 原始补丁组
+ * @param conflicts 冲突详情
+ * @param resolutions 解决方案
+ * @param customResolutions 自定义解决方案
+ * @returns 验证结果
  */
 export const validateResolvedConflicts = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
@@ -202,42 +184,64 @@ export const validateResolvedConflicts = (
 ): ValidationResult => {
     const errors: string[] = [];
 
-    // First validate that resolutions are valid
-    const resolutionsValid = validateResolutions(conflicts, resolutions, customResolutions);
+    // 首先验证解决方案是否有效
+    const resolutionsValid = validateResolutions(conflicts, resolutions);
     if (!resolutionsValid.isValid) {
         return resolutionsValid;
     }
 
-    // Create a new patch set with resolved patches
+    // 创建已解决冲突的补丁集合
     const allPatches = patches.flat();
-    const excludedPatchIndices = new Set<number>();
-
-    // Mark patches to exclude
-    conflicts.forEach((conflict, index) => {
-        const selectedOperationIndex = resolutions[index.toString()] ?? 0;
-
-        conflict.operations.forEach((op, opIndex) => {
-            if (opIndex !== selectedOperationIndex) {
-                excludedPatchIndices.add(op.index);
+    const resolvedPatchSet = new Set<Patch>();
+    const conflictPaths = new Set<string>();
+    
+    // 收集所有冲突路径
+    conflicts.forEach(conflict => {
+        conflictPaths.add(conflict.path);
+        
+        // 找出选中的选项
+        let selectedOption = conflict.options[0]; // 默认选第一个
+        
+        for (const option of conflict.options) {
+            if (resolutions[option.hash] !== undefined) {
+                const selectedIndex = resolutions[option.hash];
+                selectedOption = conflict.options[selectedIndex] || selectedOption;
+                break;
             }
-        });
+        }
+        
+        // 找到匹配的补丁
+        const matchingPatch = allPatches.find(patch => 
+            // 优先通过哈希值匹配
+            (patch.hash === selectedOption.hash) || 
+            // 回退到路径、操作和值的匹配
+            (patch.path === selectedOption.path && 
+             patch.op === selectedOption.operation && 
+             JSON.stringify(patch.value) === JSON.stringify(selectedOption.value))
+        );
+        
+        if (matchingPatch) {
+            resolvedPatchSet.add(matchingPatch);
+        }
     });
-
-    // Collect patches to apply
-    const resolvedPatches = allPatches.filter((_, index) => !excludedPatchIndices.has(index));
-
-    // Add custom resolutions
-    const finalPatches = [...resolvedPatches, ...(customResolutions?.map(cr => cr.patch) || [])];
+    
+    // 添加非冲突补丁
+    const nonConflictPatches = allPatches.filter(patch => !conflictPaths.has(patch.path));
+    const resolvedPatches = [
+        ...nonConflictPatches,
+        ...Array.from(resolvedPatchSet),
+        ...(customResolutions?.map(cr => cr.patch) || [])
+    ];
 
     // Check if there are still conflicts after resolution
-    const remainingConflicts = detectConflicts([finalPatches]);
+    const remainingConflicts = detectConflicts([resolvedPatches]);
 
     if (remainingConflicts.length > 0) {
         errors.push(
             `There are still ${remainingConflicts.length} conflicts after applying resolutions`
         );
 
-        remainingConflicts.forEach((conflict, _index) => {
+        remainingConflicts.forEach((conflict) => {
             errors.push(`  - Path ${conflict.path} has unresolved conflicts`);
         });
     }
@@ -470,4 +474,57 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
                 return true; // Unknown type, assume valid
         }
     }
+};
+
+/**
+ * Validate conflicts against JSON Schema
+ * @param conflicts Conflict details array
+ * @param schema JSON Schema object
+ * @returns Validation result
+ */
+export const validateConflictsAgainstSchema = (
+    conflicts: ReadonlyArray<ConflictDetail>,
+    schema: Schema
+): ValidationResult => {
+    const errors: string[] = [];
+
+    if (!Array.isArray(conflicts)) {
+        errors.push('Conflicts must be an array');
+        return { isValid: false, errors };
+    }
+
+    // Check each conflict against schema
+    conflicts.forEach((conflict: ConflictDetail) => {
+        conflict.options.forEach((option: ConflictOption, opIndex: number) => {
+            // Skip for non-add/replace operations
+            if (option.operation !== 'add' && option.operation !== 'replace') {
+                return;
+            }
+
+            // Get operation's path
+            const path = conflict.path;
+            const pathComponents = parseJsonPath(path);
+
+            // Verify if path exists in schema
+            const schemaForPath = getSchemaForPath(schema, pathComponents);
+
+            // If no schema found for path, skip validation
+            if (!schemaForPath || typeof schemaForPath !== 'object') {
+                return;
+            }
+
+            // Validate value against schema
+            if (!validateValueAgainstSchema(option.value, schemaForPath)) {
+                errors.push(
+                    `Conflict at path "${path}", option ${opIndex + 1} (hash: ${option.hash}): ` +
+                    `Value does not match schema requirements`
+                );
+            }
+        });
+    });
+
+    return {
+        isValid: errors.length === 0,
+        errors,
+    };
 };

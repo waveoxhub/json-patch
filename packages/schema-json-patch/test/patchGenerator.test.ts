@@ -19,6 +19,7 @@ describe('patchGenerator', () => {
             const source = JSON.stringify([{ name: 'xiaoming', age: 25 }]);
             const target = JSON.stringify([{ name: 'xiaoming', age: 30 }]);
             const patches = generatePatches(schema, source, target);
+            console.log(JSON.stringify(patches, null, 2));
             expect(patches).toHaveLength(1);
             expect(patches[0]).toEqual({
                 op: 'replace',

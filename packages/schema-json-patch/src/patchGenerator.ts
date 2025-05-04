@@ -2,9 +2,34 @@ import { Schema } from './types/schema';
 import { Patch } from './types/patch';
 import { extractPathMap } from './utils/pathUtils';
 import { deepEqual } from './utils/deepEqual';
+import { generatePatchOptionHash } from './utils/hashUtils';
 
 /**
- * Interface for tracking path processing state
+ * 创建带有哈希值的补丁对象
+ * @param op 操作类型
+ * @param path 路径
+ * @param value 值(可选)
+ * @returns 带有哈希值的补丁
+ */
+const createPatchWithHash = (op: 'add' | 'remove' | 'replace', path: string, value?: unknown): Patch => {
+    // 使用类型断言解决只读属性赋值问题
+    const patch = {
+        op,
+        path
+    } as Patch;
+    
+    if (value !== undefined) {
+        (patch as any).value = value;
+    }
+    
+    // 生成并添加哈希值
+    (patch as any).hash = generatePatchOptionHash(path, value);
+    
+    return patch;
+};
+
+/**
+ * 路径处理状态的接口
  */
 interface PathProcessingState {
     handledPaths: Set<string>;
@@ -12,27 +37,27 @@ interface PathProcessingState {
 }
 
 /**
- * Generate patches between two objects based on schema
+ * 根据模式生成两个对象之间的补丁
  *
- * @param schema - Data structure schema
- * @param sourceData - Source data
- * @param targetData - Target data
- * @returns Array of patches
+ * @param schema - 数据结构模式
+ * @param sourceData - 源数据
+ * @param targetData - 目标数据
+ * @returns 补丁数组
  */
 export const generatePatches = (
     schema: Schema,
     sourceJson: string,
     targetJson: string
 ): ReadonlyArray<Patch> => {
-    // Parse input JSON data
+    // 解析输入的JSON数据
     const sourceData = JSON.parse(sourceJson);
     const targetData = JSON.parse(targetJson);
-    // Extract path mappings
+    // 提取路径映射
     const sourcePathMap = extractPathMap(schema, sourceData);
     const targetPathMap = extractPathMap(schema, targetData);
     const patches: Patch[] = [];
 
-    // Check if top-level array with primary key
+    // 检查是否为带有主键的顶层数组
     if (
         schema.$type === 'array' &&
         schema.$item &&
@@ -44,34 +69,27 @@ export const generatePatches = (
             throw new Error('Type mismatch: array expected');
         }
 
-        // Create ID to index mapping
+        // 创建ID到索引的映射
         const sourceIdMap = new Map(sourceData.map((item, index) => [item[pkField], index]));
         const targetIdMap = new Map(targetData.map((item, index) => [item[pkField], index]));
 
-        // Process deleted items
+        // 处理已删除的项目
         for (const [id] of sourceIdMap) {
             if (!targetIdMap.has(id)) {
-                patches.push({
-                    op: 'remove',
-                    path: `/${id}`,
-                });
+                patches.push(createPatchWithHash('remove', `/${id}`));
             }
         }
 
-        // Process added and modified items
+        // 处理新增和修改的项目
         for (let targetIndex = 0; targetIndex < targetData.length; targetIndex++) {
             const item = targetData[targetIndex];
             const id = item[pkField];
 
             if (!sourceIdMap.has(id)) {
-                // New item
-                patches.push({
-                    op: 'add',
-                    path: `/${id}`,
-                    value: item,
-                });
+                // 新项目
+                patches.push(createPatchWithHash('add', `/${id}`, item));
             } else {
-                // Modified item
+                // 修改的项目
                 const sourceIndex = sourceIdMap.get(id)!;
                 const sourceItem = sourceData[sourceIndex];
 
@@ -99,7 +117,7 @@ export const generatePatches = (
         return optimizePatches(patches);
     }
 
-    // Check if top-level object
+    // 检查是否为顶层对象
     if (
         schema.$type === 'object' &&
         typeof sourceData === 'object' &&
@@ -107,15 +125,15 @@ export const generatePatches = (
         typeof targetData === 'object' &&
         targetData !== null
     ) {
-        // Regular objects don't have primary keys, directly process object fields
+        // 常规对象没有主键，直接处理对象字段
         const sourceObj = sourceData as Record<string, unknown>;
         const targetObj = targetData as Record<string, unknown>;
 
-        // Create processing state
+        // 创建处理状态
         const allPaths = Array.from(
             new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
         ).sort((a, b) => {
-            // Sort by path depth, shallow paths first
+            // 按路径深度排序，浅层路径优先
             const depthA = a.split('/').length;
             const depthB = b.split('/').length;
             if (depthA !== depthB) return depthA - depthB;
@@ -136,14 +154,14 @@ export const generatePatches = (
 };
 
 /**
- * Build path string, handling slash issues
+ * 构建路径字符串，处理斜杠问题
  */
 const buildPath = (basePath: string, key: string): string => {
     return basePath.endsWith('/') ? `${basePath}${key}` : `${basePath}/${key}`;
 };
 
 /**
- * Generate patches for object fields
+ * 为对象字段生成补丁
  */
 const generateObjectFieldPatches = (
     path: string,
@@ -153,20 +171,20 @@ const generateObjectFieldPatches = (
     state: PathProcessingState,
     schema: Schema
 ): void => {
-    // General processing logic
+    // 通用处理逻辑
     if (!deepEqual(sourceObj, targetObj)) {
-        // Check if whole object should be replaced
+        // 检查是否应该替换整个对象
         const shouldReplaceWhole = (): boolean => {
-            // For arrays with non-object members, replace the whole array
+            // 对于包含非对象成员的数组，替换整个数组
             if (schema.$type === 'array' && schema.$item && schema.$item.$type !== 'object') {
                 return true;
             }
 
-            // Handle object property additions/deletions
+            // 处理对象属性的添加/删除
             const sourceKeys = Object.keys(sourceObj);
             const targetKeys = Object.keys(targetObj);
 
-            // If more than one property is added/removed, use whole replacement
+            // 如果添加/删除了多个属性，使用整体替换
             const addedKeys = targetKeys.filter(k => !sourceKeys.includes(k));
             const removedKeys = sourceKeys.filter(k => !targetKeys.includes(k));
 
@@ -174,10 +192,10 @@ const generateObjectFieldPatches = (
                 return true;
             }
 
-            // If more than 50% of fields are modified, use whole replacement
+            // 如果超过50%的字段被修改，使用整体替换
             const commonKeys = sourceKeys.filter(k => targetKeys.includes(k));
 
-            // For single property objects, avoid whole replacement
+            // 对于单属性对象，避免整体替换
             if (commonKeys.length === 1) {
                 return false;
             }
@@ -194,11 +212,7 @@ const generateObjectFieldPatches = (
 
         // Determine if the whole object should be replaced
         if (shouldReplaceWhole()) {
-            patches.push({
-                op: 'replace',
-                path: path === '/' ? '' : path,
-                value: targetObj,
-            });
+            patches.push(createPatchWithHash('replace', path === '/' ? '' : path, targetObj));
 
             // Mark whole object path and child paths as handled
             state.handledPaths.add(path);
@@ -224,10 +238,7 @@ const generateObjectFieldPatches = (
             // Skip already handled fields
             if (state.handledPaths.has(fieldPath)) continue;
 
-            patches.push({
-                op: 'remove',
-                path: fieldPath,
-            });
+            patches.push(createPatchWithHash('remove', fieldPath));
             state.handledPaths.add(fieldPath);
         }
     }
@@ -240,11 +251,7 @@ const generateObjectFieldPatches = (
         if (state.handledPaths.has(fieldPath)) continue;
 
         if (!sourceKeys.includes(key)) {
-            patches.push({
-                op: 'add',
-                path: fieldPath,
-                value: targetObj[key],
-            });
+            patches.push(createPatchWithHash('add', fieldPath, targetObj[key]));
             state.handledPaths.add(fieldPath);
         } else if (!deepEqual(sourceObj[key], targetObj[key])) {
             const sourceValue = sourceObj[key];
@@ -294,10 +301,7 @@ const generateObjectFieldPatches = (
 
                             if (state.handledPaths.has(itemPath)) continue;
 
-                            patches.push({
-                                op: 'remove',
-                                path: itemPath,
-                            });
+                            patches.push(createPatchWithHash('remove', itemPath));
                             state.handledPaths.add(itemPath);
                         }
                     }
@@ -311,11 +315,7 @@ const generateObjectFieldPatches = (
 
                         if (!sourceIdMap.has(id)) {
                             // Process new item
-                            patches.push({
-                                op: 'add',
-                                path: itemPath,
-                                value: targetItem,
-                            });
+                            patches.push(createPatchWithHash('add', itemPath, targetItem));
                             state.handledPaths.add(itemPath);
                         } else {
                             // Process modified item
@@ -347,11 +347,7 @@ const generateObjectFieldPatches = (
                 }
             } else {
                 // Simple value use replace operation
-                patches.push({
-                    op: 'replace',
-                    path: fieldPath,
-                    value: targetValue,
-                });
+                patches.push(createPatchWithHash('replace', fieldPath, targetValue));
                 state.handledPaths.add(fieldPath);
             }
         }
@@ -359,7 +355,7 @@ const generateObjectFieldPatches = (
 };
 
 /**
- * 根据操作类型的优先级
+ * 获取操作优先级
  */
 const getOperationPriority = (op: string): number => {
     switch (op) {
@@ -375,10 +371,7 @@ const getOperationPriority = (op: string): number => {
 };
 
 /**
- * Optimize patches, remove redundant operations
- *
- * @param patches - Patches array
- * @returns Optimized patches array
+ * 优化补丁列表
  */
 const optimizePatches = (patches: Patch[]): ReadonlyArray<Patch> => {
     if (patches.length <= 1) return patches;

@@ -21,6 +21,7 @@ describe('detectConflicts', () => {
         ];
 
         const conflicts = detectConflicts([patch1, patch2]);
+        console.log(JSON.stringify(conflicts, null, 2));
         expect(conflicts).toStrictEqual([
             {
                 path: '/name',

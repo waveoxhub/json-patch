@@ -6,14 +6,14 @@ import {
     MergeCellsOutlined,
     CheckCircleOutlined,
 } from '@ant-design/icons';
-import { ConflictDetail, Patch, CustomResolution } from '@waveox/schema-json-patch';
+import { ConflictDetail, ConflictOption, Patch, CustomResolution } from '@waveox/schema-json-patch';
 
 const { Text } = Typography;
 
 interface ConflictResolutionSectionProps {
-    conflicts: Array<ConflictDetail & { patches: Array<Patch> }>;
-    resolutions: Record<string, number>;
-    onResolutionChange: (conflictIndex: number, selectedOperationIndex: number) => void;
+    conflicts: Array<ConflictDetail>;
+    resolutions: Record<string, number>; // 基于哈希的映射
+    onResolutionChange: (hash: string, selectedOperationIndex: number) => void;
     onApply: () => void;
     onBack: () => void;
     targetLabels?: string[];
@@ -40,19 +40,18 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
         conflicts.forEach((conflict, index) => {
             // 生成类似Git冲突标记的文本
             let mergeText = '';
-            conflict.operations.forEach((operation, opIndex) => {
-                const patch = conflict.patches[opIndex] || { value: null };
-                const label = getTargetLabel(operation.groupIndex);
+            conflict.options.forEach((option, opIndex) => {
+                const label = getTargetLabel(option.groupIndex);
 
                 if (opIndex === 0) {
                     mergeText += `<<<<<<< ${label}\n`;
-                    mergeText += JSON.stringify(patch.value, null, 2);
+                    mergeText += JSON.stringify(option.value, null, 2);
                     mergeText += '\n=======\n';
-                } else if (opIndex === conflict.operations.length - 1) {
-                    mergeText += JSON.stringify(patch.value, null, 2);
+                } else if (opIndex === conflict.options.length - 1) {
+                    mergeText += JSON.stringify(option.value, null, 2);
                     mergeText += `\n>>>>>>> ${label}\n`;
                 } else {
-                    mergeText += JSON.stringify(patch.value, null, 2);
+                    mergeText += JSON.stringify(option.value, null, 2);
                     mergeText += '\n=======\n';
                 }
             });
@@ -92,7 +91,11 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
             const parsedValue = JSON.parse(cleanedValue);
 
             // 更新为自定义解决方案
-            onResolutionChange(conflictIndex, -1); // 选择自定义选项
+            const conflict = conflicts[conflictIndex];
+            if (conflict.options.length > 0) {
+                const firstOptionHash = conflict.options[0].hash;
+                onResolutionChange(firstOptionHash, -1); // 选择自定义选项
+            }
             onCustomResolutionChange(conflictIndex, parsedValue);
         } catch (err) {
             // 如果格式不正确，不进行处理
@@ -102,7 +105,6 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
     // 清理合并文本，移除冲突标记
     const cleanMergeText = (mergeText: string): string => {
         // 这里实现一个简单的解析器，移除Git风格的冲突标记
-        // 在真实场景中，可能需要更复杂的处理
         try {
             // 先尝试检测是否还有冲突标记
             if (!/<<<<<<< |=======|>>>>>>> /.test(mergeText)) {
@@ -126,7 +128,17 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
     };
 
     const collapseItems = conflicts.map((conflict, index) => {
-        const resolution = resolutions[index.toString()] ?? 0;
+        // 查找该冲突中当前选择的选项索引
+        let selectedIndex = 0;
+        if (conflict.options.length > 0) {
+            // 通过遍历选项哈希找到被选中的选项索引
+            conflict.options.forEach((option, opIndex) => {
+                if (resolutions[option.hash] !== undefined) {
+                    selectedIndex = opIndex;
+                }
+            });
+        }
+        
         const mergeText = mergeTexts[index.toString()] || '';
 
         return {
@@ -154,22 +166,19 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                 </Text>
                                             </div>
                                             <Radio.Group
-                                                value={resolution}
-                                                onChange={e =>
-                                                    onResolutionChange(index, e.target.value)
-                                                }
+                                                value={selectedIndex}
+                                                onChange={e => {
+                                                    // 获取选中选项的哈希值
+                                                    const option = conflict.options[e.target.value];
+                                                    if (option) {
+                                                        onResolutionChange(option.hash, e.target.value);
+                                                    }
+                                                }}
                                                 style={{ marginBottom: 16 }}
                                             >
                                                 <Space direction="vertical">
-                                                    {conflict.operations.map(
-                                                        (
-                                                            operation: {
-                                                                groupIndex: number;
-                                                                operation: string;
-                                                            },
-                                                            opIndex: number
-                                                        ) => {
-                                                            const patch = conflict.patches[opIndex];
+                                                    {conflict.options.map(
+                                                        (option, opIndex) => {
                                                             return (
                                                                 <Radio
                                                                     key={opIndex}
@@ -178,10 +187,10 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                                     <div>
                                                                         <div>
                                                                             {getTargetLabel(
-                                                                                operation.groupIndex
+                                                                                option.groupIndex
                                                                             )}
                                                                             的版本:{' '}
-                                                                            {operation.operation}
+                                                                            {option.operation}
                                                                         </div>
                                                                         <div
                                                                             style={{
@@ -190,7 +199,7 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                                                 marginLeft: '23px',
                                                                             }}
                                                                         >
-                                                                            路径: {patch.path}
+                                                                            路径: {option.path}
                                                                         </div>
                                                                         <div
                                                                             style={{
@@ -201,8 +210,17 @@ const ConflictResolutionSection: React.FC<ConflictResolutionSectionProps> = ({
                                                                         >
                                                                             值:{' '}
                                                                             {JSON.stringify(
-                                                                                patch.value
+                                                                                option.value
                                                                             )}
+                                                                        </div>
+                                                                        <div
+                                                                            style={{
+                                                                                color: '#999',
+                                                                                fontSize: '12px',
+                                                                                marginLeft: '23px',
+                                                                            }}
+                                                                        >
+                                                                            哈希: {option.hash}
                                                                         </div>
                                                                     </div>
                                                                 </Radio>

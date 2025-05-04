@@ -4,12 +4,12 @@ import { deepClone } from './utils/deepClone';
 import { Schema } from './types/schema';
 
 /**
- * Apply patches to JSON state
+ * 将补丁应用到JSON状态
  *
- * @param sourceJson - Source JSON string
- * @param patches - Array of patches
- * @param schema - Data structure schema
- * @returns JSON string after applying patches
+ * @param sourceJson - 源JSON字符串
+ * @param patches - 补丁数组
+ * @param schema - 数据结构模式
+ * @returns 应用补丁后的JSON字符串
  */
 export const applyPatches = (
     sourceJson: string,
@@ -31,12 +31,12 @@ export const applyPatches = (
 };
 
 /**
- * Apply a single patch to state object
+ * 将单个补丁应用到状态对象
  *
- * @param state - Current state
- * @param patch - Patch object
- * @param schema - Data structure schema
- * @returns Updated state
+ * @param state - 当前状态
+ * @param patch - 补丁对象
+ * @param schema - 数据结构模式
+ * @returns 更新后的状态
  */
 const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
     const { op, path, value } = patch;
@@ -58,17 +58,17 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
 };
 
 /**
- * Check if value is a non-null object
+ * 检查值是否为非空对象
  */
 const isObject = (value: unknown): value is Record<string, unknown> => {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
 /**
- * Get primary key field name for array members
+ * 获取数组成员的主键字段名
  *
- * @param schema - Structure that may be an array schema
- * @returns Primary key field name
+ * @param schema - 可能是数组模式的结构
+ * @returns 主键字段名
  */
 const getPrimaryKeyField = (schema: Schema): string => {
     if (!schema || !isObject(schema)) {
@@ -95,11 +95,11 @@ const getPrimaryKeyField = (schema: Schema): string => {
 };
 
 /**
- * Get sub-schema for a specific path
+ * 获取特定路径的子模式
  *
- * @param schema - Current schema
- * @param component - Current path component
- * @returns Sub-schema or undefined
+ * @param schema - 当前模式
+ * @param component - 当前路径组件
+ * @returns 子模式或undefined
  */
 const getSubSchema = (schema: Schema, component: string): Schema | undefined => {
     if (!schema || !isObject(schema)) return undefined;
@@ -123,7 +123,7 @@ const getSubSchema = (schema: Schema, component: string): Schema | undefined => 
 };
 
 /**
- * Find or create item in array
+ * 在数组中查找或创建项目
  */
 const findOrCreateArrayItem = (
     array: unknown[],
@@ -157,13 +157,13 @@ const findOrCreateArrayItem = (
 };
 
 /**
- * Handle add operation
+ * 处理添加操作
  *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param value - Value to add
- * @param schema - Data structure schema
- * @returns Updated state
+ * @param state - 当前状态
+ * @param pathComponents - 路径组件
+ * @param value - 要添加的值
+ * @param schema - 数据结构模式
+ * @returns 更新后的状态
  */
 const handleAdd = (
     state: unknown,
@@ -172,7 +172,7 @@ const handleAdd = (
     schema: Schema
 ): unknown => {
     if (pathComponents.length === 0) {
-        // Replace entire document
+        // 替换整个文档
         return value;
     }
     const result = deepClone(state);
@@ -181,12 +181,12 @@ const handleAdd = (
 };
 
 /**
- * Recursively add value to path
+ * 递归地将值添加到路径
  *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param value - Value to add
- * @param schema - Schema for current path
+ * @param current - 当前对象
+ * @param pathComponents - 剩余路径组件
+ * @param value - 要添加的值
+ * @param schema - 当前路径的模式
  */
 const addToPath = (
     current: unknown,
@@ -197,7 +197,7 @@ const addToPath = (
     const [head, ...tail] = pathComponents;
 
     if (tail.length === 0) {
-        // Reached target path, add value
+        // 到达目标路径，添加值
         if (Array.isArray(current)) {
             if (!schema) {
                 throw new Error('Schema must be provided when processing array data');
@@ -242,12 +242,12 @@ const addToPath = (
 };
 
 /**
- * Handle remove operation
+ * 处理删除操作
  *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param schema - Data structure schema
- * @returns Updated state
+ * @param state - 当前状态
+ * @param pathComponents - 路径组件
+ * @param schema - 数据结构模式
+ * @returns 更新后的状态
  */
 const handleRemove = (
     state: unknown,
@@ -265,12 +265,12 @@ const handleRemove = (
 };
 
 /**
- * Recursively remove value from path
+ * 从路径中移除值
  *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param schema - Schema for current path
- * @returns Whether value is successfully removed
+ * @param current - 当前对象
+ * @param pathComponents - 路径组件
+ * @param schema - 当前路径的模式
+ * @returns 是否成功移除
  */
 const removeFromPath = (
     current: unknown,
@@ -328,13 +328,13 @@ const removeFromPath = (
 };
 
 /**
- * Handle replace operation
+ * 处理替换操作
  *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param value - Replacement value
- * @param schema - Data structure schema
- * @returns Updated state
+ * @param state - 当前状态
+ * @param pathComponents - 路径组件
+ * @param value - 新值
+ * @param schema - 数据结构模式
+ * @returns 更新后的状态
  */
 const handleReplace = (
     state: unknown,
@@ -353,13 +353,13 @@ const handleReplace = (
 };
 
 /**
- * Recursively replace value at path
+ * 在路径处替换值
  *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param value - Replacement value
- * @param schema - Schema for current path
- * @returns Whether value is successfully replaced
+ * @param current - 当前对象
+ * @param pathComponents - 路径组件
+ * @param value - 新值
+ * @param schema - 当前路径的模式
+ * @returns 是否成功替换
  */
 const replaceAtPath = (
     current: unknown,
