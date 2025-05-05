@@ -28,7 +28,12 @@ const PatchPreviewSection: React.FC = () => {
 
   return (
     <div className="patch-preview-section">
-      <Card title="补丁预览" className="preview-card">
+      <Card 
+        title="补丁预览" 
+        className="preview-card"
+        bordered={false}
+        style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
+      >
         <Text>
           以下是根据源JSON和目标JSON生成的补丁。您可以检查生成的补丁，然后检测冲突并应用。
         </Text>
@@ -38,6 +43,8 @@ const PatchPreviewSection: React.FC = () => {
             type="card"
             activeKey={activeTargetIndex.toString()}
             onChange={handleTabChange}
+            className="modern-tabs"
+            style={{ marginTop: '16px' }}
             items={patchStrings.map((patchString, index) => ({
               key: index.toString(),
               label: `目标 ${index + 1} 的补丁`,
@@ -48,6 +55,7 @@ const PatchPreviewSection: React.FC = () => {
                     onChange={() => {}}
                     readOnly={true}
                     height="300px"
+                    title="补丁内容"
                   />
                 </div>
               ),
@@ -56,17 +64,18 @@ const PatchPreviewSection: React.FC = () => {
         )}
 
         {targetJsons.length === 1 && (
-          <div className="patch-content">
+          <div className="patch-content" style={{ marginTop: '16px' }}>
             <JsonEditor
               value={patchStrings[0] || '[]'}
               onChange={() => {}}
               readOnly={true}
               height="300px"
+              title="补丁内容"
             />
           </div>
         )}
 
-        <Divider />
+        <Divider style={{ margin: '24px 0' }} />
 
         <div className="actions">
           <Space>
@@ -75,6 +84,7 @@ const PatchPreviewSection: React.FC = () => {
               onClick={checkForConflicts}
               disabled={!hasPatches}
               icon={<CheckOutlined />}
+              size="middle"
             >
               检测冲突并应用
             </Button>

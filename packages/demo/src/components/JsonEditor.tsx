@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Input, Typography, Button } from 'antd';
-import { FormatPainterOutlined } from '@ant-design/icons';
+import { Input, Typography, Button, Space, Tooltip } from 'antd';
+import { FormatPainterOutlined, MinusSquareOutlined } from '@ant-design/icons';
 import { JsonEditorProps } from '../types/types';
 import { formatJson } from '../utils/jsonUtils';
 
@@ -12,7 +12,6 @@ const { Text } = Typography;
  */
 const JsonEditor: React.FC<JsonEditorProps & {
     title?: string;
-    showFormatButton?: boolean;
     style?: React.CSSProperties;
 }> = ({
     value,
@@ -21,14 +20,15 @@ const JsonEditor: React.FC<JsonEditorProps & {
     placeholder,
     readOnly = false,
     title,
-    showFormatButton = true,
     style = {},
 }) => {
     const [error, setError] = useState<string | null>(null);
+    const [displayValue, setDisplayValue] = useState<string | null>(null);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         onChange(newValue);
+        setDisplayValue(null);
 
         if (newValue.trim()) {
             try {
@@ -43,41 +43,104 @@ const JsonEditor: React.FC<JsonEditorProps & {
     }, [onChange]);
 
     const handleFormat = useCallback(() => {
-        const formatted = formatJson(value);
-        onChange(formatted);
-    }, [value, onChange]);
+        try {
+            const formatted = formatJson(value);
+            if (readOnly) {
+                setDisplayValue(formatted);
+            } else {
+                onChange(formatted);
+                setDisplayValue(null);
+            }
+        } catch {
+            // 如果解析失败，保持原状
+        }
+    }, [value, onChange, readOnly]);
+
+    const handleCompress = useCallback(() => {
+        if (!value.trim()) return;
+        
+        try {
+            const parsed = JSON.parse(value);
+            const compressed = JSON.stringify(parsed);
+            if (readOnly) {
+                setDisplayValue(compressed);
+            } else {
+                onChange(compressed);
+                setDisplayValue(null);
+            }
+        } catch {
+            // 如果解析失败，保持原状
+        }
+    }, [value, onChange, readOnly]);
+
+    // 重置展示值回原始值
+    const handleResetDisplay = useCallback(() => {
+        setDisplayValue(null);
+    }, []);
+
+    // 实际显示的值
+    const actualValue = displayValue !== null ? displayValue : value;
 
     return (
-        <div style={{ ...style }}>
-            {(title || showFormatButton) && (
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 8,
-                    }}
-                >
-                    {title && <Text strong>{title}</Text>}
-                    {showFormatButton && !readOnly && (
+        <div 
+            style={{ 
+                ...style,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    borderBottom: '1px solid #f0f0f0',
+                    backgroundColor: '#fafafa',
+                }}
+            >
+                {title && <Text strong style={{ fontSize: '14px' }}>{title}</Text>}
+                
+                <Space>
+                    <Tooltip title="格式化JSON">
                         <Button
                             icon={<FormatPainterOutlined />}
                             size="small"
                             onClick={handleFormat}
-                            title="格式化JSON"
+                            type="text"
                         />
+                    </Tooltip>
+                    <Tooltip title="压缩为单行">
+                        <Button
+                            icon={<MinusSquareOutlined />}
+                            size="small"
+                            onClick={handleCompress}
+                            type="text"
+                        />
+                    </Tooltip>
+                    {readOnly && displayValue !== null && (
+                        <Tooltip title="还原显示">
+                            <Button
+                                size="small"
+                                onClick={handleResetDisplay}
+                                type="text"
+                            >
+                                还原
+                            </Button>
+                        </Tooltip>
                     )}
-                </div>
-            )}
+                </Space>
+            </div>
 
             {error && (
-                <div style={{ marginBottom: 8 }}>
+                <div style={{ padding: '8px 12px', backgroundColor: '#fff2f0' }}>
                     <Text type="danger">{error}</Text>
                 </div>
             )}
             
             <TextArea
-                value={value}
+                value={actualValue}
                 onChange={handleChange}
                 placeholder={placeholder}
                 readOnly={readOnly}
@@ -85,6 +148,10 @@ const JsonEditor: React.FC<JsonEditorProps & {
                     width: '100%',
                     height,
                     fontFamily: 'monospace',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: 0,
+                    resize: 'vertical',
                 }}
                 status={error ? 'error' : ''}
                 autoSize={{ minRows: 6, maxRows: 12 }}

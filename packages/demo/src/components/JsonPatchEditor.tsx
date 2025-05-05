@@ -42,11 +42,14 @@ const JsonPatchEditor: React.FC = () => {
       <Card 
         title="JSON编辑" 
         className="editor-card"
+        bordered={false}
+        style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
         extra={
           <Button
             type="primary"
             onClick={handleGeneratePatches}
             icon={<ThunderboltOutlined />}
+            size="middle"
             disabled={!sourceJson.trim() || !targetJsons.some(json => json.trim())}
           >
             生成补丁
@@ -55,23 +58,24 @@ const JsonPatchEditor: React.FC = () => {
       >
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <div className="source-editor">
-            <Text strong>源JSON</Text>
             <JsonEditor
               value={sourceJson}
               onChange={handleSourceChange}
               height="200px"
               placeholder="请输入源JSON数据"
+              title="源JSON"
             />
           </div>
 
-          <Divider>目标JSON</Divider>
+          <Divider style={{ margin: '24px 0 16px' }}>目标JSON</Divider>
 
           <div className="target-editors">
-            <div className="target-actions">
+            <div className="target-actions" style={{ marginBottom: '16px' }}>
               <Button 
                 type="dashed" 
                 icon={<PlusOutlined />} 
                 onClick={addTargetJson}
+                size="middle"
               >
                 添加目标
               </Button>
@@ -81,6 +85,7 @@ const JsonPatchEditor: React.FC = () => {
               type="editable-card"
               activeKey={activeTargetIndex.toString()}
               onChange={key => setActiveTargetIndex(parseInt(key))}
+              className="modern-tabs"
               onEdit={(targetKey, action) => {
                 if (action === 'remove' && typeof targetKey === 'string') {
                   removeTargetJson(parseInt(targetKey));
@@ -97,6 +102,7 @@ const JsonPatchEditor: React.FC = () => {
                       onChange={value => handleTargetChange(index, value)}
                       height="200px"
                       placeholder="请输入目标JSON数据"
+                      title={`目标 ${index + 1} JSON`}
                     />
                   </div>
                 ),
@@ -105,7 +111,7 @@ const JsonPatchEditor: React.FC = () => {
           </div>
 
           {error && !error.includes('Schema') && (
-            <div className="error-message">
+            <div className="error-message" style={{ padding: '8px 12px', backgroundColor: '#fff2f0', borderRadius: '4px' }}>
               <Text type="danger">{error}</Text>
             </div>
           )}
