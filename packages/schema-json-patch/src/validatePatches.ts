@@ -3,9 +3,6 @@ import { Schema } from './types/schema';
 import { isObject } from './utils/isObject';
 import { detectConflicts } from './detectConflicts';
 import { parseJsonPath } from './utils/pathUtils';
-import { collectPathPrefixes } from './utils/pathUtils';
-import { deepEqual } from './utils/deepEqual';
-import { ConflictOption } from './types/patch';
 
 /**
  * 验证结果类型
@@ -74,6 +71,11 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
         }
+        
+        // 验证哈希值
+        if (!patch.hash || typeof patch.hash !== 'string') {
+            errors.push(`Patch #${index} must have a valid hash string`);
+        }
     });
 
     return {
@@ -121,7 +123,7 @@ export const validatePatchGroups = (
 /**
  * 验证解决方案是否有效
  * @param conflicts 冲突详情
- * @param resolutions 基于哈希值的解决方案
+ * @param resolutions 冲突解决方案数组
  * @returns 验证结果
  */
 export const validateResolutions = (
@@ -135,31 +137,37 @@ export const validateResolutions = (
         return { isValid: false, errors };
     }
 
-    if (!isObject(resolutions)) {
-        errors.push('Resolutions must be an object');
+    if (!Array.isArray(resolutions)) {
+        errors.push('Resolutions must be an array');
         return { isValid: false, errors };
     }
 
-    // 检查每个冲突选项是否有合法的解决方案
-    conflicts.forEach((conflict: ConflictDetail) => {
-        conflict.options.forEach((option: ConflictOption) => {
-            const hash = option.hash;
-            if (hash in resolutions) {
-                const resolutionValue = resolutions[hash];
-                
-                if (
-                    typeof resolutionValue !== 'number' ||
-                    resolutionValue < 0 ||
-                    resolutionValue >= conflict.options.length
-                ) {
-                    errors.push(
-                        `Resolution for option ${hash} at path "${conflict.path}" is invalid. ` +
-                        `Value ${resolutionValue} must be between 0 and ${conflict.options.length - 1}.`
-                    );
-                }
-            }
-            // 如果没有为该hash提供解决方案，将使用默认值，不需要验证
-        });
+    // 检查每个解决方案是否有合法的路径和选中的哈希值
+    resolutions.forEach((resolution, index) => {
+        if (!resolution.path || typeof resolution.path !== 'string') {
+            errors.push(`Resolution #${index} has invalid path`);
+            return;
+        }
+
+        if (!resolution.selectedHash || typeof resolution.selectedHash !== 'string') {
+            errors.push(`Resolution #${index} has invalid selectedHash`);
+            return;
+        }
+
+        // 查找对应的冲突
+        const conflict = conflicts.find(c => c.path === resolution.path);
+        if (!conflict) {
+            errors.push(`Resolution #${index} references a path "${resolution.path}" that doesn't exist in conflicts`);
+            return;
+        }
+
+        // 验证选中的哈希是否在冲突选项中
+        if (!conflict.options.includes(resolution.selectedHash)) {
+            errors.push(
+                `Resolution #${index} selects a hash "${resolution.selectedHash}" ` +
+                `that is not an option for conflict at path "${resolution.path}"`
+            );
+        }
     });
 
     return {
@@ -199,26 +207,17 @@ export const validateResolvedConflicts = (
     conflicts.forEach(conflict => {
         conflictPaths.add(conflict.path);
         
-        // 找出选中的选项
-        let selectedOption = conflict.options[0]; // 默认选第一个
+        // 找出选中的哈希值
+        let selectedHash = conflict.options[0]; // 默认选第一个
         
-        for (const option of conflict.options) {
-            if (resolutions[option.hash] !== undefined) {
-                const selectedIndex = resolutions[option.hash];
-                selectedOption = conflict.options[selectedIndex] || selectedOption;
-                break;
-            }
+        // 查找是否有针对此路径的解决方案
+        const resolution = resolutions.find(res => res.path === conflict.path);
+        if (resolution && conflict.options.includes(resolution.selectedHash)) {
+            selectedHash = resolution.selectedHash;
         }
         
-        // 找到匹配的补丁
-        const matchingPatch = allPatches.find(patch => 
-            // 优先通过哈希值匹配
-            (patch.hash === selectedOption.hash) || 
-            // 回退到路径、操作和值的匹配
-            (patch.path === selectedOption.path && 
-             patch.op === selectedOption.operation && 
-             JSON.stringify(patch.value) === JSON.stringify(selectedOption.value))
-        );
+        // 找到匹配哈希值的补丁
+        const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);
         
         if (matchingPatch) {
             resolvedPatchSet.add(matchingPatch);
@@ -477,54 +476,8 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
 };
 
 /**
- * Validate conflicts against JSON Schema
- * @param conflicts Conflict details array
- * @param schema JSON Schema object
- * @returns Validation result
+ * 验证模块导出文件
+ * 重新导出所有验证函数，保持向后兼容
  */
-export const validateConflictsAgainstSchema = (
-    conflicts: ReadonlyArray<ConflictDetail>,
-    schema: Schema
-): ValidationResult => {
-    const errors: string[] = [];
 
-    if (!Array.isArray(conflicts)) {
-        errors.push('Conflicts must be an array');
-        return { isValid: false, errors };
-    }
-
-    // Check each conflict against schema
-    conflicts.forEach((conflict: ConflictDetail) => {
-        conflict.options.forEach((option: ConflictOption, opIndex: number) => {
-            // Skip for non-add/replace operations
-            if (option.operation !== 'add' && option.operation !== 'replace') {
-                return;
-            }
-
-            // Get operation's path
-            const path = conflict.path;
-            const pathComponents = parseJsonPath(path);
-
-            // Verify if path exists in schema
-            const schemaForPath = getSchemaForPath(schema, pathComponents);
-
-            // If no schema found for path, skip validation
-            if (!schemaForPath || typeof schemaForPath !== 'object') {
-                return;
-            }
-
-            // Validate value against schema
-            if (!validateValueAgainstSchema(option.value, schemaForPath)) {
-                errors.push(
-                    `Conflict at path "${path}", option ${opIndex + 1} (hash: ${option.hash}): ` +
-                    `Value does not match schema requirements`
-                );
-            }
-        });
-    });
-
-    return {
-        isValid: errors.length === 0,
-        errors,
-    };
-};
+export * from './validation';

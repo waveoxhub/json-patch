@@ -7,27 +7,36 @@ import {
 } from '../src/resolveConflicts';
 import { ConflictDetail, Patch, ConflictResolutions, CustomResolution } from '../src/types/patch';
 import { detectConflicts } from '../src';
+import { generatePatchOptionHash } from '../src/utils/hashUtils';
 
 describe('resolveConflicts', () => {
     it('should resolve property conflicts using specified strategy', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+
         const patches: Patch[] = [
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
+                hash: patch1Hash
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
+                hash: patch2Hash
             },
         ];
 
         const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
-        const resolutions: ConflictResolutions = {
-            '0': 1, // Select second operation
-        };
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: patch2Hash
+            }
+        ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
 
@@ -36,26 +45,32 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch2Name',
+            hash: patch2Hash
         });
     });
 
     it('should use first patch as default when no resolution is provided', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+
         const patches: Patch[] = [
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
+                hash: patch1Hash
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
+                hash: patch2Hash
             },
         ];
 
         const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
-        const resolutions: ConflictResolutions = {};
+        const resolutions: ConflictResolutions = [];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
 
@@ -64,30 +79,40 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
+            hash: patch1Hash
         });
     });
 
     it('should handle multiple conflict paths', () => {
+        const name1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const name2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+        const age1Hash = generatePatchOptionHash('replace', '/age', 25);
+        const age2Hash = generatePatchOptionHash('replace', '/age', 30);
+
         const patches: Patch[] = [
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
+                hash: name1Hash
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
+                hash: name2Hash
             },
             {
                 op: 'replace',
                 path: '/age',
                 value: 25,
+                hash: age1Hash
             },
             {
                 op: 'replace',
                 path: '/age',
                 value: 30,
+                hash: age2Hash
             },
         ];
 
@@ -96,10 +121,16 @@ describe('resolveConflicts', () => {
             [patches[1], patches[3]]
         ]);
 
-        const resolutions: ConflictResolutions = {
-            '0': 0, // Select first patch for name
-            '1': 1, // Select second patch for age
-        };
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: name1Hash
+            },
+            {
+                path: '/age',
+                selectedHash: age2Hash
+            }
+        ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
 
@@ -108,30 +139,37 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
+            hash: name1Hash
         });
         expect(resolvedPatches).toContainEqual({
             op: 'replace',
             path: '/age',
             value: 30,
+            hash: age2Hash
         });
     });
 
     it('should return all patches directly when no conflicts exist', () => {
+        const nameHash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const ageHash = generatePatchOptionHash('add', '/age', 25);
+
         const patches: Patch[] = [
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
+                hash: nameHash
             },
             {
                 op: 'add',
                 path: '/age',
                 value: 25,
+                hash: ageHash
             },
         ];
 
         const conflicts: ConflictDetail[] = [];
-        const resolutions: ConflictResolutions = {};
+        const resolutions: ConflictResolutions = [];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
 
@@ -140,24 +178,33 @@ describe('resolveConflicts', () => {
     });
 
     it('should apply custom resolutions', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+        const ageHash = generatePatchOptionHash('add', '/age', 30);
+
         const patches: Patch[] = [
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
+                hash: patch1Hash
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
+                hash: patch2Hash
             },
         ];
 
         const conflicts = detectConflicts([[patches[0]], [patches[1]]]);
 
-        const resolutions: ConflictResolutions = {
-            '0': 0, // Select first operation
-        };
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: patch1Hash
+            }
+        ];
 
         const customResolutions: CustomResolution[] = [
             {
@@ -166,6 +213,7 @@ describe('resolveConflicts', () => {
                     op: 'add',
                     path: '/age',
                     value: 30,
+                    hash: ageHash
                 },
             },
         ];
@@ -182,38 +230,50 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
+            hash: patch1Hash
         });
         expect(resolvedPatches).toContainEqual({
             op: 'add',
             path: '/age',
             value: 30,
+            hash: ageHash
         });
     });
 
     it('should handle conflicts with multiple operation types for the same path', () => {
+        const removeHash = generatePatchOptionHash('remove', '/items/0');
+        const replaceHash = generatePatchOptionHash('replace', '/items/0', 'new value');
+        const addHash = generatePatchOptionHash('add', '/items/0', 'another new value');
+
         const patches: Patch[] = [
             {
                 op: 'remove',
                 path: '/items/0',
+                hash: removeHash
             },
             {
                 op: 'replace',
                 path: '/items/0',
                 value: 'new value',
+                hash: replaceHash
             },
             {
                 op: 'add',
                 path: '/items/0',
                 value: 'another new value',
+                hash: addHash
             },
         ];
 
         const conflicts = detectConflicts([[patches[0]], [patches[1]], [patches[2]]]);
 
-        // Select third operation (add)
-        const resolutions: ConflictResolutions = {
-            '0': 2,
-        };
+        // Select add operation
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/items/0',
+                selectedHash: addHash
+            }
+        ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
 
@@ -223,18 +283,23 @@ describe('resolveConflicts', () => {
             op: 'add',
             path: '/items/0',
             value: 'another new value',
+            hash: addHash
         });
     });
 });
 
 describe('processConflicts', () => {
     it('should return flattened patch array when no conflicts exist', () => {
+        const nameHash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const ageHash = generatePatchOptionHash('add', '/age', 25);
+
         const patches: Patch[][] = [
             [
                 {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
+                    hash: nameHash
                 },
             ],
             [
@@ -242,6 +307,7 @@ describe('processConflicts', () => {
                     op: 'add',
                     path: '/age',
                     value: 25,
+                    hash: ageHash
                 },
             ],
         ];
@@ -257,12 +323,16 @@ describe('processConflicts', () => {
     });
 
     it('should return conflict information but not resolve patches when conflicts exist', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+
         const patches: Patch[][] = [
             [
                 {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
+                    hash: patch1Hash
                 },
             ],
             [
@@ -270,6 +340,7 @@ describe('processConflicts', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
+                    hash: patch2Hash
                 },
             ],
         ];
@@ -288,7 +359,7 @@ describe('generateResolvedPatch', () => {
     it('should return empty result when no patches exist', () => {
         const patches: Patch[][] = [];
         const conflicts: ConflictDetail[] = [];
-        const resolutions: ConflictResolutions = {};
+        const resolutions: ConflictResolutions = [];
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
@@ -298,12 +369,16 @@ describe('generateResolvedPatch', () => {
     });
 
     it('should return all patches when no conflicts exist', () => {
+        const nameHash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const ageHash = generatePatchOptionHash('add', '/age', 25);
+
         const patches: Patch[][] = [
             [
                 {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
+                    hash: nameHash
                 },
             ],
             [
@@ -311,12 +386,13 @@ describe('generateResolvedPatch', () => {
                     op: 'add',
                     path: '/age',
                     value: 25,
+                    hash: ageHash
                 },
             ],
         ];
 
         const conflicts: ConflictDetail[] = [];
-        const resolutions: ConflictResolutions = {};
+        const resolutions: ConflictResolutions = [];
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
@@ -326,12 +402,16 @@ describe('generateResolvedPatch', () => {
     });
 
     it('should apply solution and return conflict information when conflicts exist', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+
         const patches: Patch[][] = [
             [
                 {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
+                    hash: patch1Hash
                 },
             ],
             [
@@ -339,15 +419,19 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
+                    hash: patch2Hash
                 },
             ],
         ];
 
         const conflicts = detectConflicts(patches);
 
-        const resolutions: ConflictResolutions = {
-            '0': 1, // Select second operation
-        };
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: patch2Hash
+            }
+        ];
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
@@ -358,16 +442,22 @@ describe('generateResolvedPatch', () => {
             op: 'replace',
             path: '/name',
             value: 'patch2Name',
+            hash: patch2Hash
         });
     });
 
     it('should apply custom solution and retain conflict information', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+        const ageHash = generatePatchOptionHash('add', '/age', 30);
+
         const patches: Patch[][] = [
             [
                 {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
+                    hash: patch1Hash
                 },
             ],
             [
@@ -375,15 +465,19 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
+                    hash: patch2Hash
                 },
             ],
         ];
 
         const conflicts = detectConflicts(patches);
 
-        const resolutions: ConflictResolutions = {
-            '0': 0, // Select first operation
-        };
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: patch1Hash
+            }
+        ];
 
         const customResolutions: CustomResolution[] = [
             {
@@ -392,6 +486,7 @@ describe('generateResolvedPatch', () => {
                     op: 'add',
                     path: '/age',
                     value: 30,
+                    hash: ageHash
                 },
             },
         ];
@@ -405,25 +500,50 @@ describe('generateResolvedPatch', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
+            hash: patch1Hash
         });
         expect(result.resolvedPatches).toContainEqual({
             op: 'add',
             path: '/age',
             value: 30,
+            hash: ageHash
         });
     });
 });
 
 describe('initializeResolutions', () => {
-    it('should create default solution for each conflict (select first operation)', () => {
+    it('should create default solution for each conflict (select first option)', () => {
+        const name1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const age1Hash = generatePatchOptionHash('replace', '/age', 25);
+        
         const patches: Patch[][] = [
             [
-                { op: 'replace', path: '/name', value: 'patch1Name' },
-                { op: 'replace', path: '/age', value: 25 },
+                { 
+                    op: 'replace', 
+                    path: '/name', 
+                    value: 'patch1Name',
+                    hash: name1Hash
+                },
+                { 
+                    op: 'replace', 
+                    path: '/age', 
+                    value: 25,
+                    hash: age1Hash
+                },
             ],
             [
-                { op: 'replace', path: '/name', value: 'patch2Name' },
-                { op: 'replace', path: '/age', value: 30 },
+                { 
+                    op: 'replace', 
+                    path: '/name', 
+                    value: 'patch2Name',
+                    hash: generatePatchOptionHash('replace', '/name', 'patch2Name')
+                },
+                { 
+                    op: 'replace', 
+                    path: '/age', 
+                    value: 30,
+                    hash: generatePatchOptionHash('replace', '/age', 30)
+                },
             ],
         ];
         
@@ -431,17 +551,24 @@ describe('initializeResolutions', () => {
 
         const resolutions = initializeResolutions(conflicts);
 
-        expect(resolutions).toEqual({
-            '0': 0,
-            '1': 0,
-        });
+        expect(resolutions).toHaveLength(2);
+        expect(resolutions).toEqual([
+            {
+                path: conflicts[0].path,
+                selectedHash: conflicts[0].options[0]
+            },
+            {
+                path: conflicts[1].path,
+                selectedHash: conflicts[1].options[0]
+            }
+        ]);
     });
 
-    it('should return empty solution object when conflict array is empty', () => {
+    it('should return empty solution array when conflict array is empty', () => {
         const conflicts: ConflictDetail[] = [];
 
         const resolutions = initializeResolutions(conflicts);
 
-        expect(resolutions).toEqual({});
+        expect(resolutions).toEqual([]);
     });
 });

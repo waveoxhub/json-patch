@@ -14,17 +14,6 @@ export type Patch = {
 };
 
 /**
- * 冲突选项，包含哈希标识符
- */
-export type ConflictOption = {
-    readonly hash: string;         // 选项唯一标识哈希
-    readonly operation: PatchOperation;
-    readonly groupIndex: number;   // 补丁组索引
-    readonly path: string;         // 补丁路径
-    readonly value?: unknown;      // 操作的值
-};
-
-/**
  * 补丁冲突详情
  */
 export type ConflictDetail = {
@@ -42,10 +31,17 @@ export type ConflictResult = {
 };
 
 /**
- * 基于哈希的冲突解决方案
- * 用哈希值作为键，选择的选项索引作为值
+ * 单个冲突解决方案
  */
-export type ConflictResolutions = Record<string, number>;
+export type ConflictResolution = {
+    readonly path: string;        // 冲突路径
+    readonly selectedHash: string; // 选中的补丁哈希值
+};
+
+/**
+ * 冲突解决方案数组
+ */
+export type ConflictResolutions = Array<ConflictResolution>;
 
 /**
  * 自定义解决方案类型

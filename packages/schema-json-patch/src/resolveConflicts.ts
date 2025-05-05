@@ -7,40 +7,24 @@ import {
 } from './types/patch';
 
 /**
- * 从所有补丁中找到与指定选项匹配的补丁
+ * 从所有补丁中找到与指定哈希匹配的补丁
  * @param patches 所有补丁数组
  * @param optionHash 选项哈希
- * @param optionPath 选项路径
- * @param optionOperation 选项操作类型
- * @param optionValue 选项值
  * @returns 匹配的补丁
  */
 const findMatchingPatch = (
     patches: ReadonlyArray<Patch>,
-    optionHash: string,
-    optionPath: string,
-    optionOperation: string,
-    optionValue?: unknown
+    optionHash: string
 ): Patch | undefined => {
-    // 优先通过哈希值快速匹配
-    const patchByHash = patches.find(patch => patch.hash === optionHash);
-    if (patchByHash) {
-        return patchByHash;
-    }
-    
-    // 如果找不到匹配的哈希，则回退到路径、操作和值的匹配
-    return patches.find(patch => 
-        patch.path === optionPath && 
-        patch.op === optionOperation && 
-        JSON.stringify(patch.value) === JSON.stringify(optionValue)
-    );
+    // 通过哈希值匹配
+    return patches.find(patch => patch.hash === optionHash);
 };
 
 /**
  * 应用冲突解决方案生成处理后的补丁集
  * @param patches 原始补丁集合（所有补丁组的扁平数组）
  * @param conflicts 冲突详情数组
- * @param resolutions 基于哈希键的冲突解决选择
+ * @param resolutions 冲突解决方案数组
  * @param customResolutions 自定义解决方案（可选）
  * @returns 处理后的补丁数组
  */
@@ -60,30 +44,26 @@ export const resolveConflicts = (
     
     // 处理所有冲突
     conflicts.forEach((conflict) => {
-        // 找出选中的选项
-        let selectedOption = conflict.options[0]; // 默认选第一个
+        // 找出相应路径的解决方案
+        const resolution = resolutions.find(res => res.path === conflict.path);
         
-        // 查找用户选择的选项
-        for (const option of conflict.options) {
-            if (resolutions[option.hash] !== undefined) {
-                const selectedIndex = resolutions[option.hash];
-                // 找到对应选项索引的选项
-                selectedOption = conflict.options[selectedIndex] || selectedOption;
-                break;
+        if (resolution && conflict.options.includes(resolution.selectedHash)) {
+            // 找到选中哈希对应的补丁并加入包含集合
+            const matchingPatch = findMatchingPatch(patches, resolution.selectedHash);
+            
+            if (matchingPatch) {
+                includedPatches.add(matchingPatch);
             }
-        }
-        
-        // 找到选中选项对应的补丁并加入包含集合
-        const matchingPatch = findMatchingPatch(
-            patches, 
-            selectedOption.hash,
-            selectedOption.path, 
-            selectedOption.operation, 
-            selectedOption.value
-        );
-        
-        if (matchingPatch) {
-            includedPatches.add(matchingPatch);
+        } else {
+            // 如果没有指定解决方案，默认选择第一个选项
+            if (conflict.options.length > 0) {
+                const defaultHash = conflict.options[0];
+                const matchingPatch = findMatchingPatch(patches, defaultHash);
+                
+                if (matchingPatch) {
+                    includedPatches.add(matchingPatch);
+                }
+            }
         }
     });
     
@@ -184,13 +164,16 @@ export const generateResolvedPatch = (
 export const initializeResolutions = (
     conflicts: ReadonlyArray<ConflictDetail>
 ): ConflictResolutions => {
-    const initialResolutions: ConflictResolutions = {};
+    const initialResolutions: ConflictResolutions = [];
 
     // 为每个冲突选项初始化解决方案
     conflicts.forEach(conflict => {
         // 默认选择每个冲突的第一个选项
         if (conflict.options.length > 0) {
-            initialResolutions[conflict.options[0].hash] = 0;
+            initialResolutions.push({
+                path: conflict.path,
+                selectedHash: conflict.options[0]
+            });
         }
     });
 

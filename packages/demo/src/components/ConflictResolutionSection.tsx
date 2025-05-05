@@ -6,7 +6,7 @@ import {
     MergeCellsOutlined,
     CheckCircleOutlined,
 } from '@ant-design/icons';
-import { ConflictDetail, ConflictOption, Patch, CustomResolution } from '@waveox/schema-json-patch';
+import { ConflictDetail, CustomResolution } from '@waveox/schema-json-patch';
 
 const { Text } = Typography;
 
