@@ -12,7 +12,7 @@ import {
   CustomResolution,
   UnresolvedConflicts
 } from '@waveox/schema-json-patch';
-import { defaultSchemaData, original, version1, version2 } from '../data/sampleJsonData';
+import { defaultSchemaData, original, version1, version2, version3 } from '../data/sampleJsonData';
 import { isValidJson } from '../utils/jsonUtils';
 
 interface PatchContextType {
@@ -314,7 +314,8 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSourceJson(original);
     setTargetJsons([
       version1,
-      version2
+      version2,
+      version3
     ]);
     setActiveTargetIndex(0);
     setActiveTab('editor');
