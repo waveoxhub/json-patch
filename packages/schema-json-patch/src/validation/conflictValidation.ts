@@ -80,6 +80,23 @@ export const validateResolvedConflicts = (
         return resolutionsValid;
     }
 
+    // 检查是否所有冲突都有对应的解决方案
+    const resolvedPaths = new Set(resolutions.map(res => res.path));
+    const unresolvedConflicts = conflicts.filter(conflict => !resolvedPaths.has(conflict.path));
+    
+    if (unresolvedConflicts.length > 0) {
+        errors.push(`There are ${unresolvedConflicts.length} unresolved conflicts`);
+        
+        unresolvedConflicts.forEach((conflict) => {
+            errors.push(`  - Path ${conflict.path} has no resolution`);
+        });
+        
+        return {
+            isValid: false,
+            errors,
+        };
+    }
+
     // 创建已解决冲突的补丁集合
     const allPatches = patches.flat();
     const resolvedPatchSet = new Set<Patch>();
