@@ -16,7 +16,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"wdhongtw.gpg-indicator"
+				"wdhongtw.gpg-indicator",
+				"christian-kohler.path-intellisense"
 			]
 		}
 	},
