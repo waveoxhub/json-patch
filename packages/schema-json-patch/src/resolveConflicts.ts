@@ -25,7 +25,7 @@ const findMatchingPatch = (
  * @param patches 原始补丁集合（所有补丁组的扁平数组）
  * @param conflicts 冲突详情数组
  * @param resolutions 冲突解决方案数组
- * @param customResolutions 自定义解决方案（可选）
+ * @param customResolutions 自定义解决方案
  * @returns 处理后的补丁数组
  */
 export const resolveConflicts = (
@@ -90,7 +90,7 @@ export const resolveConflicts = (
  * @param patches 原始补丁数组（多个组）
  * @param conflicts 冲突详情数组
  * @param resolutions 冲突解决选择
- * @param customResolutions 自定义解决方案（可选）
+ * @param customResolutions 自定义解决方案
  * @returns 处理结果对象
  */
 export const generateResolvedPatch = (

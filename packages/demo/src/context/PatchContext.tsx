@@ -311,13 +311,13 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // 加载示例数据
   const loadExampleData = useCallback(() => {
-    setSourceJson(JSON.stringify(original, null, 2));
+    setSourceJson(original);
     setTargetJsons([
-      JSON.stringify(version1, null, 2),
-      JSON.stringify(version2, null, 2)
+      version1,
+      version2
     ]);
     setActiveTargetIndex(0);
-    setActiveTab('source');
+    setActiveTab('editor');
   }, []);
 
   return (
