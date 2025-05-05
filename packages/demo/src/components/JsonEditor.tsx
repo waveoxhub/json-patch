@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Input, Typography, Button, Space, Tooltip } from 'antd';
 import { FormatPainterOutlined, MinusSquareOutlined } from '@ant-design/icons';
 import { JsonEditorProps } from '../types/types';
@@ -24,6 +24,20 @@ const JsonEditor: React.FC<JsonEditorProps & {
 }) => {
     const [error, setError] = useState<string | null>(null);
     const [displayValue, setDisplayValue] = useState<string | null>(null);
+
+    // 默认压缩显示
+    useEffect(() => {
+        if (value && value.trim()) {
+            try {
+                const parsed = JSON.parse(value);
+                const compressed = JSON.stringify(parsed);
+                setDisplayValue(compressed);
+            } catch {
+                // 如果解析失败，使用原始值
+                setDisplayValue(null);
+            }
+        }
+    }, [value]);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
@@ -85,9 +99,9 @@ const JsonEditor: React.FC<JsonEditorProps & {
         <div 
             style={{ 
                 ...style,
-                borderRadius: '8px',
+                borderRadius: '6px',
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                border: '1px solid #d9d9d9',
             }}
         >
             <div
@@ -96,7 +110,7 @@ const JsonEditor: React.FC<JsonEditorProps & {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px 12px',
-                    borderBottom: '1px solid #f0f0f0',
+                    borderBottom: '1px solid #d9d9d9',
                     backgroundColor: '#fafafa',
                 }}
             >
