@@ -1,85 +1,62 @@
-import React from 'react';
-import { Typography, Input, Card, Alert, Button, Space } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
+import React, { useEffect } from 'react';
+import { Card, Button, Space, Typography } from 'antd';
+import { RightOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import JsonEditor from './JsonEditor';
+import { usePatchContext } from '../context/PatchContext';
 
-const { Title, Paragraph, Text } = Typography;
-const { TextArea } = Input;
-
-interface SchemaEditSectionProps {
-    schema: string;
-    onSchemaChange: (schema: string) => void;
-    onNext?: () => void;
-}
+const { Title, Text, Paragraph } = Typography;
 
 /**
- * 用于编辑数据模型定义的组件
+ * Schema编辑部分组件，用于编辑JSON模型
  */
-const SchemaEditSection: React.FC<SchemaEditSectionProps> = ({
-    schema,
-    onSchemaChange,
-    onNext,
-}) => {
-    // 处理Schema变更
-    const handleSchemaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        onSchemaChange(e.target.value);
-    };
+const SchemaEditSection: React.FC = () => {
+  const { 
+    schemaString, 
+    updateSchema, 
+    error, 
+    setActiveTab 
+  } = usePatchContext();
 
-    return (
-        <div style={{ padding: '16px 0' }}>
-            <Card>
-                <Title level={4}>数据模型(Schema)定义</Title>
+  return (
+    <div className="schema-edit-section">
+      <Card 
+        title="数据模型定义" 
+        className="schema-card"
+        extra={
+          <Button
+            type="primary"
+            onClick={() => setActiveTab('editor')}
+            icon={<RightOutlined />}
+          >
+            下一步
+          </Button>
+        }
+      >
+        <Space direction="vertical" className="schema-content" size="large">
+          <div>
+            <Paragraph>
+              <InfoCircleOutlined /> 请定义您的数据模型，用于指导补丁的生成和应用。
+            </Paragraph>
+            
+            <Paragraph>
+              模型描述了您的数据结构，包括主键、字段类型等信息，这些信息将用于更精确地生成和应用补丁。
+            </Paragraph>
+          </div>
 
-                <Alert
-                    type="info"
-                    showIcon
-                    message="数据模型定义说明"
-                    description={
-                        <div>
-                            <Paragraph>
-                                在这里定义JSON数据的结构模型，用于指导补丁生成算法如何处理数据差异。
-                            </Paragraph>
-                            <Paragraph>
-                                基本语法:
-                                <ul>
-                                    <li>
-                                        <Text code>$type</Text>: 定义数据类型，可以是 "string",
-                                        "number", "boolean", "array", "object"
-                                    </li>
-                                    <li>
-                                        <Text code>$pk</Text>:
-                                        定义对象的主键属性名，用于识别同一对象
-                                    </li>
-                                    <li>
-                                        <Text code>$fields</Text>: 定义对象的子字段结构
-                                    </li>
-                                    <li>
-                                        <Text code>$item</Text>: 定义数组的子项结构
-                                    </li>
-                                </ul>
-                            </Paragraph>
-                        </div>
-                    }
-                    style={{ marginBottom: 16 }}
-                />
-
-                <TextArea
-                    value={schema}
-                    onChange={handleSchemaChange}
-                    rows={12}
-                    placeholder="请输入JSON格式的数据模型定义"
-                    style={{ fontFamily: 'monospace', marginBottom: 16 }}
-                />
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Space>
-                        <Button type="primary" onClick={onNext} icon={<RightOutlined />}>
-                            下一步：编辑数据
-                        </Button>
-                    </Space>
-                </div>
-            </Card>
-        </div>
-    );
+          <JsonEditor
+            value={schemaString}
+            onChange={updateSchema}
+            title="Schema JSON"
+            height="400px"
+          />
+          
+          {error && error.includes('Schema') && (
+            <Text type="danger">{error}</Text>
+          )}
+        </Space>
+      </Card>
+    </div>
+  );
 };
 
 export default SchemaEditSection;

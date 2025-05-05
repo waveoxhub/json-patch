@@ -1,31 +1,32 @@
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Input, Typography, Button } from 'antd';
 import { FormatPainterOutlined } from '@ant-design/icons';
-import { formatJson } from './utils';
+import { JsonEditorProps } from '../types/types';
+import { formatJson } from '../utils/jsonUtils';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
-interface JsonEditorProps {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder?: string;
-    style?: React.CSSProperties;
+/**
+ * JSON编辑器组件，支持JSON格式化和错误检测
+ */
+const JsonEditor: React.FC<JsonEditorProps & {
     title?: string;
     showFormatButton?: boolean;
-}
-
-const JsonEditor: React.FC<JsonEditorProps> = ({
+    style?: React.CSSProperties;
+}> = ({
     value,
     onChange,
+    height = '150px',
     placeholder,
-    style = {},
+    readOnly = false,
     title,
     showFormatButton = true,
+    style = {},
 }) => {
     const [error, setError] = useState<string | null>(null);
 
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         onChange(newValue);
 
@@ -39,11 +40,12 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
         } else {
             setError(null);
         }
-    };
+    }, [onChange]);
 
-    const handleFormat = () => {
-        formatJson(value, onChange);
-    };
+    const handleFormat = useCallback(() => {
+        const formatted = formatJson(value);
+        onChange(formatted);
+    }, [value, onChange]);
 
     return (
         <div style={{ ...style }}>
@@ -57,7 +59,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
                     }}
                 >
                     {title && <Text strong>{title}</Text>}
-                    {showFormatButton && (
+                    {showFormatButton && !readOnly && (
                         <Button
                             icon={<FormatPainterOutlined />}
                             size="small"
@@ -73,13 +75,15 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
                     <Text type="danger">{error}</Text>
                 </div>
             )}
+            
             <TextArea
                 value={value}
                 onChange={handleChange}
                 placeholder={placeholder}
+                readOnly={readOnly}
                 style={{
                     width: '100%',
-                    height: '150px',
+                    height,
                     fontFamily: 'monospace',
                 }}
                 status={error ? 'error' : ''}

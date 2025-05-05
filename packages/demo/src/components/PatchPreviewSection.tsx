@@ -1,86 +1,88 @@
 import React from 'react';
-import { Card, Button, Alert, Space, Tabs } from 'antd';
-import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
-import { copyToClipboard } from './utils';
-import type { TabsProps } from 'antd';
+import { Card, Button, Space, Tabs, Divider, Typography } from 'antd';
+import { CheckOutlined } from '@ant-design/icons';
+import { usePatchContext } from '../context/PatchContext';
+import JsonEditor from './JsonEditor';
 
-interface PatchPreviewSectionProps {
-    patchStrings: string[];
-    onApplyPatches: () => void;
-    onBack: () => void;
-}
+const { Text } = Typography;
 
-const PatchPreviewSection: React.FC<PatchPreviewSectionProps> = ({
-    patchStrings,
-    onApplyPatches,
-    onBack,
-}) => {
-    if (!patchStrings.length || patchStrings.every(p => !p)) {
-        return (
-            <Alert
-                message="没有有效的补丁"
-                description="没有发现有效的补丁数据，请返回编辑页面重新生成补丁。"
-                type="info"
-                showIcon
+/**
+ * 补丁预览部分组件，显示生成的补丁
+ */
+const PatchPreviewSection: React.FC = () => {
+  const { 
+    patches, 
+    patchStrings, 
+    activeTargetIndex, 
+    setActiveTargetIndex,
+    checkForConflicts, 
+    targetJsons
+  } = usePatchContext();
+
+  const hasPatches = patches.length > 0 && patches.some(p => p.length > 0);
+
+  // 处理标签切换
+  const handleTabChange = (key: string) => {
+    setActiveTargetIndex(parseInt(key));
+  };
+
+  return (
+    <div className="patch-preview-section">
+      <Card title="补丁预览" className="preview-card">
+        <Text>
+          以下是根据源JSON和目标JSON生成的补丁。您可以检查生成的补丁，然后检测冲突并应用。
+        </Text>
+
+        {targetJsons.length > 1 && (
+          <Tabs
+            type="card"
+            activeKey={activeTargetIndex.toString()}
+            onChange={handleTabChange}
+            items={patchStrings.map((patchString, index) => ({
+              key: index.toString(),
+              label: `目标 ${index + 1} 的补丁`,
+              children: (
+                <div className="patch-content">
+                  <JsonEditor
+                    value={patchString}
+                    onChange={() => {}}
+                    readOnly={true}
+                    height="300px"
+                  />
+                </div>
+              ),
+            }))}
+          />
+        )}
+
+        {targetJsons.length === 1 && (
+          <div className="patch-content">
+            <JsonEditor
+              value={patchStrings[0] || '[]'}
+              onChange={() => {}}
+              readOnly={true}
+              height="300px"
             />
-        );
-    }
+          </div>
+        )}
 
-    const items: TabsProps['items'] = patchStrings
-        .map((patchString, index) => {
-            if (!patchString) {
-                return null;
-            }
+        <Divider />
 
-            return {
-                key: index.toString(),
-                label: `补丁 ${index + 1}`,
-                children: (
-                    <Card
-                        title={`从源到目标 ${index + 1} 的补丁`}
-                        size="small"
-                        extra={
-                            <Button
-                                icon={<CopyOutlined />}
-                                size="small"
-                                onClick={() => copyToClipboard(patchString)}
-                                title="复制补丁"
-                            >
-                                复制
-                            </Button>
-                        }
-                    >
-                        <pre
-                            style={{
-                                backgroundColor: '#f5f5f5',
-                                padding: '8px',
-                                borderRadius: '4px',
-                                maxHeight: '400px',
-                                overflow: 'auto',
-                            }}
-                        >
-                            {patchString}
-                        </pre>
-                    </Card>
-                ),
-            };
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
-
-    return (
-        <>
-            <Tabs defaultActiveKey="0" items={items} />
-
-            <div style={{ textAlign: 'center', margin: '24px 0' }}>
-                <Space>
-                    <Button type="primary" icon={<CheckOutlined />} onClick={onApplyPatches}>
-                        检测冲突并应用
-                    </Button>
-                    <Button onClick={onBack}>返回编辑</Button>
-                </Space>
-            </div>
-        </>
-    );
+        <div className="actions">
+          <Space>
+            <Button
+              type="primary"
+              onClick={checkForConflicts}
+              disabled={!hasPatches}
+              icon={<CheckOutlined />}
+            >
+              检测冲突并应用
+            </Button>
+          </Space>
+        </div>
+      </Card>
+    </div>
+  );
 };
 
 export default PatchPreviewSection;
