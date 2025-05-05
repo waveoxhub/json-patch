@@ -84,6 +84,7 @@ const JsonPatchEditor: React.FC = () => {
               activeKey={activeTargetIndex.toString()}
               onChange={key => setActiveTargetIndex(parseInt(key))}
               className="modern-tabs"
+              destroyInactiveTabPane={true}
               onEdit={(targetKey, action) => {
                 if (action === 'remove' && typeof targetKey === 'string') {
                   removeTargetJson(parseInt(targetKey));

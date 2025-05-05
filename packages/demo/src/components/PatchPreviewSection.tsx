@@ -42,6 +42,7 @@ const PatchPreviewSection: React.FC = () => {
             activeKey={activeTargetIndex.toString()}
             onChange={handleTabChange}
             className="modern-tabs"
+            destroyInactiveTabPane={true}
             style={{ marginTop: '16px' }}
             items={patchStrings.map((patchString, index) => ({
               key: index.toString(),

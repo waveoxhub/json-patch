@@ -109,6 +109,7 @@ const JsonPatchDemoContent: React.FC = () => {
       <Tabs
         activeKey={activeTab}
         items={tabs}
+        destroyInactiveTabPane={true}
         onChange={(key) => setActiveTab(key)}
       />
     </div>
