@@ -4,7 +4,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import JsonEditor from './JsonEditor';
 import { usePatchContext } from '../context/PatchContext';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 /**
  * 结果展示部分组件，显示补丁应用后的结果

@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, Button, Space, Typography } from 'antd';
 import { RightOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import JsonEditor from './JsonEditor';
 import { usePatchContext } from '../context/PatchContext';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 /**
  * Schema编辑部分组件，用于编辑JSON模型

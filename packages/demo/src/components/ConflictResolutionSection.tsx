@@ -126,7 +126,7 @@ const ConflictResolutionSection: React.FC = () => {
                       className="resolution-options"
                     >
                       <Space direction="vertical" style={{ width: '100%' }}>
-                        {options && options.map((hash, i) => {
+                        {options && options.map((hash) => {
                           const patch = findPatchByHash(hash);
                           return (
                             <Radio key={hash} value={hash} style={{ marginBottom: '16px' }}>

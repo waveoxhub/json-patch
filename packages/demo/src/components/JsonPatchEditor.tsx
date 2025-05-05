@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button, Tabs, Divider, Space, Typography } from 'antd';
-import { PlusOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { PlusOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import JsonEditor from './JsonEditor';
 import { usePatchContext } from '../context/PatchContext';
 
