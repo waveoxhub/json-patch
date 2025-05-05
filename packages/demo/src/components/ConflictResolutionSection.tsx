@@ -8,24 +8,16 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 /**
- * 从hash中提取目标索引，格式化为易读的目标标签
+ * 从hash中匹配目标索引，返回对应的目标标签
  */
-const getTargetLabelFromHash = (hash: string): string => {
-  // 调试
-  console.log('解析hash:', hash);
-  
-  // 尝试从hash中提取目标索引
-  let targetIndex = 0;
-  const hashParts = hash.split('-');
-  
-  if (hashParts.length > 0) {
-    const possibleIndex = parseInt(hashParts[0]);
-    if (!isNaN(possibleIndex)) {
-      targetIndex = possibleIndex;
+const getTargetLabelFromHash = (hash: string, patches: Patch[][]): string => {
+  for (let i = 0; i < patches.length; i++) {
+    const patchGroup = patches[i];
+    if (patchGroup.some(patch => patch.hash === hash)) {
+      return `目标 ${i + 1}`;
     }
   }
-  
-  return `目标 ${targetIndex + 1}`;
+  return '未知';
 };
 
 /**
@@ -139,7 +131,7 @@ const ConflictResolutionSection: React.FC = () => {
                           return (
                             <Radio key={hash} value={hash} style={{ marginBottom: '16px' }}>
                               <div className="resolution-option">
-                                <Text>{getTargetLabelFromHash(hash)}:</Text>
+                                <Text>{getTargetLabelFromHash(hash, patches)}:</Text>
                                 <div className="value-display">
                                   <pre>{getConflictValueDisplay(patch?.value)}</pre>
                                 </div>
@@ -193,3 +185,4 @@ const ConflictResolutionSection: React.FC = () => {
 };
 
 export default ConflictResolutionSection;
+
