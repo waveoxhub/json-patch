@@ -42,8 +42,6 @@ const JsonPatchEditor: React.FC = () => {
       <Card 
         title="JSON编辑" 
         className="editor-card"
-        bordered={false}
-        style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
         extra={
           <Button
             type="primary"

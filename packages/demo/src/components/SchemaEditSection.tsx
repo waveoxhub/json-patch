@@ -22,8 +22,6 @@ const SchemaEditSection: React.FC = () => {
       <Card 
         title="数据模型定义" 
         className="schema-card"
-        bordered={false}
-        style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
         extra={
           <Button
             type="primary"

@@ -31,8 +31,6 @@ const PatchPreviewSection: React.FC = () => {
       <Card 
         title="补丁预览" 
         className="preview-card"
-        bordered={false}
-        style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
       >
         <Text>
           以下是根据源JSON和目标JSON生成的补丁。您可以检查生成的补丁，然后检测冲突并应用。
