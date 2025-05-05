@@ -2,15 +2,15 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import {
   Patch,
   ConflictResolutions,
-  ConflictResult,
+  ConflictDetail,
   Schema,
   generatePatches,
   applyPatches,
   detectConflicts,
-  processConflicts,
   initializeResolutions,
   generateResolvedPatch,
   CustomResolution,
+  UnresolvedConflicts
 } from '@waveox/schema-json-patch';
 import { defaultSchemaData, original, version1, version2 } from '../data/sampleJsonData';
 import { isValidJson } from '../utils/jsonUtils';
@@ -39,7 +39,10 @@ interface PatchContextType {
   generatePatchesCallback: () => void;
   
   // 冲突相关
-  conflictResult: ConflictResult;
+  conflicts: Array<ConflictDetail>;
+  hasConflicts: boolean;
+  unresolvedConflicts: UnresolvedConflicts;
+  resolvedPatches: Array<Patch>;
   conflictResolutions: ConflictResolutions;
   customResolutions: CustomResolution[];
   checkForConflicts: () => void;
@@ -75,11 +78,10 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [patchStrings, setPatchStrings] = useState<string[]>([]);
 
   // 冲突相关
-  const [conflictResult, setConflictResult] = useState<ConflictResult>({
-    hasConflicts: false,
-    conflicts: [],
-    resolvedPatches: [],
-  });
+  const [hasConflicts, setHasConflicts] = useState<boolean>(false);
+  const [conflicts, setConflicts] = useState<Array<ConflictDetail>>([]);
+  const [unresolvedConflicts, setUnresolvedConflicts] = useState<UnresolvedConflicts>([]);
+  const [resolvedPatches, setResolvedPatches] = useState<Array<Patch>>([]);
   const [conflictResolutions, setConflictResolutions] = useState<ConflictResolutions>([]);
   const [customResolutions, setCustomResolutions] = useState<CustomResolution[]>([]);
 
@@ -163,24 +165,27 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const checkForConflicts = useCallback(() => {
     try {
       // 检测补丁间的冲突
-      const conflicts = detectConflicts(patches);
-      console.log('检测到的冲突:', JSON.stringify(conflicts, null, 2));
+      const detectedConflicts = detectConflicts(patches);
+      console.log('检测到的冲突:', JSON.stringify(detectedConflicts, null, 2));
 
-      // 处理冲突结果
-      const result = processConflicts(patches, conflicts);
-      console.log('处理后的冲突结果:', JSON.stringify(result, null, 2));
-      setConflictResult(result);
+      setConflicts([...detectedConflicts]);
+      setHasConflicts(detectedConflicts.length > 0);
 
-      if (!result.hasConflicts) {
+      if (detectedConflicts.length === 0) {
         // 没有冲突，直接应用补丁
-        applyAllPatches(result.resolvedPatches);
+        applyAllPatches(patches.flat());
         return;
       }
 
       // 初始化冲突解决方案（默认选择第一个选项）
-      const initialResolutions = initializeResolutions(conflicts);
+      const initialResolutions = initializeResolutions(detectedConflicts);
       console.log('初始化的冲突解决方案:', JSON.stringify(initialResolutions, null, 2));
       setConflictResolutions(initialResolutions);
+
+      // 生成初始结果
+      const result = generateResolvedPatch(patches, detectedConflicts, initialResolutions);
+      setUnresolvedConflicts([...result.unresolvedConflicts]);
+      setResolvedPatches([...result.resolvedPatches]);
 
       // 切换到冲突解决界面
       setActiveTab('conflicts');
@@ -227,7 +232,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // 处理自定义解决方案
   const handleCustomResolution = useCallback((conflictIndex: number, customValue: any) => {
-    const conflict = conflictResult.conflicts[conflictIndex];
+    const conflict = conflicts[conflictIndex];
     if (!conflict) return;
 
     // 创建自定义解决方案补丁
@@ -248,34 +253,43 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         ...filtered,
         {
           path: conflict.path,
-          patch: customPatch,
-        },
+          patch: customPatch
+        }
       ];
     });
-  }, [conflictResult.conflicts]);
 
-  // 应用冲突解决方案
+    // 也移除该路径上的常规解决方案选择
+    setConflictResolutions(prev =>
+      prev.filter(res => res.path !== conflict.path)
+    );
+  }, [conflicts]);
+
+  // 应用解决方案
   const applyResolutions = useCallback(() => {
     try {
-      // 生成解决方案后的补丁
-      const resolvedResult = generateResolvedPatch(
-        patches,
-        conflictResult.conflicts,
-        conflictResolutions,
-        customResolutions
-      );
-
-      if (resolvedResult.resolvedPatches.length === 0) {
-        setError('解决冲突后没有有效的补丁可应用');
+      if (conflicts.length === 0) {
+        // 没有冲突，直接应用所有补丁
+        applyAllPatches(patches.flat());
         return;
       }
 
-      // 应用解决后的补丁
-      applyAllPatches(resolvedResult.resolvedPatches);
+      // 生成解决后的补丁集
+      const result = generateResolvedPatch(patches, conflicts, conflictResolutions, customResolutions);
+      
+      // 更新未解决的冲突和解决后的补丁
+      setUnresolvedConflicts([...result.unresolvedConflicts]);
+      setResolvedPatches([...result.resolvedPatches]);
+
+      if (result.unresolvedConflicts.length === 0) {
+        // 所有冲突已解决，应用补丁
+        applyAllPatches(result.resolvedPatches);
+      } else {
+        setError('仍有未解决的冲突');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '应用补丁失败');
+      setError(err instanceof Error ? err.message : '应用解决方案失败');
     }
-  }, [patches, conflictResult.conflicts, conflictResolutions, customResolutions, applyAllPatches]);
+  }, [patches, conflicts, conflictResolutions, customResolutions, applyAllPatches]);
 
   // 重置工作流
   const resetWorkflow = useCallback(() => {
@@ -284,11 +298,10 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setActiveTargetIndex(0);
     setPatches([]);
     setPatchStrings([]);
-    setConflictResult({
-      hasConflicts: false,
-      conflicts: [],
-      resolvedPatches: [],
-    });
+    setConflicts([]);
+    setHasConflicts(false);
+    setUnresolvedConflicts([]);
+    setResolvedPatches([]);
     setConflictResolutions([]);
     setCustomResolutions([]);
     setResultJson('');
@@ -298,86 +311,70 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // 加载示例数据
   const loadExampleData = useCallback(() => {
-    try {
-      // 直接使用导入的示例数据
-      setSourceJson(original);
-      setTargetJsons([version1, version2]);
-      setActiveTargetIndex(0);
-      setError(null);
-    } catch (err) {
-      setError(`加载示例数据失败: ${err instanceof Error ? err.message : '未知错误'}`);
-    }
+    setSourceJson(JSON.stringify(original, null, 2));
+    setTargetJsons([
+      JSON.stringify(version1, null, 2),
+      JSON.stringify(version2, null, 2)
+    ]);
+    setActiveTargetIndex(0);
+    setActiveTab('source');
   }, []);
 
-  // 添加目标JSON
-  const addTargetJson = useCallback(() => {
-    setTargetJsons([...targetJsons, '']);
-  }, [targetJsons]);
-
-  // 更新目标JSON
-  const updateTargetJson = useCallback((index: number, value: string) => {
-    const newTargetJsons = [...targetJsons];
-    newTargetJsons[index] = value;
-    setTargetJsons(newTargetJsons);
-  }, [targetJsons]);
-
-  // 移除目标JSON
-  const removeTargetJson = useCallback((index: number) => {
-    if (targetJsons.length <= 1) {
-      return; // 至少保留一个目标
-    }
-    
-    const newTargetJsons = targetJsons.filter((_, i) => i !== index);
-    setTargetJsons(newTargetJsons);
-    
-    // 如果当前活动目标被删除，调整活动目标索引
-    if (activeTargetIndex >= index && activeTargetIndex > 0) {
-      setActiveTargetIndex(activeTargetIndex - 1);
-    }
-  }, [targetJsons, activeTargetIndex]);
-
-  const contextValue: PatchContextType = {
-    sourceJson,
-    setSourceJson,
-    targetJsons,
-    activeTargetIndex,
-    addTargetJson,
-    updateTargetJson,
-    removeTargetJson,
-    setActiveTargetIndex,
-    schema,
-    schemaString,
-    updateSchema,
-    patches,
-    patchStrings,
-    generatePatchesCallback,
-    conflictResult,
-    conflictResolutions,
-    customResolutions,
-    checkForConflicts,
-    handleConflictResolution,
-    handleCustomResolution,
-    applyResolutions,
-    resultJson,
-    error,
-    activeTab,
-    setActiveTab,
-    resetWorkflow,
-    loadExampleData,
-  };
-
   return (
-    <PatchContext.Provider value={contextValue}>
+    <PatchContext.Provider
+      value={{
+        sourceJson,
+        setSourceJson,
+        targetJsons,
+        activeTargetIndex,
+        addTargetJson: () => setTargetJsons([...targetJsons, '']),
+        updateTargetJson: (index, json) => {
+          const newTargets = [...targetJsons];
+          newTargets[index] = json;
+          setTargetJsons(newTargets);
+        },
+        removeTargetJson: (index) => {
+          const newTargets = targetJsons.filter((_, i) => i !== index);
+          setTargetJsons(newTargets);
+          if (activeTargetIndex >= newTargets.length) {
+            setActiveTargetIndex(Math.max(0, newTargets.length - 1));
+          }
+        },
+        setActiveTargetIndex,
+        schema,
+        schemaString,
+        updateSchema,
+        patches,
+        patchStrings,
+        generatePatchesCallback,
+        conflicts,
+        hasConflicts,
+        unresolvedConflicts,
+        resolvedPatches,
+        conflictResolutions,
+        customResolutions,
+        checkForConflicts,
+        handleConflictResolution,
+        handleCustomResolution,
+        applyResolutions,
+        resultJson,
+        error,
+        activeTab,
+        setActiveTab,
+        resetWorkflow,
+        loadExampleData
+      }}
+    >
       {children}
     </PatchContext.Provider>
   );
 };
 
-// 自定义Hook，用于访问上下文
+// 使用上下文的钩子
 export const usePatchContext = (): PatchContextType => {
   const context = useContext(PatchContext);
   if (!context) {
-    throw new Error('usePatchContext必须在PatchProvider内使用');
+    throw new Error('usePatchContext必须在PatchProvider内部使用');
   }
   return context;
 }; 

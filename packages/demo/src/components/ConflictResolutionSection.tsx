@@ -33,7 +33,8 @@ const getTargetLabelFromHash = (hash: string): string => {
  */
 const ConflictResolutionSection: React.FC = () => {
   const {
-    conflictResult,
+    conflicts,
+    hasConflicts,
     conflictResolutions,
     handleConflictResolution,
     handleCustomResolution,
@@ -45,12 +46,12 @@ const ConflictResolutionSection: React.FC = () => {
   
   // 调试信息
   useEffect(() => {
-    console.log('冲突数据:', conflictResult);
+    console.log('冲突数据:', conflicts);
     console.log('解决方案:', conflictResolutions);
     console.log('补丁数据:', patches);
-  }, [conflictResult, conflictResolutions, patches]);
+  }, [conflicts, conflictResolutions, patches]);
 
-  if (!conflictResult.hasConflicts) {
+  if (!hasConflicts) {
     return (
       <div className="no-conflicts">
         <Empty
@@ -115,7 +116,7 @@ const ConflictResolutionSection: React.FC = () => {
           </div>
 
           <List
-            dataSource={conflictResult.conflicts}
+            dataSource={conflicts}
             renderItem={(conflict, index) => {
               const { path, options } = conflict;
               const selectedHash = conflictResolutions.find(res => res.path === path)?.selectedHash;

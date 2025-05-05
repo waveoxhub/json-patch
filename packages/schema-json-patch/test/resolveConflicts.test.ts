@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
     resolveConflicts,
-    processConflicts,
     generateResolvedPatch,
     initializeResolutions,
 } from '../src/resolveConflicts';
@@ -288,73 +287,6 @@ describe('resolveConflicts', () => {
     });
 });
 
-describe('processConflicts', () => {
-    it('should return flattened patch array when no conflicts exist', () => {
-        const nameHash = generatePatchOptionHash('replace', '/name', 'patch1Name');
-        const ageHash = generatePatchOptionHash('add', '/age', 25);
-
-        const patches: Patch[][] = [
-            [
-                {
-                    op: 'replace',
-                    path: '/name',
-                    value: 'patch1Name',
-                    hash: nameHash
-                },
-            ],
-            [
-                {
-                    op: 'add',
-                    path: '/age',
-                    value: 25,
-                    hash: ageHash
-                },
-            ],
-        ];
-
-        const conflicts: ConflictDetail[] = [];
-
-        const result = processConflicts(patches, conflicts);
-
-        expect(result.hasConflicts).toBe(false);
-        expect(result.conflicts).toEqual([]);
-        expect(result.resolvedPatches).toHaveLength(2);
-        expect(result.resolvedPatches).toEqual(patches.flat());
-    });
-
-    it('should return conflict information but not resolve patches when conflicts exist', () => {
-        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
-        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
-
-        const patches: Patch[][] = [
-            [
-                {
-                    op: 'replace',
-                    path: '/name',
-                    value: 'patch1Name',
-                    hash: patch1Hash
-                },
-            ],
-            [
-                {
-                    op: 'replace',
-                    path: '/name',
-                    value: 'patch2Name',
-                    hash: patch2Hash
-                },
-            ],
-        ];
-
-        const conflicts = detectConflicts(patches);
-
-        const result = processConflicts(patches, conflicts);
-
-        expect(result.hasConflicts).toBe(true);
-        expect(result.conflicts).toEqual(conflicts);
-        expect(result.resolvedPatches).toEqual([]);
-    });
-});
-
 describe('generateResolvedPatch', () => {
     it('should return empty result when no patches exist', () => {
         const patches: Patch[][] = [];
@@ -363,8 +295,7 @@ describe('generateResolvedPatch', () => {
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
-        expect(result.hasConflicts).toBe(false);
-        expect(result.conflicts).toEqual([]);
+        expect(result.unresolvedConflicts).toEqual([]);
         expect(result.resolvedPatches).toEqual([]);
     });
 
@@ -396,12 +327,11 @@ describe('generateResolvedPatch', () => {
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
-        expect(result.hasConflicts).toBe(false);
-        expect(result.conflicts).toEqual([]);
+        expect(result.unresolvedConflicts).toEqual([]);
         expect(result.resolvedPatches).toEqual(patches.flat());
     });
 
-    it('should apply solution and return conflict information when conflicts exist', () => {
+    it('should apply solution and return unresolved conflicts when conflicts exist', () => {
         const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
         const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
 
@@ -435,8 +365,7 @@ describe('generateResolvedPatch', () => {
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
 
-        expect(result.hasConflicts).toBe(true);
-        expect(result.conflicts).toEqual(conflicts);
+        expect(result.unresolvedConflicts.length).toBe(0); // All conflicts resolved
         expect(result.resolvedPatches).toHaveLength(1);
         expect(result.resolvedPatches[0]).toEqual({
             op: 'replace',
@@ -446,7 +375,7 @@ describe('generateResolvedPatch', () => {
         });
     });
 
-    it('should apply custom solution and retain conflict information', () => {
+    it('should apply custom solution and track unresolved conflicts', () => {
         const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
         const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
         const ageHash = generatePatchOptionHash('add', '/age', 30);
@@ -493,8 +422,7 @@ describe('generateResolvedPatch', () => {
 
         const result = generateResolvedPatch(patches, conflicts, resolutions, customResolutions);
 
-        expect(result.hasConflicts).toBe(true);
-        expect(result.conflicts).toEqual(conflicts);
+        expect(result.unresolvedConflicts.length).toBe(0); // All conflicts resolved
         expect(result.resolvedPatches).toHaveLength(2);
         expect(result.resolvedPatches).toContainEqual({
             op: 'replace',
@@ -507,6 +435,68 @@ describe('generateResolvedPatch', () => {
             path: '/age',
             value: 30,
             hash: ageHash
+        });
+    });
+
+    it('should populate unresolvedConflicts when some conflicts remain unresolved', () => {
+        const patch1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
+        const patch2Hash = generatePatchOptionHash('replace', '/name', 'patch2Name');
+        const age1Hash = generatePatchOptionHash('replace', '/age', 25);
+        const age2Hash = generatePatchOptionHash('replace', '/age', 30);
+
+        const patches: Patch[][] = [
+            [
+                {
+                    op: 'replace',
+                    path: '/name',
+                    value: 'patch1Name',
+                    hash: patch1Hash
+                },
+                {
+                    op: 'replace',
+                    path: '/age',
+                    value: 25,
+                    hash: age1Hash
+                },
+            ],
+            [
+                {
+                    op: 'replace',
+                    path: '/name',
+                    value: 'patch2Name',
+                    hash: patch2Hash
+                },
+                {
+                    op: 'replace',
+                    path: '/age',
+                    value: 30,
+                    hash: age2Hash
+                },
+            ],
+        ];
+
+        const conflicts = detectConflicts(patches);
+
+        // Only resolve one of the two conflicts
+        const resolutions: ConflictResolutions = [
+            {
+                path: '/name',
+                selectedHash: patch1Hash
+            }
+            // age conflict remains unresolved
+        ];
+
+        const result = generateResolvedPatch(patches, conflicts, resolutions);
+
+        expect(result.unresolvedConflicts.length).toBeGreaterThan(0); // Has unresolved conflicts
+        expect(result.unresolvedConflicts).toContain(age1Hash);
+        expect(result.unresolvedConflicts).toContain(age2Hash);
+        // Still resolves the path that has a resolution
+        expect(result.resolvedPatches).toContainEqual({
+            op: 'replace',
+            path: '/name',
+            value: 'patch1Name',
+            hash: patch1Hash
         });
     });
 });

@@ -123,16 +123,17 @@ const patches1 = [{ op: 'replace', path: 'city', value: 'Shanghai' }];
 const patches2 = [{ op: 'replace', path: 'city', value: 'Guangzhou' }];
 
 // Detect conflicts
-const conflictResult = detectConflicts([patches1, patches2]);
+const conflicts = detectConflicts([patches1, patches2]);
 
-if (conflictResult.hasConflicts) {
-    // Resolve conflicts, choose the solution from the second set of patches
-    const resolutions = {
-        city: 1, // Select the second patch group (index starts from 0)
-    };
+if (conflicts.length > 0) {
+    // Resolve conflicts by choosing which patch to apply
+    const resolutions = conflicts.map(conflict => ({
+        path: conflict.path,
+        selectedHash: conflict.options[1] // Choose the second option
+    }));
 
     // Apply resolution
-    const resolvedPatches = resolveConflicts(conflictResult, resolutions);
+    const resolvedPatches = resolveConflicts(patches1.concat(patches2), conflicts, resolutions);
 
     // Apply the resolved patches
     const result = applyPatches(original, resolvedPatches, schema);
@@ -185,7 +186,7 @@ For example, to modify the `name` field:
 | `generatePatches(original, modified, schema)`   | Generate patches from source state to target state     |
 | `applyPatches(state, patches, schema)`          | Apply patches to data state                            |
 | `detectConflicts(patchGroups)`                  | Detect conflicts between multiple sets of patches      |
-| `resolveConflicts(conflictResult, resolutions)` | Merge conflicting patches according to resolution plan |
+| `resolveConflicts(patches, conflicts, resolutions)` | Merge conflicting patches according to resolution plan |
 
 ### Validation Functions
 
@@ -204,7 +205,7 @@ For example, to modify the `name` field:
 | --------------------- | ------------------------------- |
 | `Schema`              | Data structure definition       |
 | `Patch`               | Patch operation object          |
-| `PatchConflictResult` | Conflict detection result       |
+| `UnresolvedConflicts` | Array of unresolved conflict hash values |
 | `ConflictResolutions` | Conflict resolution plan        |
 | `ValidationResult`    | Result of validation operations |
 

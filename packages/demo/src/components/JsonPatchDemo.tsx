@@ -21,7 +21,7 @@ const JsonPatchDemoContent: React.FC = () => {
     error, 
     resetWorkflow, 
     loadExampleData,
-    conflictResult
+    hasConflicts
   } = usePatchContext();
 
   // 定义标签页
@@ -62,11 +62,11 @@ const JsonPatchDemoContent: React.FC = () => {
         <span>
           <WarningOutlined />
           冲突解决
-          {conflictResult.hasConflicts && <span className="conflict-badge"> !</span>}
+          {hasConflicts && <span className="conflict-badge"> !</span>}
         </span>
       ),
       children: <ConflictResolutionSection />,
-      disabled: !conflictResult.hasConflicts,
+      disabled: !hasConflicts,
     },
     {
       key: 'result',

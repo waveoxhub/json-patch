@@ -2,7 +2,7 @@ import {
     Patch,
     ConflictDetail,
     ConflictResolutions,
-    ConflictResult,
+    UnresolvedConflicts,
     CustomResolution,
 } from './types/patch';
 
@@ -86,53 +86,25 @@ export const resolveConflicts = (
 };
 
 /**
- * 处理补丁冲突并生成冲突结果
- * @param patches 多个补丁组
- * @param conflicts 冲突详情数组
- * @returns 包含冲突信息的结果对象
- */
-export const processConflicts = (
-    patches: ReadonlyArray<ReadonlyArray<Patch>>,
-    conflicts: ReadonlyArray<ConflictDetail>
-): ConflictResult => {
-    if (conflicts.length === 0) {
-        // 没有冲突，返回所有补丁的扁平数组
-        const allPatches = patches.flat();
-        return {
-            hasConflicts: false,
-            conflicts: [],
-            resolvedPatches: allPatches,
-        };
-    }
-
-    return {
-        hasConflicts: true,
-        conflicts: conflicts as ConflictDetail[],
-        resolvedPatches: [], // 默认为空，冲突解决后填充
-    };
-};
-
-/**
  * 冲突解决后生成合并的补丁
  * @param patches 原始补丁数组（多个组）
  * @param conflicts 冲突详情数组
  * @param resolutions 冲突解决选择
  * @param customResolutions 自定义解决方案（可选）
- * @returns 冲突解决结果对象
+ * @returns 处理结果对象
  */
 export const generateResolvedPatch = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
     customResolutions: ReadonlyArray<CustomResolution> = []
-): ConflictResult => {
+): { unresolvedConflicts: UnresolvedConflicts, resolvedPatches: ReadonlyArray<Patch> } => {
     // 扁平化所有补丁
     const allPatches = patches.flat();
 
     if (allPatches.length === 0) {
         return {
-            hasConflicts: false,
-            conflicts: [],
+            unresolvedConflicts: [],
             resolvedPatches: [],
         };
     }
@@ -140,18 +112,26 @@ export const generateResolvedPatch = (
     // 如果没有冲突，返回所有补丁
     if (conflicts.length === 0) {
         return {
-            hasConflicts: false,
-            conflicts: [],
+            unresolvedConflicts: [],
             resolvedPatches: allPatches as Patch[],
         };
     }
+
+    // 收集所有未解决的冲突哈希值
+    const unresolvedHashes = new Set<string>();
+    conflicts.forEach(conflict => {
+        const resolution = resolutions.find(r => r.path === conflict.path);
+        if (!resolution) {
+            // 未解决的冲突
+            conflict.options.forEach(hash => unresolvedHashes.add(hash));
+        }
+    });
 
     // 应用冲突解决方案
     const resolvedPatches = resolveConflicts(allPatches, conflicts, resolutions, customResolutions);
 
     return {
-        hasConflicts: true,
-        conflicts: conflicts as ConflictDetail[],
+        unresolvedConflicts: Array.from(unresolvedHashes),
         resolvedPatches: resolvedPatches as Patch[],
     };
 };

@@ -1,9 +1,10 @@
 import { 
   Patch, 
   ConflictResolutions, 
-  ConflictResult, 
+  ConflictDetail, 
   Schema, 
-  CustomResolution 
+  CustomResolution,
+  UnresolvedConflicts
 } from '@waveox/schema-json-patch';
 
 /**
@@ -26,7 +27,10 @@ export interface JsonPatchEditorProps {
  * 冲突解决部分属性
  */
 export interface ConflictResolutionSectionProps {
-  conflictResult: ConflictResult;
+  conflicts: Array<ConflictDetail>;
+  hasConflicts: boolean;
+  unresolvedConflicts: UnresolvedConflicts;
+  resolvedPatches: Array<Patch>;
   conflictResolutions: ConflictResolutions;
   onResolutionSelect: (path: string, selectedHash: string) => void;
   onCustomResolution: (conflictIndex: number, customValue: any) => void;

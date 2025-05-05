@@ -22,15 +22,6 @@ export type ConflictDetail = {
 };
 
 /**
- * 补丁冲突处理结果
- */
-export type ConflictResult = {
-    readonly hasConflicts: boolean;
-    readonly conflicts: Array<ConflictDetail>;
-    readonly resolvedPatches: Array<Patch>;
-};
-
-/**
  * 单个冲突解决方案
  */
 export type ConflictResolution = {
@@ -44,6 +35,11 @@ export type ConflictResolution = {
 export type ConflictResolutions = Array<ConflictResolution>;
 
 /**
+ * 未解决的冲突hash数组
+ */
+export type UnresolvedConflicts = Array<string>;
+
+/**
  * 自定义解决方案类型
  * 用于处理特殊冲突情况
  */
@@ -51,3 +47,4 @@ export type CustomResolution = {
     readonly path: string;
     readonly patch: Patch;
 };
+
