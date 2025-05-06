@@ -43,8 +43,13 @@ export type UnresolvedConflicts = Array<string>;
  * 自定义解决方案类型
  * 用于处理特殊冲突情况
  */
-export type CustomResolution = {
+export type CustomConflictResolution = {
     readonly path: string;
     readonly patch: Patch;
 };
 
+
+/**
+ * 自定义解决方案数组
+ */
+export type CustomConflictResolutions = Array<CustomConflictResolution>;

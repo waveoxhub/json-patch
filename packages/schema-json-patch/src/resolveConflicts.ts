@@ -3,7 +3,8 @@ import {
     ConflictDetail,
     ConflictResolutions,
     UnresolvedConflicts,
-    CustomResolution,
+    CustomConflictResolution,
+    CustomConflictResolutions,
 } from './types/patch';
 
 /**
@@ -16,7 +17,6 @@ const findMatchingPatch = (
     patches: ReadonlyArray<Patch>,
     optionHash: string
 ): Patch | undefined => {
-    // 通过哈希值匹配
     return patches.find(patch => patch.hash === optionHash);
 };
 
@@ -32,7 +32,7 @@ export const resolveConflicts = (
     patches: ReadonlyArray<Patch>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    customResolutions: CustomConflictResolutions
 ): ReadonlyArray<Patch> => {
     // 如果没有冲突，返回所有补丁
     if (conflicts.length === 0) {
@@ -97,7 +97,7 @@ export const generateResolvedPatch = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    customResolutions: ReadonlyArray<CustomConflictResolution> = []
 ): { unresolvedConflicts: UnresolvedConflicts, resolvedPatches: ReadonlyArray<Patch> } => {
     // 扁平化所有补丁
     const allPatches = patches.flat();
@@ -146,7 +146,6 @@ export const initializeResolutions = (
 ): ConflictResolutions => {
     const initialResolutions: ConflictResolutions = [];
 
-    // 为每个冲突选项初始化解决方案
     conflicts.forEach(conflict => {
         // 默认选择每个冲突的第一个选项
         if (conflict.options.length > 0) {

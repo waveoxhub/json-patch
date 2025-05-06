@@ -1,4 +1,4 @@
-import { Patch, ConflictDetail, ConflictResolutions, CustomResolution } from './types/patch';
+import { Patch, ConflictDetail, ConflictResolutions, CustomConflictResolution } from './types/patch';
 import { Schema } from './types/schema';
 import { isObject } from './utils/isObject';
 import { detectConflicts } from './detectConflicts';
@@ -188,7 +188,7 @@ export const validateResolvedConflicts = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    customResolutions: ReadonlyArray<CustomConflictResolution> = []
 ): ValidationResult => {
     const errors: string[] = [];
 

@@ -2,8 +2,6 @@ import {
   Patch, 
   ConflictResolutions, 
   ConflictDetail, 
-  Schema, 
-  CustomResolution,
   UnresolvedConflicts
 } from '@waveox/schema-json-patch';
 

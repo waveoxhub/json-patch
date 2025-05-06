@@ -9,7 +9,7 @@ import {
   detectConflicts,
   initializeResolutions,
   generateResolvedPatch,
-  CustomResolution,
+  CustomConflictResolution,
   UnresolvedConflicts
 } from '@waveox/schema-json-patch';
 import { defaultSchemaData, original, version1, version2, version3 } from '../data/sampleJsonData';
@@ -44,7 +44,7 @@ interface PatchContextType {
   unresolvedConflicts: UnresolvedConflicts;
   resolvedPatches: Array<Patch>;
   conflictResolutions: ConflictResolutions;
-  customResolutions: CustomResolution[];
+  customResolutions: CustomConflictResolution[];
   checkForConflicts: () => void;
   handleConflictResolution: (path: string, selectedHash: string) => void;
   handleCustomResolution: (conflictIndex: number, customValue: any) => void;
@@ -83,7 +83,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [unresolvedConflicts, setUnresolvedConflicts] = useState<UnresolvedConflicts>([]);
   const [resolvedPatches, setResolvedPatches] = useState<Array<Patch>>([]);
   const [conflictResolutions, setConflictResolutions] = useState<ConflictResolutions>([]);
-  const [customResolutions, setCustomResolutions] = useState<CustomResolution[]>([]);
+  const [customResolutions, setCustomResolutions] = useState<CustomConflictResolution[]>([]);
 
   // 结果相关
   const [resultJson, setResultJson] = useState<string>('');
