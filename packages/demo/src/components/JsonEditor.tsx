@@ -10,18 +10,12 @@ const { Text } = Typography;
 /**
  * JSON编辑器组件，支持JSON格式化和错误检测
  */
-const JsonEditor: React.FC<JsonEditorProps & {
-    title?: string;
-    style?: React.CSSProperties;
-}> = ({
-    value,
-    onChange,
-    height = '150px',
-    placeholder,
-    readOnly = false,
-    title,
-    style = {},
-}) => {
+const JsonEditor: React.FC<
+    JsonEditorProps & {
+        title?: string;
+        style?: React.CSSProperties;
+    }
+> = ({ value, onChange, height = '150px', placeholder, readOnly = false, title, style = {} }) => {
     const [error, setError] = useState<string | null>(null);
     const [displayValue, setDisplayValue] = useState<string | null>(null);
 
@@ -39,22 +33,25 @@ const JsonEditor: React.FC<JsonEditorProps & {
         }
     }, [value]);
 
-    const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newValue = e.target.value;
-        onChange(newValue);
-        setDisplayValue(null);
+    const handleChange = useCallback(
+        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            const newValue = e.target.value;
+            onChange(newValue);
+            setDisplayValue(null);
 
-        if (newValue.trim()) {
-            try {
-                JSON.parse(newValue);
+            if (newValue.trim()) {
+                try {
+                    JSON.parse(newValue);
+                    setError(null);
+                } catch {
+                    setError('JSON格式错误');
+                }
+            } else {
                 setError(null);
-            } catch {
-                setError('JSON格式错误');
             }
-        } else {
-            setError(null);
-        }
-    }, [onChange]);
+        },
+        [onChange]
+    );
 
     const handleFormat = useCallback(() => {
         try {
@@ -72,7 +69,7 @@ const JsonEditor: React.FC<JsonEditorProps & {
 
     const handleCompress = useCallback(() => {
         if (!value.trim()) return;
-        
+
         try {
             const parsed = JSON.parse(value);
             const compressed = JSON.stringify(parsed);
@@ -96,8 +93,8 @@ const JsonEditor: React.FC<JsonEditorProps & {
     const actualValue = displayValue !== null ? displayValue : value;
 
     return (
-        <div 
-            style={{ 
+        <div
+            style={{
                 ...style,
                 borderRadius: '6px',
                 overflow: 'hidden',
@@ -114,8 +111,12 @@ const JsonEditor: React.FC<JsonEditorProps & {
                     backgroundColor: '#fafafa',
                 }}
             >
-                {title && <Text strong style={{ fontSize: '14px' }}>{title}</Text>}
-                
+                {title && (
+                    <Text strong style={{ fontSize: '14px' }}>
+                        {title}
+                    </Text>
+                )}
+
                 <Space>
                     <Tooltip title="格式化JSON">
                         <Button
@@ -135,11 +136,7 @@ const JsonEditor: React.FC<JsonEditorProps & {
                     </Tooltip>
                     {readOnly && displayValue !== null && (
                         <Tooltip title="还原显示">
-                            <Button
-                                size="small"
-                                onClick={handleResetDisplay}
-                                type="text"
-                            >
+                            <Button size="small" onClick={handleResetDisplay} type="text">
                                 还原
                             </Button>
                         </Tooltip>
@@ -152,7 +149,7 @@ const JsonEditor: React.FC<JsonEditorProps & {
                     <Text type="danger">{error}</Text>
                 </div>
             )}
-            
+
             <TextArea
                 value={actualValue}
                 onChange={handleChange}

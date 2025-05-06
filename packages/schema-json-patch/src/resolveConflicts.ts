@@ -3,7 +3,6 @@ import {
     ConflictDetail,
     ConflictResolutions,
     UnresolvedConflicts,
-    CustomConflictResolution,
     CustomConflictResolutions,
 } from './types/patch';
 
@@ -97,7 +96,7 @@ export const generateResolvedPatch = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomConflictResolution> = []
+    customResolutions: CustomConflictResolutions
 ): { unresolvedConflicts: UnresolvedConflicts, resolvedPatches: ReadonlyArray<Patch> } => {
     // 扁平化所有补丁
     const allPatches = patches.flat();
