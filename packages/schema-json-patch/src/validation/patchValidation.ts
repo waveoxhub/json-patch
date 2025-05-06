@@ -36,7 +36,7 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
         }
-        
+
         // 验证哈希值
         if (!patch.hash || typeof patch.hash !== 'string') {
             errors.push(`Patch #${index} must have a valid hash string`);
@@ -83,4 +83,4 @@ export const validatePatchGroups = (
         isValid: errors.length === 0,
         errors,
     };
-}; 
+};

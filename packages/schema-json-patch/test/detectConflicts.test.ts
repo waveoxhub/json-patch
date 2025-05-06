@@ -10,7 +10,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: generatePatchOptionHash('replace', '/name', 'patch1Name')
+                hash: generatePatchOptionHash('replace', '/name', 'patch1Name'),
             },
         ];
 
@@ -19,7 +19,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
-                hash: generatePatchOptionHash('replace', '/name', 'patch2Name')
+                hash: generatePatchOptionHash('replace', '/name', 'patch2Name'),
             },
         ];
 
@@ -29,7 +29,7 @@ describe('detectConflicts', () => {
                 path: '/name',
                 options: [
                     generatePatchOptionHash('replace', '/name', 'patch1Name'),
-                    generatePatchOptionHash('replace', '/name', 'patch2Name')
+                    generatePatchOptionHash('replace', '/name', 'patch2Name'),
                 ],
             },
         ]);
@@ -41,7 +41,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'newName',
-                hash: generatePatchOptionHash('replace', '/name', 'newName')
+                hash: generatePatchOptionHash('replace', '/name', 'newName'),
             },
         ];
 
@@ -50,7 +50,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/age',
                 value: 30,
-                hash: generatePatchOptionHash('replace', '/age', 30)
+                hash: generatePatchOptionHash('replace', '/age', 30),
             },
         ];
 
@@ -64,7 +64,7 @@ describe('detectConflicts', () => {
             {
                 op: 'remove',
                 path: '/user',
-                hash: generatePatchOptionHash('remove', '/user')
+                hash: generatePatchOptionHash('remove', '/user'),
             },
         ];
 
@@ -73,7 +73,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/user/name',
                 value: 'newName',
-                hash: generatePatchOptionHash('replace', '/user/name', 'newName')
+                hash: generatePatchOptionHash('replace', '/user/name', 'newName'),
             },
         ];
 
@@ -83,7 +83,7 @@ describe('detectConflicts', () => {
                 path: '/user/name',
                 options: [
                     generatePatchOptionHash('remove', '/user'),
-                    generatePatchOptionHash('replace', '/user/name', 'newName')
+                    generatePatchOptionHash('replace', '/user/name', 'newName'),
                 ],
             },
         ]);
@@ -95,7 +95,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/items/0',
                 value: 'newItem1',
-                hash: generatePatchOptionHash('replace', '/items/0', 'newItem1')
+                hash: generatePatchOptionHash('replace', '/items/0', 'newItem1'),
             },
         ];
 
@@ -104,7 +104,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/items/1',
                 value: 'newItem2',
-                hash: generatePatchOptionHash('replace', '/items/1', 'newItem2')
+                hash: generatePatchOptionHash('replace', '/items/1', 'newItem2'),
             },
         ];
 
@@ -124,13 +124,13 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/name',
                 value: 'Alice Chen',
-                hash: hash1_1
+                hash: hash1_1,
             },
             {
                 op: 'add',
                 path: '/settings/language',
                 value: 'zh-CN',
-                hash: hash1_2
+                hash: hash1_2,
             },
         ];
 
@@ -139,13 +139,13 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/name',
                 value: 'Alice Wang',
-                hash: hash2_1
+                hash: hash2_1,
             },
             {
                 op: 'add',
                 path: '/settings/language',
                 value: 'en-US',
-                hash: hash2_2
+                hash: hash2_2,
             },
         ];
 
@@ -176,13 +176,13 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'Alice',
-                hash: generatePatchOptionHash('replace', '/name', 'Alice')
+                hash: generatePatchOptionHash('replace', '/name', 'Alice'),
             },
             {
                 op: 'add',
                 path: '/age',
                 value: 30,
-                hash: generatePatchOptionHash('add', '/age', 30)
+                hash: generatePatchOptionHash('add', '/age', 30),
             },
         ];
 
@@ -196,7 +196,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'Alice',
-                hash: generatePatchOptionHash('replace', '/name', 'Alice')
+                hash: generatePatchOptionHash('replace', '/name', 'Alice'),
             },
         ];
 
@@ -215,7 +215,7 @@ describe('detectConflicts', () => {
                 op: 'add',
                 path: '/users/0/profile',
                 value: { age: 30 },
-                hash: addHash
+                hash: addHash,
             },
         ];
 
@@ -224,7 +224,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/profile',
                 value: { age: 25 },
-                hash: replaceHash
+                hash: replaceHash,
             },
         ];
 
@@ -239,7 +239,10 @@ describe('detectConflicts', () => {
     });
 
     it('should identify path prefix conflicts', () => {
-        const parentHash = generatePatchOptionHash('replace', '/users/0', { name: 'Alice', age: 30 });
+        const parentHash = generatePatchOptionHash('replace', '/users/0', {
+            name: 'Alice',
+            age: 30,
+        });
         const childHash = generatePatchOptionHash('replace', '/users/0/name', 'Bob');
 
         const patches1: Patch[] = [
@@ -247,7 +250,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0',
                 value: { name: 'Alice', age: 30 },
-                hash: parentHash
+                hash: parentHash,
             },
         ];
 
@@ -256,7 +259,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/name',
                 value: 'Bob',
-                hash: childHash
+                hash: childHash,
             },
         ];
 
@@ -264,8 +267,8 @@ describe('detectConflicts', () => {
         expect(conflicts.length).toBeGreaterThan(0);
 
         // 找到包含这两个哈希之一的冲突
-        const hasConflict = conflicts.some(c => 
-            c.options.includes(parentHash) || c.options.includes(childHash)
+        const hasConflict = conflicts.some(
+            c => c.options.includes(parentHash) || c.options.includes(childHash)
         );
         expect(hasConflict).toBe(true);
     });
@@ -276,7 +279,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/name',
                 value: 'Alice',
-                hash: generatePatchOptionHash('replace', '/users/0/name', 'Alice')
+                hash: generatePatchOptionHash('replace', '/users/0/name', 'Alice'),
             },
         ];
 
@@ -285,7 +288,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/1/name',
                 value: 'Bob',
-                hash: generatePatchOptionHash('replace', '/users/1/name', 'Bob')
+                hash: generatePatchOptionHash('replace', '/users/1/name', 'Bob'),
             },
         ];
 
@@ -301,7 +304,7 @@ describe('detectConflicts', () => {
             {
                 op: 'remove',
                 path: '/users/0',
-                hash: removeHash
+                hash: removeHash,
             },
         ];
 
@@ -310,7 +313,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/0/name',
                 value: 'Alice',
-                hash: replaceHash
+                hash: replaceHash,
             },
         ];
 
@@ -325,8 +328,16 @@ describe('detectConflicts', () => {
     });
 
     it('should identify complex conflicts in deeply nested structures', () => {
-        const cityHash = generatePatchOptionHash('replace', '/users/user123/addresses/0/city', 'Beijing');
-        const zipcodeHash = generatePatchOptionHash('replace', '/users/user123/addresses/0/zipcode', '100000');
+        const cityHash = generatePatchOptionHash(
+            'replace',
+            '/users/user123/addresses/0/city',
+            'Beijing'
+        );
+        const zipcodeHash = generatePatchOptionHash(
+            'replace',
+            '/users/user123/addresses/0/zipcode',
+            '100000'
+        );
         const removeHash = generatePatchOptionHash('remove', '/users/user123/addresses/0');
         const addHash = generatePatchOptionHash('add', '/users/user123/addresses/1', {
             city: 'Shanghai',
@@ -338,13 +349,13 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/users/user123/addresses/0/city',
                 value: 'Beijing',
-                hash: cityHash
+                hash: cityHash,
             },
             {
                 op: 'replace',
                 path: '/users/user123/addresses/0/zipcode',
                 value: '100000',
-                hash: zipcodeHash
+                hash: zipcodeHash,
             },
         ];
 
@@ -352,7 +363,7 @@ describe('detectConflicts', () => {
             {
                 op: 'remove',
                 path: '/users/user123/addresses/0',
-                hash: removeHash
+                hash: removeHash,
             },
             {
                 op: 'add',
@@ -361,7 +372,7 @@ describe('detectConflicts', () => {
                     city: 'Shanghai',
                     zipcode: '200000',
                 },
-                hash: addHash
+                hash: addHash,
             },
         ];
 
@@ -407,7 +418,7 @@ describe('detectConflicts', () => {
                     tags: ['同事', '技术部', '管理层'],
                     address: '北京市朝阳区',
                 },
-                hash: contactHash
+                hash: contactHash,
             },
         ];
 
@@ -416,7 +427,7 @@ describe('detectConflicts', () => {
                 op: 'replace',
                 path: '/contact-1/phone',
                 value: '13888888888',
-                hash: phoneHash
+                hash: phoneHash,
             },
         ];
 

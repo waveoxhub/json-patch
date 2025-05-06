@@ -40,16 +40,16 @@ export const resolveConflicts = (
 
     // 创建要包含的补丁集合
     const includedPatches = new Set<Patch>();
-    
+
     // 处理所有冲突
-    conflicts.forEach((conflict) => {
+    conflicts.forEach(conflict => {
         // 找出相应路径的解决方案
         const resolution = resolutions.find(res => res.path === conflict.path);
-        
+
         if (resolution && conflict.options.includes(resolution.selectedHash)) {
             // 找到选中哈希对应的补丁并加入包含集合
             const matchingPatch = findMatchingPatch(patches, resolution.selectedHash);
-            
+
             if (matchingPatch) {
                 includedPatches.add(matchingPatch);
             }
@@ -58,23 +58,20 @@ export const resolveConflicts = (
             if (conflict.options.length > 0) {
                 const defaultHash = conflict.options[0];
                 const matchingPatch = findMatchingPatch(patches, defaultHash);
-                
+
                 if (matchingPatch) {
                     includedPatches.add(matchingPatch);
                 }
             }
         }
     });
-    
+
     // 收集非冲突路径的补丁
     const conflictPaths = new Set(conflicts.map(conflict => conflict.path));
     const nonConflictPatches = patches.filter(patch => !conflictPaths.has(patch.path));
-    
+
     // 合并非冲突补丁和选中的冲突补丁
-    const resolvedPatches = [
-        ...nonConflictPatches,
-        ...Array.from(includedPatches)
-    ];
+    const resolvedPatches = [...nonConflictPatches, ...Array.from(includedPatches)];
 
     // 添加自定义解决方案
     if (customResolutions.length > 0) {
@@ -97,7 +94,7 @@ export const generateResolvedPatch = (
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
     customResolutions: CustomConflictResolutions
-): { unresolvedConflicts: UnresolvedConflicts, resolvedPatches: ReadonlyArray<Patch> } => {
+): { unresolvedConflicts: UnresolvedConflicts; resolvedPatches: ReadonlyArray<Patch> } => {
     // 扁平化所有补丁
     const allPatches = patches.flat();
 
@@ -150,7 +147,7 @@ export const initializeResolutions = (
         if (conflict.options.length > 0) {
             initialResolutions.push({
                 path: conflict.path,
-                selectedHash: conflict.options[0]
+                selectedHash: conflict.options[0],
             });
         }
     });

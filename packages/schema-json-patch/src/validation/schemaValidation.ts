@@ -59,16 +59,16 @@ export const validatePatchApplication = (
             if (patch.op === 'remove' || patch.op === 'replace') {
                 // 对于删除和替换操作，路径必须存在于当前状态
                 if (!pathExists(state, pathComponents, schema)) {
-                    errors.push(`Path "${patch.path}" does not exist, cannot perform ${patch.op} operation`);
+                    errors.push(
+                        `Path "${patch.path}" does not exist, cannot perform ${patch.op} operation`
+                    );
                 }
             } else if (patch.op === 'add') {
                 // 对于添加操作，验证父路径是否存在（除非是添加到根）
                 if (pathComponents.length > 1) {
                     const parentComponents = pathComponents.slice(0, -1);
                     if (!pathExists(state, parentComponents, schema)) {
-                        errors.push(
-                            `Parent path for add operation "${patch.path}" does not exist`
-                        );
+                        errors.push(`Parent path for add operation "${patch.path}" does not exist`);
                     }
                 }
 
@@ -134,11 +134,11 @@ export const validateConflictsAgainstSchema = (
         conflict.options.forEach((optionHash: string, optionIndex: number) => {
             // 查找对应的补丁
             const patch = patches.find(p => p.hash === optionHash);
-            
+
             if (!patch) {
                 errors.push(
                     `Option #${optionIndex} (hash: ${optionHash}) for conflict #${conflictIndex} ` +
-                    `not found in patch array`
+                        `not found in patch array`
                 );
                 return;
             }
@@ -152,7 +152,7 @@ export const validateConflictsAgainstSchema = (
             if (!validateValueAgainstSchema(patch.value, schemaForPath)) {
                 errors.push(
                     `Option #${optionIndex} (hash: ${optionHash}) for conflict #${conflictIndex}: ` +
-                    `value does not conform to schema requirements`
+                        `value does not conform to schema requirements`
                 );
             }
         });
@@ -297,4 +297,4 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
                 return true; // 未知类型，假定有效
         }
     }
-}; 
+};

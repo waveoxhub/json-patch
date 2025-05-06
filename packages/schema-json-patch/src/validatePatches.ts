@@ -1,4 +1,9 @@
-import { Patch, ConflictDetail, ConflictResolutions, CustomConflictResolution } from './types/patch';
+import {
+    Patch,
+    ConflictDetail,
+    ConflictResolutions,
+    CustomConflictResolution,
+} from './types/patch';
 import { Schema } from './types/schema';
 import { isObject } from './utils/isObject';
 import { detectConflicts } from './detectConflicts';
@@ -71,7 +76,7 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
         }
-        
+
         // 验证哈希值
         if (!patch.hash || typeof patch.hash !== 'string') {
             errors.push(`Patch #${index} must have a valid hash string`);
@@ -157,7 +162,9 @@ export const validateResolutions = (
         // 查找对应的冲突
         const conflict = conflicts.find(c => c.path === resolution.path);
         if (!conflict) {
-            errors.push(`Resolution #${index} references a path "${resolution.path}" that doesn't exist in conflicts`);
+            errors.push(
+                `Resolution #${index} references a path "${resolution.path}" that doesn't exist in conflicts`
+            );
             return;
         }
 
@@ -165,7 +172,7 @@ export const validateResolutions = (
         if (!conflict.options.includes(resolution.selectedHash)) {
             errors.push(
                 `Resolution #${index} selects a hash "${resolution.selectedHash}" ` +
-                `that is not an option for conflict at path "${resolution.path}"`
+                    `that is not an option for conflict at path "${resolution.path}"`
             );
         }
     });
@@ -202,34 +209,34 @@ export const validateResolvedConflicts = (
     const allPatches = patches.flat();
     const resolvedPatchSet = new Set<Patch>();
     const conflictPaths = new Set<string>();
-    
+
     // 收集所有冲突路径
     conflicts.forEach(conflict => {
         conflictPaths.add(conflict.path);
-        
+
         // 找出选中的哈希值
         let selectedHash = conflict.options[0]; // 默认选第一个
-        
+
         // 查找是否有针对此路径的解决方案
         const resolution = resolutions.find(res => res.path === conflict.path);
         if (resolution && conflict.options.includes(resolution.selectedHash)) {
             selectedHash = resolution.selectedHash;
         }
-        
+
         // 找到匹配哈希值的补丁
         const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);
-        
+
         if (matchingPatch) {
             resolvedPatchSet.add(matchingPatch);
         }
     });
-    
+
     // 添加非冲突补丁
     const nonConflictPatches = allPatches.filter(patch => !conflictPaths.has(patch.path));
     const resolvedPatches = [
         ...nonConflictPatches,
         ...Array.from(resolvedPatchSet),
-        ...(customResolutions?.map(cr => cr.patch) || [])
+        ...(customResolutions?.map(cr => cr.patch) || []),
     ];
 
     // Check if there are still conflicts after resolution
@@ -240,7 +247,7 @@ export const validateResolvedConflicts = (
             `There are still ${remainingConflicts.length} conflicts after applying resolutions`
         );
 
-        remainingConflicts.forEach((conflict) => {
+        remainingConflicts.forEach(conflict => {
             errors.push(`  - Path ${conflict.path} has unresolved conflicts`);
         });
     }

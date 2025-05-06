@@ -17,7 +17,7 @@ export type Patch = {
  * 补丁冲突详情
  */
 export type ConflictDetail = {
-    readonly path: string;         // 冲突的路径
+    readonly path: string; // 冲突的路径
     readonly options: Array<string>; // 冲突选项哈希数组
 };
 
@@ -25,7 +25,7 @@ export type ConflictDetail = {
  * 单个冲突解决方案
  */
 export type ConflictResolution = {
-    readonly path: string;        // 冲突路径
+    readonly path: string; // 冲突路径
     readonly selectedHash: string; // 选中的补丁哈希值
 };
 
@@ -47,7 +47,6 @@ export type CustomConflictResolution = {
     readonly path: string;
     readonly patch: Patch;
 };
-
 
 /**
  * 自定义解决方案数组

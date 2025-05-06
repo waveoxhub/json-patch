@@ -38,11 +38,7 @@ export const detectConflicts = (
     detectDirectPathConflicts(patchesByPath, conflictsByPath);
 
     // Detect parent-child path conflicts
-    detectParentChildPathConflicts(
-        patchesByPath,
-        pathPrefixMap,
-        conflictsByPath
-    );
+    detectParentChildPathConflicts(patchesByPath, pathPrefixMap, conflictsByPath);
 
     // Convert to array
     return Object.values(conflictsByPath);
@@ -200,7 +196,7 @@ const detectParentChildPathConflicts = (
                             if (childOp.patch.op !== 'replace' && childOp.patch.op !== 'add') {
                                 return true;
                             }
-                            
+
                             // Extract the remaining path relative to the parent path
                             const remainingPath = path.slice(prefix.length);
 
@@ -236,9 +232,7 @@ const detectParentChildPathConflicts = (
 
                     // Add parent path and current path operations to conflict
                     addOperationToConflict(conflictsByPath[path], parentOp);
-                    operations.forEach(op =>
-                        addOperationToConflict(conflictsByPath[path], op)
-                    );
+                    operations.forEach(op => addOperationToConflict(conflictsByPath[path], op));
 
                     // One conflict is enough
                     break;
@@ -273,16 +267,14 @@ const createConflictWithOperations = (
 /**
  * Add an operation to a conflict
  */
-const addOperationToConflict = (
-    conflict: ConflictDetail,
-    op: PatchOperationWithIndex
-): void => {
+const addOperationToConflict = (conflict: ConflictDetail, op: PatchOperationWithIndex): void => {
     // Prefer to use hash already in the patch, compute if not available
-    const hash = op.patch.hash || generatePatchOptionHash(op.patch.op, op.patch.path, op.patch.value);
-    
+    const hash =
+        op.patch.hash || generatePatchOptionHash(op.patch.op, op.patch.path, op.patch.value);
+
     // Check if an option with the same hash already exists
     const existingOption = conflict.options.includes(hash);
-    
+
     if (!existingOption) {
         // Add new option (hash only)
         conflict.options.push(hash);

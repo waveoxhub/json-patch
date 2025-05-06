@@ -22,4 +22,4 @@ export const validateJson = (jsonString: string): ValidationResult => {
         isValid: errors.length === 0,
         errors,
     };
-}; 
+};

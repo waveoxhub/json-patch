@@ -35,18 +35,18 @@ describe('Validation Functionality', () => {
                     op: 'add',
                     path: '/name',
                     value: 'test',
-                    hash: generatePatchOptionHash('add', '/name', 'test')
+                    hash: generatePatchOptionHash('add', '/name', 'test'),
                 },
                 {
                     op: 'remove',
                     path: '/age',
-                    hash: generatePatchOptionHash('remove', '/age')
+                    hash: generatePatchOptionHash('remove', '/age'),
                 },
                 {
                     op: 'replace',
                     path: '/value',
                     value: 456,
-                    hash: generatePatchOptionHash('replace', '/value', 456)
+                    hash: generatePatchOptionHash('replace', '/value', 456),
                 },
             ];
             const result = validatePatches(patches);
@@ -56,12 +56,14 @@ describe('Validation Functionality', () => {
 
         it('should identify invalid patch operation type', () => {
             type InvalidPatch = { op: string; path: string; value?: unknown; hash: string };
-            const patches: InvalidPatch[] = [{
-                op: 'invalid',
-                path: '/name',
-                value: 'test',
-                hash: 'dummy-hash'
-            }];
+            const patches: InvalidPatch[] = [
+                {
+                    op: 'invalid',
+                    path: '/name',
+                    value: 'test',
+                    hash: 'dummy-hash',
+                },
+            ];
             const result = validatePatches(patches as unknown as Patch[]);
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
@@ -69,11 +71,13 @@ describe('Validation Functionality', () => {
         });
 
         it('should identify missing value in add/replace operations', () => {
-            const patches: Partial<Patch>[] = [{
-                op: 'add',
-                path: '/name',
-                hash: 'dummy-hash'
-            }];
+            const patches: Partial<Patch>[] = [
+                {
+                    op: 'add',
+                    path: '/name',
+                    hash: 'dummy-hash',
+                },
+            ];
             const result = validatePatches(patches as Patch[]);
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
@@ -81,12 +85,14 @@ describe('Validation Functionality', () => {
         });
 
         it('should identify invalid path format', () => {
-            const patches: Patch[] = [{
-                op: 'add',
-                path: 'name',
-                value: 'test',
-                hash: generatePatchOptionHash('add', 'name', 'test')
-            }];
+            const patches: Patch[] = [
+                {
+                    op: 'add',
+                    path: 'name',
+                    value: 'test',
+                    hash: generatePatchOptionHash('add', 'name', 'test'),
+                },
+            ];
             const result = validatePatches(patches);
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
@@ -94,11 +100,13 @@ describe('Validation Functionality', () => {
         });
 
         it('should identify missing hash', () => {
-            const patches: Partial<Patch>[] = [{
-                op: 'add',
-                path: '/name',
-                value: 'test'
-            }];
+            const patches: Partial<Patch>[] = [
+                {
+                    op: 'add',
+                    path: '/name',
+                    value: 'test',
+                },
+            ];
             const result = validatePatches(patches as Patch[]);
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
@@ -109,18 +117,22 @@ describe('Validation Functionality', () => {
     describe('validatePatchGroups', () => {
         it('should validate valid patch group array', () => {
             const patchGroups: Patch[][] = [
-                [{
-                    op: 'add',
-                    path: '/name',
-                    value: 'test',
-                    hash: generatePatchOptionHash('add', '/name', 'test')
-                }],
-                [{
-                    op: 'replace',
-                    path: '/value',
-                    value: 456,
-                    hash: generatePatchOptionHash('replace', '/value', 456)
-                }],
+                [
+                    {
+                        op: 'add',
+                        path: '/name',
+                        value: 'test',
+                        hash: generatePatchOptionHash('add', '/name', 'test'),
+                    },
+                ],
+                [
+                    {
+                        op: 'replace',
+                        path: '/value',
+                        value: 456,
+                        hash: generatePatchOptionHash('replace', '/value', 456),
+                    },
+                ],
             ];
             const result = validatePatchGroups(patchGroups);
             expect(result.isValid).toBe(true);
@@ -129,12 +141,14 @@ describe('Validation Functionality', () => {
 
         it('should identify invalid patch groups', () => {
             const invalidPatchGroups = [
-                [{
-                    op: 'add',
-                    path: '/name',
-                    value: 'test',
-                    hash: generatePatchOptionHash('add', '/name', 'test')
-                }],
+                [
+                    {
+                        op: 'add',
+                        path: '/name',
+                        value: 'test',
+                        hash: generatePatchOptionHash('add', '/name', 'test'),
+                    },
+                ],
                 'not-an-array',
             ];
             const result = validatePatchGroups(invalidPatchGroups as Patch[][]);
@@ -152,14 +166,14 @@ describe('Validation Functionality', () => {
             const conflicts: ConflictDetail[] = [
                 {
                     path: '/name',
-                    options: [hash1, hash2]
+                    options: [hash1, hash2],
                 },
             ];
             const resolutions = [
                 {
                     path: '/name',
-                    selectedHash: hash2
-                }
+                    selectedHash: hash2,
+                },
             ];
 
             const result = validateResolutions(conflicts, resolutions);
@@ -174,14 +188,14 @@ describe('Validation Functionality', () => {
             const conflicts: ConflictDetail[] = [
                 {
                     path: '/name',
-                    options: [hash1, hash2]
+                    options: [hash1, hash2],
                 },
             ];
             const resolutions = [
                 {
                     path: '/nonexistent',
-                    selectedHash: hash1
-                }
+                    selectedHash: hash1,
+                },
             ];
 
             const result = validateResolutions(conflicts, resolutions);
@@ -198,20 +212,22 @@ describe('Validation Functionality', () => {
             const conflicts: ConflictDetail[] = [
                 {
                     path: '/name',
-                    options: [hash1, hash2]
+                    options: [hash1, hash2],
                 },
             ];
             const resolutions = [
                 {
                     path: '/name',
-                    selectedHash: invalidHash
-                }
+                    selectedHash: invalidHash,
+                },
             ];
 
             const result = validateResolutions(conflicts, resolutions);
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
-            expect(result.errors[0]).toContain('"invalid-hash" is not an option for conflict at path "/name"');
+            expect(result.errors[0]).toContain(
+                '"invalid-hash" is not an option for conflict at path "/name"'
+            );
         });
     });
 
@@ -222,18 +238,22 @@ describe('Validation Functionality', () => {
             const hash2 = generatePatchOptionHash('add', '/name', 'B');
 
             const patchGroups: Patch[][] = [
-                [{
-                    op: 'add',
-                    path: '/name',
-                    value: 'A',
-                    hash: hash1
-                }],
-                [{
-                    op: 'add',
-                    path: '/name',
-                    value: 'B',
-                    hash: hash2
-                }],
+                [
+                    {
+                        op: 'add',
+                        path: '/name',
+                        value: 'A',
+                        hash: hash1,
+                    },
+                ],
+                [
+                    {
+                        op: 'add',
+                        path: '/name',
+                        value: 'B',
+                        hash: hash2,
+                    },
+                ],
             ];
 
             // Detect conflicts
@@ -244,8 +264,8 @@ describe('Validation Functionality', () => {
             const resolutions = [
                 {
                     path: '/name',
-                    selectedHash: hash2
-                }
+                    selectedHash: hash2,
+                },
             ];
 
             // Validate if there are still conflicts after resolution
@@ -267,13 +287,13 @@ describe('Validation Functionality', () => {
                         op: 'add',
                         path: '/name',
                         value: 'A',
-                        hash: hashA1
+                        hash: hashA1,
                     },
                     {
                         op: 'add',
                         path: '/value',
                         value: 1,
-                        hash: hashA2
+                        hash: hashA2,
                     },
                 ],
                 [
@@ -281,13 +301,13 @@ describe('Validation Functionality', () => {
                         op: 'add',
                         path: '/name',
                         value: 'B',
-                        hash: hashB1
+                        hash: hashB1,
                     },
                     {
                         op: 'add',
                         path: '/value',
                         value: 2,
-                        hash: hashB2
+                        hash: hashB2,
                     },
                 ],
             ];
@@ -299,10 +319,12 @@ describe('Validation Functionality', () => {
             console.log(conflicts);
 
             // Only resolve the first conflict
-            const resolutions = [{
-                path: conflicts[0].path,
-                selectedHash: conflicts[0].options[0]
-            }];
+            const resolutions = [
+                {
+                    path: conflicts[0].path,
+                    selectedHash: conflicts[0].options[0],
+                },
+            ];
 
             const result = validateResolvedConflicts(patchGroups, conflicts, resolutions);
 
@@ -314,12 +336,14 @@ describe('Validation Functionality', () => {
     describe('validatePatchApplication', () => {
         it('should validate patches that can be successfully applied', () => {
             const json = '{"name": "test", "value": 123}';
-            const patches: Patch[] = [{
-                op: 'replace',
-                path: '/value',
-                value: 456,
-                hash: generatePatchOptionHash('replace', '/value', 456)
-            }];
+            const patches: Patch[] = [
+                {
+                    op: 'replace',
+                    path: '/value',
+                    value: 456,
+                    hash: generatePatchOptionHash('replace', '/value', 456),
+                },
+            ];
             const schema: ObjectSchema = {
                 $type: 'object',
                 $fields: {
@@ -335,12 +359,14 @@ describe('Validation Functionality', () => {
 
         it('should identify invalid JSON input', () => {
             const json = '{"name": "test", value: 123}'; // Invalid JSON
-            const patches: Patch[] = [{
-                op: 'replace',
-                path: '/value',
-                value: 456,
-                hash: generatePatchOptionHash('replace', '/value', 456)
-            }];
+            const patches: Patch[] = [
+                {
+                    op: 'replace',
+                    path: '/value',
+                    value: 456,
+                    hash: generatePatchOptionHash('replace', '/value', 456),
+                },
+            ];
             const schema: ObjectSchema = {
                 $type: 'object',
                 $fields: {
@@ -363,8 +389,8 @@ describe('Validation Functionality', () => {
                     op: 'invalid',
                     path: '/value',
                     value: 456,
-                    hash: 'dummy-hash'
-                }
+                    hash: 'dummy-hash',
+                },
             ];
             const schema: ObjectSchema = {
                 $type: 'object',
@@ -382,12 +408,14 @@ describe('Validation Functionality', () => {
 
         it('should identify null Schema', () => {
             const json = '{"name": "test", "value": 123}';
-            const patches: Patch[] = [{
-                op: 'replace',
-                path: '/value',
-                value: 456,
-                hash: generatePatchOptionHash('replace', '/value', 456)
-            }];
+            const patches: Patch[] = [
+                {
+                    op: 'replace',
+                    path: '/value',
+                    value: 456,
+                    hash: generatePatchOptionHash('replace', '/value', 456),
+                },
+            ];
             const schema = null;
 
             const result = validatePatchApplication(
@@ -402,12 +430,14 @@ describe('Validation Functionality', () => {
 
         it('should identify invalid Schema', () => {
             const json = '{"name": "test", "value": 123}';
-            const patches: Patch[] = [{
-                op: 'replace',
-                path: '/value',
-                value: 456,
-                hash: generatePatchOptionHash('replace', '/value', 456)
-            }];
+            const patches: Patch[] = [
+                {
+                    op: 'replace',
+                    path: '/value',
+                    value: 456,
+                    hash: generatePatchOptionHash('replace', '/value', 456),
+                },
+            ];
             const schema = {};
 
             const result = validatePatchApplication(
@@ -417,7 +447,9 @@ describe('Validation Functionality', () => {
             );
             expect(result.isValid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
-            expect(result.errors[0]).toContain('Schema must have a valid $type field with value "object" or "array"');
+            expect(result.errors[0]).toContain(
+                'Schema must have a valid $type field with value "object" or "array"'
+            );
         });
     });
 });

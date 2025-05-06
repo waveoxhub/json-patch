@@ -4,4 +4,4 @@
 export type ValidationResult = {
     readonly isValid: boolean;
     readonly errors: string[];
-}; 
+};

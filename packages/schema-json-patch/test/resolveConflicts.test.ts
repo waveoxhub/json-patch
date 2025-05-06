@@ -18,13 +18,13 @@ describe('resolveConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: patch1Hash
+                hash: patch1Hash,
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
-                hash: patch2Hash
+                hash: patch2Hash,
             },
         ];
 
@@ -33,8 +33,8 @@ describe('resolveConflicts', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: patch2Hash
-            }
+                selectedHash: patch2Hash,
+            },
         ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
@@ -44,7 +44,7 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch2Name',
-            hash: patch2Hash
+            hash: patch2Hash,
         });
     });
 
@@ -57,13 +57,13 @@ describe('resolveConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: patch1Hash
+                hash: patch1Hash,
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
-                hash: patch2Hash
+                hash: patch2Hash,
             },
         ];
 
@@ -78,7 +78,7 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
-            hash: patch1Hash
+            hash: patch1Hash,
         });
     });
 
@@ -93,42 +93,42 @@ describe('resolveConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: name1Hash
+                hash: name1Hash,
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
-                hash: name2Hash
+                hash: name2Hash,
             },
             {
                 op: 'replace',
                 path: '/age',
                 value: 25,
-                hash: age1Hash
+                hash: age1Hash,
             },
             {
                 op: 'replace',
                 path: '/age',
                 value: 30,
-                hash: age2Hash
+                hash: age2Hash,
             },
         ];
 
         const conflicts = detectConflicts([
             [patches[0], patches[2]],
-            [patches[1], patches[3]]
+            [patches[1], patches[3]],
         ]);
 
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: name1Hash
+                selectedHash: name1Hash,
             },
             {
                 path: '/age',
-                selectedHash: age2Hash
-            }
+                selectedHash: age2Hash,
+            },
         ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
@@ -138,13 +138,13 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
-            hash: name1Hash
+            hash: name1Hash,
         });
         expect(resolvedPatches).toContainEqual({
             op: 'replace',
             path: '/age',
             value: 30,
-            hash: age2Hash
+            hash: age2Hash,
         });
     });
 
@@ -157,13 +157,13 @@ describe('resolveConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: nameHash
+                hash: nameHash,
             },
             {
                 op: 'add',
                 path: '/age',
                 value: 25,
-                hash: ageHash
+                hash: ageHash,
             },
         ];
 
@@ -186,13 +186,13 @@ describe('resolveConflicts', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'patch1Name',
-                hash: patch1Hash
+                hash: patch1Hash,
             },
             {
                 op: 'replace',
                 path: '/name',
                 value: 'patch2Name',
-                hash: patch2Hash
+                hash: patch2Hash,
             },
         ];
 
@@ -201,8 +201,8 @@ describe('resolveConflicts', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: patch1Hash
-            }
+                selectedHash: patch1Hash,
+            },
         ];
 
         const customResolutions: CustomResolution[] = [
@@ -212,7 +212,7 @@ describe('resolveConflicts', () => {
                     op: 'add',
                     path: '/age',
                     value: 30,
-                    hash: ageHash
+                    hash: ageHash,
                 },
             },
         ];
@@ -229,13 +229,13 @@ describe('resolveConflicts', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
-            hash: patch1Hash
+            hash: patch1Hash,
         });
         expect(resolvedPatches).toContainEqual({
             op: 'add',
             path: '/age',
             value: 30,
-            hash: ageHash
+            hash: ageHash,
         });
     });
 
@@ -248,19 +248,19 @@ describe('resolveConflicts', () => {
             {
                 op: 'remove',
                 path: '/items/0',
-                hash: removeHash
+                hash: removeHash,
             },
             {
                 op: 'replace',
                 path: '/items/0',
                 value: 'new value',
-                hash: replaceHash
+                hash: replaceHash,
             },
             {
                 op: 'add',
                 path: '/items/0',
                 value: 'another new value',
-                hash: addHash
+                hash: addHash,
             },
         ];
 
@@ -270,8 +270,8 @@ describe('resolveConflicts', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/items/0',
-                selectedHash: addHash
-            }
+                selectedHash: addHash,
+            },
         ];
 
         const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
@@ -282,7 +282,7 @@ describe('resolveConflicts', () => {
             op: 'add',
             path: '/items/0',
             value: 'another new value',
-            hash: addHash
+            hash: addHash,
         });
     });
 });
@@ -309,7 +309,7 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
-                    hash: nameHash
+                    hash: nameHash,
                 },
             ],
             [
@@ -317,7 +317,7 @@ describe('generateResolvedPatch', () => {
                     op: 'add',
                     path: '/age',
                     value: 25,
-                    hash: ageHash
+                    hash: ageHash,
                 },
             ],
         ];
@@ -341,7 +341,7 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
-                    hash: patch1Hash
+                    hash: patch1Hash,
                 },
             ],
             [
@@ -349,7 +349,7 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
-                    hash: patch2Hash
+                    hash: patch2Hash,
                 },
             ],
         ];
@@ -359,8 +359,8 @@ describe('generateResolvedPatch', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: patch2Hash
-            }
+                selectedHash: patch2Hash,
+            },
         ];
 
         const result = generateResolvedPatch(patches, conflicts, resolutions);
@@ -371,7 +371,7 @@ describe('generateResolvedPatch', () => {
             op: 'replace',
             path: '/name',
             value: 'patch2Name',
-            hash: patch2Hash
+            hash: patch2Hash,
         });
     });
 
@@ -386,7 +386,7 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
-                    hash: patch1Hash
+                    hash: patch1Hash,
                 },
             ],
             [
@@ -394,7 +394,7 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
-                    hash: patch2Hash
+                    hash: patch2Hash,
                 },
             ],
         ];
@@ -404,8 +404,8 @@ describe('generateResolvedPatch', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: patch1Hash
-            }
+                selectedHash: patch1Hash,
+            },
         ];
 
         const customResolutions: CustomResolution[] = [
@@ -415,7 +415,7 @@ describe('generateResolvedPatch', () => {
                     op: 'add',
                     path: '/age',
                     value: 30,
-                    hash: ageHash
+                    hash: ageHash,
                 },
             },
         ];
@@ -428,13 +428,13 @@ describe('generateResolvedPatch', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
-            hash: patch1Hash
+            hash: patch1Hash,
         });
         expect(result.resolvedPatches).toContainEqual({
             op: 'add',
             path: '/age',
             value: 30,
-            hash: ageHash
+            hash: ageHash,
         });
     });
 
@@ -450,13 +450,13 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch1Name',
-                    hash: patch1Hash
+                    hash: patch1Hash,
                 },
                 {
                     op: 'replace',
                     path: '/age',
                     value: 25,
-                    hash: age1Hash
+                    hash: age1Hash,
                 },
             ],
             [
@@ -464,13 +464,13 @@ describe('generateResolvedPatch', () => {
                     op: 'replace',
                     path: '/name',
                     value: 'patch2Name',
-                    hash: patch2Hash
+                    hash: patch2Hash,
                 },
                 {
                     op: 'replace',
                     path: '/age',
                     value: 30,
-                    hash: age2Hash
+                    hash: age2Hash,
                 },
             ],
         ];
@@ -481,8 +481,8 @@ describe('generateResolvedPatch', () => {
         const resolutions: ConflictResolutions = [
             {
                 path: '/name',
-                selectedHash: patch1Hash
-            }
+                selectedHash: patch1Hash,
+            },
             // age conflict remains unresolved
         ];
 
@@ -496,7 +496,7 @@ describe('generateResolvedPatch', () => {
             op: 'replace',
             path: '/name',
             value: 'patch1Name',
-            hash: patch1Hash
+            hash: patch1Hash,
         });
     });
 });
@@ -505,38 +505,38 @@ describe('initializeResolutions', () => {
     it('should create default solution for each conflict (select first option)', () => {
         const name1Hash = generatePatchOptionHash('replace', '/name', 'patch1Name');
         const age1Hash = generatePatchOptionHash('replace', '/age', 25);
-        
+
         const patches: Patch[][] = [
             [
-                { 
-                    op: 'replace', 
-                    path: '/name', 
+                {
+                    op: 'replace',
+                    path: '/name',
                     value: 'patch1Name',
-                    hash: name1Hash
+                    hash: name1Hash,
                 },
-                { 
-                    op: 'replace', 
-                    path: '/age', 
+                {
+                    op: 'replace',
+                    path: '/age',
                     value: 25,
-                    hash: age1Hash
+                    hash: age1Hash,
                 },
             ],
             [
-                { 
-                    op: 'replace', 
-                    path: '/name', 
+                {
+                    op: 'replace',
+                    path: '/name',
                     value: 'patch2Name',
-                    hash: generatePatchOptionHash('replace', '/name', 'patch2Name')
+                    hash: generatePatchOptionHash('replace', '/name', 'patch2Name'),
                 },
-                { 
-                    op: 'replace', 
-                    path: '/age', 
+                {
+                    op: 'replace',
+                    path: '/age',
                     value: 30,
-                    hash: generatePatchOptionHash('replace', '/age', 30)
+                    hash: generatePatchOptionHash('replace', '/age', 30),
                 },
             ],
         ];
-        
+
         const conflicts = detectConflicts(patches);
 
         const resolutions = initializeResolutions(conflicts);
@@ -545,12 +545,12 @@ describe('initializeResolutions', () => {
         expect(resolutions).toEqual([
             {
                 path: conflicts[0].path,
-                selectedHash: conflicts[0].options[0]
+                selectedHash: conflicts[0].options[0],
             },
             {
                 path: conflicts[1].path,
-                selectedHash: conflicts[1].options[0]
-            }
+                selectedHash: conflicts[1].options[0],
+            },
         ]);
     });
 

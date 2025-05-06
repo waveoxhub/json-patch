@@ -20,15 +20,15 @@ describe('patchGenerator', () => {
             const source = JSON.stringify([{ name: 'xiaoming', age: 25 }]);
             const target = JSON.stringify([{ name: 'xiaoming', age: 30 }]);
             const patches = generatePatches(schema, source, target);
-            const result_op = 'replace'
-            const result_path = '/xiaoming/age'
-            const result_value = 30
+            const result_op = 'replace';
+            const result_path = '/xiaoming/age';
+            const result_value = 30;
             expect(patches).toHaveLength(1);
             expect(patches[0]).toEqual({
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -49,11 +49,11 @@ describe('patchGenerator', () => {
             const result_path = '/name';
             const result_value = 'newName';
             expect(patches).toHaveLength(1);
-            expect(patches[0]).toEqual({ 
-                op: result_op, 
-                path: result_path, 
+            expect(patches[0]).toEqual({
+                op: result_op,
+                path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -72,11 +72,11 @@ describe('patchGenerator', () => {
             const result_path = '/name';
             const result_value = 'newName';
             expect(patches).toHaveLength(1);
-            expect(patches[0]).toEqual({ 
-                op: result_op, 
-                path: result_path, 
+            expect(patches[0]).toEqual({
+                op: result_op,
+                path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -102,7 +102,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -126,7 +126,7 @@ describe('patchGenerator', () => {
             expect(patches[0]).toEqual({
                 op: result_op,
                 path: result_path,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -165,7 +165,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -204,7 +204,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
     });
@@ -233,7 +233,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -262,16 +262,16 @@ describe('patchGenerator', () => {
             const result_path2 = '/items/item3';
             const result_value2 = { name: 'item3' };
             expect(patches).toStrictEqual([
-                { 
-                    op: result_op1, 
+                {
+                    op: result_op1,
                     path: result_path1,
-                    hash: generatePatchOptionHash(result_op1, result_path1)
+                    hash: generatePatchOptionHash(result_op1, result_path1),
                 },
-                { 
+                {
                     op: result_op2,
                     path: result_path2,
                     value: result_value2,
-                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2),
                 },
             ]);
         });
@@ -300,7 +300,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -328,7 +328,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -356,7 +356,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -400,11 +400,11 @@ describe('patchGenerator', () => {
             const result_path = '/users/u1/age';
             const result_value = 26;
             expect(patches.length).toBe(1);
-            expect(patches[0]).toEqual({ 
-                op: result_op, 
-                path: result_path, 
+            expect(patches[0]).toEqual({
+                op: result_op,
+                path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
     });
@@ -433,11 +433,11 @@ describe('patchGenerator', () => {
             const result_path = '/data/newField';
             const result_value = 'value';
             expect(patches.length).toBe(1);
-            expect(patches[0]).toStrictEqual({ 
-                op: result_op, 
-                path: result_path, 
+            expect(patches[0]).toStrictEqual({
+                op: result_op,
+                path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -465,16 +465,16 @@ describe('patchGenerator', () => {
             const result_path2 = '/data/field2';
             const result_value2 = 'new';
             expect(patches).toStrictEqual([
-                { 
-                    op: result_op1, 
+                {
+                    op: result_op1,
                     path: result_path1,
-                    hash: generatePatchOptionHash(result_op1, result_path1, result_value1)
+                    hash: generatePatchOptionHash(result_op1, result_path1, result_value1),
                 },
-                { 
-                    op: result_op2, 
-                    path: result_path2, 
+                {
+                    op: result_op2,
+                    path: result_path2,
                     value: result_value2,
-                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+                    hash: generatePatchOptionHash(result_op2, result_path2, result_value2),
                 },
             ]);
         });
@@ -496,11 +496,11 @@ describe('patchGenerator', () => {
             const result_path = '/items';
             const result_value = ['c', 'a', 'b'];
             expect(patches).toStrictEqual([
-                { 
-                    op: result_op, 
-                    path: result_path, 
+                {
+                    op: result_op,
+                    path: result_path,
                     value: result_value,
-                    hash: generatePatchOptionHash(result_op, result_path, result_value)
+                    hash: generatePatchOptionHash(result_op, result_path, result_value),
                 },
             ]);
         });
@@ -579,7 +579,7 @@ describe('patchGenerator', () => {
                     op: result_op,
                     path: result_path,
                     value: result_value,
-                    hash: generatePatchOptionHash(result_op, result_path, result_value)
+                    hash: generatePatchOptionHash(result_op, result_path, result_value),
                 },
             ]);
         });
@@ -646,13 +646,13 @@ describe('patchGenerator', () => {
             expect(patches).toContainEqual({
                 op: 'remove',
                 path: '/2',
-                hash: generatePatchOptionHash('remove', '/2', undefined)
+                hash: generatePatchOptionHash('remove', '/2', undefined),
             });
             expect(patches).toContainEqual({
                 op: 'add',
                 path: '/3',
                 value: { id: '3', value: 'value3' },
-                hash: generatePatchOptionHash('add', '/3', { id: '3', value: 'value3' })
+                hash: generatePatchOptionHash('add', '/3', { id: '3', value: 'value3' }),
             });
         });
 
@@ -710,14 +710,14 @@ describe('patchGenerator', () => {
                 op: result_op1,
                 path: result_path1,
                 value: result_value1,
-                hash: generatePatchOptionHash(result_op1, result_path1, result_value1)
+                hash: generatePatchOptionHash(result_op1, result_path1, result_value1),
             });
-            
+
             expect(patches).toContainEqual({
                 op: result_op2,
                 path: result_path2,
                 value: result_value2,
-                hash: generatePatchOptionHash(result_op2, result_path2, result_value2)
+                hash: generatePatchOptionHash(result_op2, result_path2, result_value2),
             });
         });
     });
@@ -744,7 +744,7 @@ describe('patchGenerator', () => {
                     op: result_op,
                     path: result_path,
                     value: result_value,
-                    hash: generatePatchOptionHash(result_op, result_path, result_value)
+                    hash: generatePatchOptionHash(result_op, result_path, result_value),
                 },
             ]);
         });
@@ -770,7 +770,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
 
@@ -826,7 +826,7 @@ describe('patchGenerator', () => {
                 op: result_op,
                 path: result_path,
                 value: result_value,
-                hash: generatePatchOptionHash(result_op, result_path, result_value)
+                hash: generatePatchOptionHash(result_op, result_path, result_value),
             });
         });
     });

@@ -12,18 +12,18 @@ import { generatePatchOptionHash } from './utils/hashUtils';
  * @returns 补丁
  */
 const createPatch = (op: PatchOperation, path: string, value?: unknown): Patch => {
-    return value !== undefined 
+    return value !== undefined
         ? {
-            op,
-            path,
-            value,
-            hash: generatePatchOptionHash(op, path, value)
-        }
+              op,
+              path,
+              value,
+              hash: generatePatchOptionHash(op, path, value),
+          }
         : {
-            op,
-            path,
-            hash: generatePatchOptionHash(op, path, value)
-        };
+              op,
+              path,
+              hash: generatePatchOptionHash(op, path, value),
+          };
 };
 
 /**
