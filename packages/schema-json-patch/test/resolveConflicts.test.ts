@@ -4,7 +4,7 @@ import {
     generateResolvedPatch,
     initializeResolutions,
 } from '../src/resolveConflicts';
-import { ConflictDetail, Patch, ConflictResolutions, CustomResolution } from '../src/types/patch';
+import { ConflictDetail, Patch, ConflictResolutions, CustomConflictResolutions } from '../src/types/patch';
 import { detectConflicts } from '../src';
 import { generatePatchOptionHash } from '../src/utils/hashUtils';
 
@@ -205,7 +205,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const customResolutions: CustomResolution[] = [
+        const customResolutions: CustomConflictResolutions = [
             {
                 path: '/age',
                 patch: {
@@ -408,7 +408,7 @@ describe('generateResolvedPatch', () => {
             },
         ];
 
-        const customResolutions: CustomResolution[] = [
+        const customResolutions: CustomConflictResolutions = [
             {
                 path: '/age',
                 patch: {

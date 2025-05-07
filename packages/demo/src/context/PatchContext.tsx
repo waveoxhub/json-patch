@@ -186,7 +186,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setConflictResolutions(initialResolutions);
 
             // 生成初始结果
-            const result = generateResolvedPatch(patches, detectedConflicts, initialResolutions);
+            const result = generateResolvedPatch(patches, detectedConflicts, initialResolutions, []);
             setUnresolvedConflicts([...result.unresolvedConflicts]);
             setResolvedPatches([...result.resolvedPatches]);
 

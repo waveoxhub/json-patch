@@ -31,7 +31,7 @@ export const resolveConflicts = (
     patches: ReadonlyArray<Patch>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: CustomConflictResolutions
+    customResolutions: CustomConflictResolutions = []
 ): ReadonlyArray<Patch> => {
     // 如果没有冲突，返回所有补丁
     if (conflicts.length === 0) {
@@ -93,7 +93,7 @@ export const generateResolvedPatch = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: CustomConflictResolutions
+    customResolutions: CustomConflictResolutions = []
 ): { unresolvedConflicts: UnresolvedConflicts; resolvedPatches: ReadonlyArray<Patch> } => {
     // 扁平化所有补丁
     const allPatches = patches.flat();

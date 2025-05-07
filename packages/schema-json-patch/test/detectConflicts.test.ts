@@ -80,7 +80,7 @@ describe('detectConflicts', () => {
         const conflicts = detectConflicts([patch1, patch2]);
         expect(conflicts).toStrictEqual([
             {
-                path: '/user/name',
+                path: '/user',
                 options: [
                     generatePatchOptionHash('remove', '/user'),
                     generatePatchOptionHash('replace', '/user/name', 'newName'),
@@ -318,14 +318,15 @@ describe('detectConflicts', () => {
         ];
 
         const conflicts = detectConflicts([patches1, patches2]);
-        expect(conflicts.length).toBeGreaterThan(0);
-
-        // 确认冲突中包含了正确的哈希值
-        const conflict = conflicts.find(c => c.path === '/users/0/name');
-        expect(conflict).toBeDefined();
-        expect(conflict?.options).toContain(removeHash);
-        expect(conflict?.options).toContain(replaceHash);
+        // 1个冲突
+        expect(conflicts.length).toBe(1);
+        // 冲突路径
+        expect(conflicts[0].path).toBe('/users/0');
+        // 冲突选项
+        expect(conflicts[0].options).toContain(removeHash);
+        expect(conflicts[0].options).toContain(replaceHash);
     });
+
 
     it('should identify complex conflicts in deeply nested structures', () => {
         const cityHash = generatePatchOptionHash(
@@ -377,22 +378,14 @@ describe('detectConflicts', () => {
         ];
 
         const conflicts = detectConflicts([patch1, patch2]);
-
-        // 应该检测到冲突，因为第二组补丁删除了第一组补丁要修改的地址
-        expect(conflicts.length).toBeGreaterThan(0);
-
-        // 验证冲突详情
-        const cityConflict = conflicts.find(c => c.path === '/users/user123/addresses/0/city');
-        expect(cityConflict).toBeDefined();
-        expect(cityConflict?.options).toContain(cityHash);
-        expect(cityConflict?.options).toContain(removeHash);
-
-        const zipcodeConflict = conflicts.find(
-            c => c.path === '/users/user123/addresses/0/zipcode'
-        );
-        expect(zipcodeConflict).toBeDefined();
-        expect(zipcodeConflict?.options).toContain(zipcodeHash);
-        expect(zipcodeConflict?.options).toContain(removeHash);
+        // 1个冲突
+        expect(conflicts.length).toBe(1);
+        // 冲突路径
+        expect(conflicts[0].path).toBe('/users/user123/addresses/0');
+        // 冲突选项
+        expect(conflicts[0].options).toContain(removeHash);
+        expect(conflicts[0].options).toContain(zipcodeHash);
+        expect(conflicts[0].options).toContain(cityHash);
     });
 
     it('should not detect conflict when replacing whole object and updating a property with identical value', () => {

@@ -4,7 +4,7 @@ import { ConflictDetail, Patch } from './types';
 import { generatePatchOptionHash } from './utils/hashUtils';
 
 /**
- * Patch operation type definition
+ * 补丁操作的类型定义
  */
 type PatchOperationWithIndex = {
     patch: Patch;
@@ -13,39 +13,39 @@ type PatchOperationWithIndex = {
 };
 
 /**
- * Detects conflicts between multiple patch groups
- * @param patchGroups Array of patch groups
- * @returns Array of detailed conflict information
+ * 检测多个补丁组之间的冲突
+ * @param patchGroups 补丁组数组
+ * @returns 详细冲突信息数组
  */
 export const detectConflicts = (
     patchGroups: ReadonlyArray<ReadonlyArray<Patch>>
 ): ReadonlyArray<ConflictDetail> => {
-    // No conflicts possible with 0 or 1 patch groups
+    // 0或1个补丁组不可能有冲突
     if (!patchGroups || patchGroups.length <= 1) {
         return [];
     }
 
-    // Index all patches by path
+    // 按路径索引所有补丁
     const patchesByPath = indexPatchesByPath(patchGroups);
 
-    // Path prefix mapping - for quickly finding patches on parent paths
+    // 路径前缀映射 - 用于快速查找父路径上的补丁
     const pathPrefixMap = buildPathPrefixMap(patchesByPath);
 
-    // Store all conflicts, grouped by path
+    // 存储所有冲突，按路径分组
     const conflictsByPath: Record<string, ConflictDetail> = {};
 
-    // Detect conflicts on the same path
+    // 检测相同路径上的冲突
     detectDirectPathConflicts(patchesByPath, conflictsByPath);
 
-    // Detect parent-child path conflicts
+    // 检测父子路径冲突
     detectParentChildPathConflicts(patchesByPath, pathPrefixMap, conflictsByPath);
 
-    // Convert to array
+    // 转换为数组
     return Object.values(conflictsByPath);
 };
 
 /**
- * Index all patches by path
+ * 按路径索引所有补丁
  */
 const indexPatchesByPath = (
     patchGroups: ReadonlyArray<ReadonlyArray<Patch>>
@@ -76,7 +76,7 @@ const indexPatchesByPath = (
 };
 
 /**
- * Build path prefix mapping
+ * 构建路径前缀映射
  */
 const buildPathPrefixMap = (
     patchesByPath: Map<string, PatchOperationWithIndex[]>
@@ -84,11 +84,11 @@ const buildPathPrefixMap = (
     const pathPrefixMap = new Map<string, string[]>();
 
     for (const path of patchesByPath.keys()) {
-        // Collect all prefixes for the path
+        // 收集路径的所有前缀
         const prefixes = new Set<string>();
         collectPathPrefixes(path, prefixes);
 
-        // Record all prefix paths for this path
+        // 记录这个路径的所有前缀路径
         pathPrefixMap.set(
             path,
             Array.from(prefixes).filter(p => p !== path)
@@ -99,17 +99,17 @@ const buildPathPrefixMap = (
 };
 
 /**
- * Detect direct path conflicts (conflicting operations on the same path)
+ * 检测直接路径冲突（同一路径上的冲突操作）
  */
 const detectDirectPathConflicts = (
     patchesByPath: Map<string, PatchOperationWithIndex[]>,
     conflictsByPath: Record<string, ConflictDetail>
 ): void => {
     for (const [path, operations] of patchesByPath.entries()) {
-        // Skip paths with only one operation
+        // 跳过只有一个操作的路径
         if (operations.length <= 1) continue;
 
-        // Check if there are conflicting operations
+        // 检查是否存在冲突操作
         if (hasConflictingOperations(operations)) {
             createConflictWithOperations(conflictsByPath, path, operations);
         }
@@ -117,28 +117,28 @@ const detectDirectPathConflicts = (
 };
 
 /**
- * Check if a set of operations has conflicts
+ * 检查一组操作是否存在冲突
  */
 const hasConflictingOperations = (operations: PatchOperationWithIndex[]): boolean => {
-    // Check if there are different operation types
+    // 检查是否有不同的操作类型
     const opTypes = new Set(operations.map(op => op.patch.op));
 
-    // If operation types are the same
+    // 如果操作类型相同
     if (opTypes.size === 1) {
         const opType = operations[0].patch.op;
 
-        // If it's a remove operation, no conflict
+        // 如果是删除操作，没有冲突
         if (opType === 'remove') {
             return false;
         }
 
-        // If add or replace operation, check if values are the same
+        // 如果是添加或替换操作，检查值是否相同
         if (opType === 'add' || opType === 'replace') {
             const valueMap = new Map();
 
             for (const op of operations) {
                 const value = op.patch.value;
-                // Look for any matching value
+                // 查找任何匹配的值
                 let found = false;
 
                 for (const [, storedValue] of valueMap.entries()) {
@@ -150,7 +150,7 @@ const hasConflictingOperations = (operations: PatchOperationWithIndex[]): boolea
 
                 if (!found) {
                     valueMap.set(valueMap.size, value);
-                    // If different values found, conflict exists
+                    // 如果发现不同的值，存在冲突
                     if (valueMap.size > 1) {
                         return true;
                     }
@@ -161,12 +161,12 @@ const hasConflictingOperations = (operations: PatchOperationWithIndex[]): boolea
         }
     }
 
-    // Different operation types, conflict exists
+    // 不同的操作类型，存在冲突
     return true;
 };
 
 /**
- * Detect parent-child path conflicts
+ * 检测父子路径冲突
  */
 const detectParentChildPathConflicts = (
     patchesByPath: Map<string, PatchOperationWithIndex[]>,
@@ -176,7 +176,7 @@ const detectParentChildPathConflicts = (
     for (const [path, operations] of patchesByPath.entries()) {
         if (!operations.length) continue;
 
-        // Get all prefix paths for this path
+        // 获取此路径的所有前缀路径
         const prefixes = pathPrefixMap.get(path) || [];
 
         for (const prefix of prefixes) {
@@ -184,23 +184,23 @@ const detectParentChildPathConflicts = (
 
             if (!parentOps || !parentOps.length) continue;
 
-            // Check if operations on the prefix path affect the current path
+            // 检查前缀路径上的操作是否影响当前路径
             for (const parentOp of parentOps) {
-                // Remove and replace operations affect child paths
+                // 删除和替换操作会影响子路径
                 if (parentOp.patch.op === 'remove' || parentOp.patch.op === 'replace') {
-                    // For replace operations, check if child path values match values in parent object
+                    // 对于替换操作，检查子路径值是否与父对象中的值匹配
                     if (
                         parentOp.patch.op === 'replace' &&
                         operations.every(childOp => {
-                            // Only compare values for replace and add operations
+                            // 仅对替换和添加操作比较值
                             if (childOp.patch.op !== 'replace' && childOp.patch.op !== 'add') {
                                 return true;
                             }
 
-                            // Extract the remaining path relative to the parent path
+                            // 提取相对于父路径的剩余路径
                             const remainingPath = path.slice(prefix.length);
 
-                            // Get the value from the parent object at the corresponding child path
+                            // 获取父对象中对应子路径的值
                             let parentValue = parentOp.patch.value;
                             const segments = remainingPath.split('/').filter(s => s);
 
@@ -212,29 +212,35 @@ const detectParentChildPathConflicts = (
                                     parentValue = (parentValue as any)[segment];
                                 }
 
-                                // Compare values for equality
+                                // 比较值是否相等
                                 return deepEqual(parentValue, childOp.patch.value);
                             } catch {
                                 return false;
                             }
                         })
                     ) {
-                        // If all child operations match the corresponding parts in the parent object, not a conflict
+                        // 如果所有子操作与父对象中的对应部分匹配，则不是冲突
                         continue;
                     }
 
-                    if (!conflictsByPath[path]) {
-                        conflictsByPath[path] = {
-                            path,
+                    // 关键修改：当父路径替换或删除时，冲突应该记录在父路径上
+                    // 而不是子路径上，因为父路径操作会覆盖所有子路径
+                    const conflictPath = prefix;
+
+                    if (!conflictsByPath[conflictPath]) {
+                        conflictsByPath[conflictPath] = {
+                            path: conflictPath,
                             options: [],
                         };
                     }
 
-                    // Add parent path and current path operations to conflict
-                    addOperationToConflict(conflictsByPath[path], parentOp);
-                    operations.forEach(op => addOperationToConflict(conflictsByPath[path], op));
+                    // 将父路径操作添加到冲突中
+                    addOperationToConflict(conflictsByPath[conflictPath], parentOp);
+                    
+                    // 将子路径操作添加到冲突中，因为它们与父路径操作冲突
+                    operations.forEach(op => addOperationToConflict(conflictsByPath[conflictPath], op));
 
-                    // One conflict is enough
+                    // 一个冲突就足够了
                     break;
                 }
             }
@@ -243,7 +249,7 @@ const detectParentChildPathConflicts = (
 };
 
 /**
- * Create a conflict with operations
+ * 创建包含操作的冲突
  */
 const createConflictWithOperations = (
     conflictsByPath: Record<string, ConflictDetail>,
@@ -265,18 +271,18 @@ const createConflictWithOperations = (
 };
 
 /**
- * Add an operation to a conflict
+ * 将操作添加到冲突
  */
 const addOperationToConflict = (conflict: ConflictDetail, op: PatchOperationWithIndex): void => {
-    // Prefer to use hash already in the patch, compute if not available
+    // 优先使用补丁中已有的哈希值，如果没有则计算
     const hash =
         op.patch.hash || generatePatchOptionHash(op.patch.op, op.patch.path, op.patch.value);
 
-    // Check if an option with the same hash already exists
+    // 检查是否已存在具有相同哈希值的选项
     const existingOption = conflict.options.includes(hash);
 
     if (!existingOption) {
-        // Add new option (hash only)
+        // 添加新选项（仅哈希值）
         conflict.options.push(hash);
     }
 };
