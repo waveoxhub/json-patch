@@ -376,11 +376,18 @@ describe('detectConflicts', () => {
 
         const conflicts = detectConflicts([patch1, patch2]);
         expect(conflicts.length).toBeGreaterThan(0);
-        expect(conflicts.some(c => c.path === '/users/user123/addresses/0' || 
-                                    c.path === '/users/user123/addresses/0/city' || 
-                                    c.path === '/users/user123/addresses/0/zipcode')).toBe(true);
+        expect(
+            conflicts.some(
+                c =>
+                    c.path === '/users/user123/addresses/0' ||
+                    c.path === '/users/user123/addresses/0/city' ||
+                    c.path === '/users/user123/addresses/0/zipcode'
+            )
+        ).toBe(true);
         expect(conflicts.some(c => c.options.includes(removeHash))).toBe(true);
-        expect(conflicts.some(c => c.options.includes(cityHash) || c.options.includes(zipcodeHash))).toBe(true);
+        expect(
+            conflicts.some(c => c.options.includes(cityHash) || c.options.includes(zipcodeHash))
+        ).toBe(true);
     });
 
     it('should not detect conflict when replacing whole object and updating a property with identical value', () => {

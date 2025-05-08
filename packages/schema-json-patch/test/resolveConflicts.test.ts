@@ -4,7 +4,12 @@ import {
     generateResolvedPatch,
     initializeResolutions,
 } from '../src/resolveConflicts';
-import { ConflictDetail, Patch, ConflictResolutions, CustomConflictResolutions } from '../src/types/patch';
+import {
+    ConflictDetail,
+    Patch,
+    ConflictResolutions,
+    CustomConflictResolutions,
+} from '../src/types/patch';
 import { detectConflicts } from '../src';
 import { generatePatchOptionHash } from '../src/utils/hashUtils';
 

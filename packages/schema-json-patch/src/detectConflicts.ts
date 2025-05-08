@@ -191,7 +191,7 @@ const detectParentChildPathConflicts = (
                 if (parentOp.patch.op === 'remove') {
                     const allConflictingOps = [parentOp, ...operations];
                     createConflictWithOperations(conflictsByPath, prefix, allConflictingOps);
-                } 
+                }
                 // 如果父路径的操作是 'replace'，它可能会与子路径的操作冲突
                 else if (parentOp.patch.op === 'replace') {
                     const isCompatibleReplace = operations.every(childOp => {
@@ -202,10 +202,16 @@ const detectParentChildPathConflicts = (
                         // 提取相对于父路径的子路径部分
                         const relativePath = path.substring(prefix.length);
                         // 获取父路径 'replace' 操作的值中对应子路径的值
-                        const childValueInParent = getValueAtPath(parentOp.patch.value, relativePath);
-                        
+                        const childValueInParent = getValueAtPath(
+                            parentOp.patch.value,
+                            relativePath
+                        );
+
                         // 如果在父路径的值中找到了对应的子路径值，并且它们深度相等，则视为兼容
-                        return childValueInParent !== undefined && deepEqual(childValueInParent, childOp.patch.value);
+                        return (
+                            childValueInParent !== undefined &&
+                            deepEqual(childValueInParent, childOp.patch.value)
+                        );
                     });
 
                     // 如果不兼容，则表示存在冲突

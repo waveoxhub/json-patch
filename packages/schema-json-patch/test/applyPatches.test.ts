@@ -257,7 +257,9 @@ describe('applyPatches', () => {
             },
         ];
 
-        expect(() => applyPatches(source, patches, schema)).toThrow('Schema field not found: profile');
+        expect(() => applyPatches(source, patches, schema)).toThrow(
+            'Schema field not found: profile'
+        );
     });
 
     it('should handle patches with dependencies', () => {
@@ -388,7 +390,9 @@ describe('applyPatches', () => {
             },
         ];
 
-        expect(() => applyPatches(source, patches, schema)).toThrow('Schema field not found: nonexistent');
+        expect(() => applyPatches(source, patches, schema)).toThrow(
+            'Schema field not found: nonexistent'
+        );
     });
 
     it('should correctly handle replace operations on arrays', () => {

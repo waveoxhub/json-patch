@@ -63,9 +63,9 @@ export const resolveConflicts = (
 
     // 合并补丁和自定义解决方案
     return [
-        ...nonConflictPatches, 
+        ...nonConflictPatches,
         ...Array.from(includedPatches),
-        ...(customResolutions.length > 0 ? customResolutions.map(cr => cr.patch) : [])
+        ...(customResolutions.length > 0 ? customResolutions.map(cr => cr.patch) : []),
     ];
 };
 
@@ -106,7 +106,7 @@ export const generateResolvedPatch = (
 
     return {
         unresolvedConflicts: Array.from(unresolvedHashes),
-        resolvedPatches
+        resolvedPatches,
     };
 };
 
@@ -117,10 +117,10 @@ export const generateResolvedPatch = (
  */
 export const initializeResolutions = (
     conflicts: ReadonlyArray<ConflictDetail>
-): ConflictResolutions => 
+): ConflictResolutions =>
     conflicts
         .filter(conflict => conflict.options.length > 0)
         .map(conflict => ({
             path: conflict.path,
-            selectedHash: conflict.options[0]
+            selectedHash: conflict.options[0],
         }));

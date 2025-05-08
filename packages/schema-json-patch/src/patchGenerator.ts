@@ -54,11 +54,7 @@ export const generatePatches = (
     const patches: Patch[] = [];
 
     // 处理顶层数组
-    if (
-        schema.$type === 'array' &&
-        schema.$item.$type === 'object' &&
-        schema.$item.$pk
-    ) {
+    if (schema.$type === 'array' && schema.$item.$type === 'object' && schema.$item.$pk) {
         if (!Array.isArray(sourceData) || !Array.isArray(targetData)) {
             throw new Error('Type mismatch: array expected');
         }
@@ -77,7 +73,7 @@ export const generatePatches = (
         // 处理新增和修改的项目
         for (const [id, targetIndex] of targetIdMap.entries()) {
             const item = targetData[targetIndex];
-            
+
             if (!sourceIdMap.has(id)) {
                 // 新项目
                 patches.push(createPatch('add', `/${id}`, item));
@@ -90,7 +86,9 @@ export const generatePatches = (
                     const itemPath = `/${id}`;
                     const state: PathProcessingState = {
                         handledPaths: new Set<string>(),
-                        allPaths: Array.from(new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])),
+                        allPaths: Array.from(
+                            new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
+                        ),
                     };
 
                     generateObjectFieldPatches(
@@ -259,8 +257,12 @@ const generateObjectFieldPatches = (
                     const sourceArray = sourceValue as Array<Record<string, unknown>>;
                     const targetArray = targetValue as Array<Record<string, unknown>>;
 
-                    const sourceIdMap = new Map(sourceArray.map((item, index) => [item[pkField], index]));
-                    const targetIdMap = new Map(targetArray.map((item, index) => [item[pkField], index]));
+                    const sourceIdMap = new Map(
+                        sourceArray.map((item, index) => [item[pkField], index])
+                    );
+                    const targetIdMap = new Map(
+                        targetArray.map((item, index) => [item[pkField], index])
+                    );
 
                     // 处理删除的项目
                     for (const [id] of sourceIdMap.entries()) {
@@ -323,10 +325,14 @@ const generateObjectFieldPatches = (
  */
 const getOperationPriority = (op: string): number => {
     switch (op) {
-        case 'remove': return 0;
-        case 'replace': return 1;
-        case 'add': return 2;
-        default: return 3;
+        case 'remove':
+            return 0;
+        case 'replace':
+            return 1;
+        case 'add':
+            return 2;
+        default:
+            return 3;
     }
 };
 

@@ -47,20 +47,26 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
     }
 
     const result = clone(state);
-    
+
     switch (op) {
         case 'add':
             modifyAtPath(result, pathComponents, schema, (parent, key) => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
-                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                        throw new Error(
+                            `Schema mismatch: expected array schema for path '${path}'`
+                        );
                     }
-                    
+
                     if (isObject(value) && hasObjectItems(arraySchema)) {
                         const pkField = getPrimaryKeyField(arraySchema);
                         if (pkField in value) {
-                            const index = getOrCreateArrayIndex(parent, String(value[pkField]), arraySchema);
+                            const index = getOrCreateArrayIndex(
+                                parent,
+                                String(value[pkField]),
+                                arraySchema
+                            );
                             parent[index] = value;
                         } else {
                             parent.push(value);
@@ -70,18 +76,22 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                     }
                 } else if (isObject(parent)) {
                     const fieldSchema = getSchemaForPath(schema, pathComponents);
-                    
+
                     if (fieldSchema && fieldSchema.$type === 'array') {
                         if (!parent[key] || !Array.isArray(parent[key])) {
                             parent[key] = [];
                         }
-                        
+
                         if (isObject(value) && hasObjectItems(fieldSchema)) {
                             const array = parent[key] as unknown[];
                             const pkField = getPrimaryKeyField(fieldSchema);
                             let index;
                             if (pkField in value) {
-                                index = getOrCreateArrayIndex(array, String(value[pkField]), fieldSchema);
+                                index = getOrCreateArrayIndex(
+                                    array,
+                                    String(value[pkField]),
+                                    fieldSchema
+                                );
                             } else {
                                 array.push(value);
                                 index = array.length - 1;
@@ -102,7 +112,9 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
-                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                        throw new Error(
+                            `Schema mismatch: expected array schema for path '${path}'`
+                        );
                     }
                     const index = findArrayIndex(parent, key, arraySchema);
                     if (index !== -1) {
@@ -119,7 +131,9 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
-                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                        throw new Error(
+                            `Schema mismatch: expected array schema for path '${path}'`
+                        );
                     }
                     const index = getOrCreateArrayIndex(parent, key, arraySchema);
                     parent[index] = value;
@@ -139,12 +153,15 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
 /**
  * 获取指定路径的模式
  */
-const getSchemaForPath = (schema: Schema, pathComponents: ReadonlyArray<string>): Schema | undefined => {
+const getSchemaForPath = (
+    schema: Schema,
+    pathComponents: ReadonlyArray<string>
+): Schema | undefined => {
     let currentSchema: Schema | undefined = schema;
-    
+
     for (const component of pathComponents) {
         if (!currentSchema) return undefined;
-        
+
         if (currentSchema.$type === 'object') {
             currentSchema = currentSchema.$fields[component] as Schema | undefined;
         } else if (currentSchema.$type === 'array') {
@@ -153,7 +170,7 @@ const getSchemaForPath = (schema: Schema, pathComponents: ReadonlyArray<string>)
             return undefined;
         }
     }
-    
+
     return currentSchema;
 };
 
@@ -198,11 +215,7 @@ const getPrimaryKeyField = (schema: ArraySchema): string => {
 /**
  * 在数组中查找项目的索引
  */
-const findArrayIndex = (
-    array: unknown[],
-    key: string,
-    schema: ArraySchema
-): number => {
+const findArrayIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
     if (!hasObjectItems(schema)) {
         // 如果不是对象数组，尝试直接使用索引
         const index = parseInt(key, 10);
@@ -211,19 +224,15 @@ const findArrayIndex = (
 
     // 使用主键查找
     const pkField = getPrimaryKeyField(schema);
-    return array.findIndex(item => 
-        isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
+    return array.findIndex(
+        item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
     );
 };
 
 /**
  * 在数组中查找或创建项目，返回其索引
  */
-const getOrCreateArrayIndex = (
-    array: unknown[],
-    key: string,
-    schema: ArraySchema
-): number => {
+const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
     const index = findArrayIndex(array, key, schema);
     if (index !== -1) {
         return index;
@@ -296,7 +305,7 @@ const modifyAtPath = (
     // 遍历路径直到倒数第二个组件
     for (let i = 0; i < lastIndex; i++) {
         const component = pathComponents[i];
-        
+
         if (!currentSchema) {
             throw new Error(`Schema not found for path component: ${component}`);
         }
@@ -327,7 +336,7 @@ const modifyAtPath = (
             // 显式类型注释，确保完整的ArraySchema类型
             const arraySchema: ArraySchema = currentSchema;
             const index = getOrCreateArrayIndex(current, component, arraySchema);
-            
+
             // 确保索引位置有值
             if (current[index] === undefined) {
                 if (isObject(arraySchema.$item)) {
@@ -341,17 +350,18 @@ const modifyAtPath = (
 
             current = current[index];
             // 明确处理$item可能的两种类型
-            if (isObject(arraySchema.$item) && 
-                arraySchema.$item.$type === 'object') {
+            if (isObject(arraySchema.$item) && arraySchema.$item.$type === 'object') {
                 currentSchema = arraySchema.$item;
             } else {
                 // 如果是基本类型，则没有进一步的schema
                 currentSchema = undefined;
             }
         } else {
-            throw new Error(`Unexpected schema type: ${
-                currentSchema ? (currentSchema as any).$type : 'unknown'
-            }`);
+            throw new Error(
+                `Unexpected schema type: ${
+                    currentSchema ? (currentSchema as any).$type : 'unknown'
+                }`
+            );
         }
     }
 

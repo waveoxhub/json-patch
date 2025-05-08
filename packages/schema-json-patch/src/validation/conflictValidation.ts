@@ -115,9 +115,10 @@ export const validateResolvedConflicts = (
 
         // 找出选中的哈希值
         const resolution = resolutions.find(res => res.path === conflict.path);
-        const selectedHash = resolution && conflict.options.includes(resolution.selectedHash)
-            ? resolution.selectedHash 
-            : conflict.options[0];
+        const selectedHash =
+            resolution && conflict.options.includes(resolution.selectedHash)
+                ? resolution.selectedHash
+                : conflict.options[0];
 
         // 找到匹配哈希值的补丁
         const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);

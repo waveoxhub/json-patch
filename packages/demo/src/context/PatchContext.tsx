@@ -186,7 +186,12 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setConflictResolutions(initialResolutions);
 
             // 生成初始结果
-            const result = generateResolvedPatch(patches, detectedConflicts, initialResolutions, []);
+            const result = generateResolvedPatch(
+                patches,
+                detectedConflicts,
+                initialResolutions,
+                []
+            );
             setUnresolvedConflicts([...result.unresolvedConflicts]);
             setResolvedPatches([...result.resolvedPatches]);
 
@@ -245,7 +250,12 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             let patchValue = customValue;
 
             // 如果customValue是对象且包含path属性，则使用其作为路径
-            if (customValue && typeof customValue === 'object' && 'path' in customValue && 'value' in customValue) {
+            if (
+                customValue &&
+                typeof customValue === 'object' &&
+                'path' in customValue &&
+                'value' in customValue
+            ) {
                 patchPath = customValue.path;
                 patchValue = customValue.value;
             }
@@ -291,15 +301,17 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             // 处理自定义冲突解决方案
             // 检查并处理路径不同的情况
             let processedCustomResolutions = customResolutions;
-            
+
             // 确保每个自定义解决方案都有正确的冲突路径映射
             for (const resolution of processedCustomResolutions) {
                 // 如果自定义补丁路径与冲突路径不同，需要处理
                 if (resolution.patch.path !== resolution.path) {
-                    console.log(`处理不同路径的自定义解决方案: 冲突路径 ${resolution.path}, 补丁路径 ${resolution.patch.path}`);
+                    console.log(
+                        `处理不同路径的自定义解决方案: 冲突路径 ${resolution.path}, 补丁路径 ${resolution.patch.path}`
+                    );
                 }
             }
-            
+
             // 生成解决后的补丁集
             const result = generateResolvedPatch(
                 patches,
