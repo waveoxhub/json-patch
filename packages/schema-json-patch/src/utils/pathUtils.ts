@@ -17,9 +17,7 @@ export const parseJsonPath = (path: string): PathComponents => {
     if (path[0] !== '/') throw new Error('Invalid path: must start with /');
 
     const components = path.split('/');
-    // 第一个元素是空字符串，移除它
-    components.shift();
-
+    components.shift(); // 移除第一个空字符串
     return components.map(component => component.replace(/~1/g, '/').replace(/~0/g, '~'));
 };
 
@@ -87,30 +85,23 @@ export const extractPathMap = (
             throw new Error(`Path ${basePath} expected to be array, but found ${typeof data}`);
         }
 
-        // 处理数组元素
         data.forEach((item, index) => {
             const itemPath = `${basePath}/${index}`;
 
             if (schema.$item.$type === 'object') {
-                // 对于对象数组，使用主键作为索引
                 const pkValue = getPrimaryKeyValue(
                     schema.$item as ArrayItemObjectSchema,
                     item as Record<string, unknown>
                 );
                 const semanticPath = `${basePath}/${pkValue}`;
 
-                // 存储从语义路径到索引路径的映射
                 result.set(semanticPath, { path: itemPath, value: item });
-
-                // 递归处理对象字段
                 extractPathMap(schema.$item, item, semanticPath, result);
             } else {
-                // 基本类型数组
                 result.set(itemPath, { path: itemPath, value: item });
             }
         });
     } else if (schema.$type === 'object') {
-        // 处理对象字段
         for (const [key, fieldSchema] of Object.entries(schema.$fields)) {
             const fieldPath = basePath ? `${basePath}/${key}` : key;
             const fieldValue = (data as Record<string, unknown>)[key];

@@ -11,11 +11,7 @@ export const validateJson = (jsonString: string): ValidationResult => {
     try {
         JSON.parse(jsonString);
     } catch (error) {
-        if (error instanceof Error) {
-            errors.push(`JSON parse error: ${error.message}`);
-        } else {
-            errors.push('JSON parse error');
-        }
+        errors.push(`JSON parse error: ${error instanceof Error ? error.message : 'Invalid JSON'}`);
     }
 
     return {

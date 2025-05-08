@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, List, Radio, Space, Divider, Input, Typography, Empty } from 'antd';
+import { Card, Button, List, Radio, Space, Divider, Input, Typography, Empty, Tag } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
 import { Patch } from '@waveox/schema-json-patch';
@@ -35,6 +35,7 @@ const ConflictResolutionSection: React.FC = () => {
     } = usePatchContext();
 
     const [customValues, setCustomValues] = useState<Record<string, string>>({});
+    const [customPaths, setCustomPaths] = useState<Record<string, string>>({});
 
     // 调试信息
     useEffect(() => {
@@ -58,13 +59,31 @@ const ConflictResolutionSection: React.FC = () => {
         }));
     };
 
+    const handleCustomPathChange = (conflictIndex: number, path: string) => {
+        setCustomPaths(prev => ({
+            ...prev,
+            [conflictIndex]: path,
+        }));
+    };
+
     const applyCustomValue = (conflictIndex: number) => {
         try {
             const value = customValues[conflictIndex];
             if (!value) return;
 
             const parsedValue = JSON.parse(value);
-            handleCustomResolution(conflictIndex, parsedValue);
+            const customPath = customPaths[conflictIndex];
+
+            // 如果提供了自定义路径，则创建包含路径和值的对象
+            if (customPath) {
+                handleCustomResolution(conflictIndex, {
+                    path: customPath,
+                    value: parsedValue
+                });
+            } else {
+                // 否则使用原始冲突路径
+                handleCustomResolution(conflictIndex, parsedValue);
+            }
         } catch (err) {
             // 处理解析错误
             console.error('无法解析自定义值', err);
@@ -139,14 +158,29 @@ const ConflictResolutionSection: React.FC = () => {
                                                                 style={{ marginBottom: '16px' }}
                                                             >
                                                                 <div className="resolution-option">
-                                                                    <Text>
-                                                                        {getTargetLabelFromHash(
-                                                                            hash,
-                                                                            patches
+                                                                    <div style={{ marginBottom: '8px' }}>
+                                                                        <Text strong>
+                                                                            {getTargetLabelFromHash(
+                                                                                hash,
+                                                                                patches
+                                                                            )}
+                                                                        </Text>
+                                                                        <Tag color="blue" style={{ marginLeft: '8px' }}>
+                                                                            hash: {hash.substring(0, 8)}
+                                                                        </Tag>
+                                                                        {patch && (
+                                                                            <>
+                                                                                <Tag color="green" style={{ marginLeft: '8px' }}>
+                                                                                    {patch.op}
+                                                                                </Tag>
+                                                                                <Tag color="purple" style={{ marginLeft: '8px' }}>
+                                                                                    路径: {patch.path}
+                                                                                </Tag>
+                                                                            </>
                                                                         )}
-                                                                        :
-                                                                    </Text>
+                                                                    </div>
                                                                     <div className="value-display">
+                                                                        <Text type="secondary">值:</Text>
                                                                         <pre>
                                                                             {getConflictValueDisplay(
                                                                                 patch?.value
@@ -163,26 +197,34 @@ const ConflictResolutionSection: React.FC = () => {
                                                     style={{ marginBottom: '8px' }}
                                                 >
                                                     <div className="custom-resolution">
-                                                        <Text>自定义值:</Text>
-                                                        <TextArea
-                                                            value={customValues[index] || ''}
-                                                            onChange={e =>
-                                                                handleCustomInputChange(
-                                                                    index,
-                                                                    e.target.value
-                                                                )
-                                                            }
-                                                            rows={4}
-                                                            placeholder="输入自定义JSON值"
-                                                            style={{ fontFamily: 'monospace' }}
-                                                        />
-                                                        <Button
-                                                            size="small"
-                                                            onClick={() => applyCustomValue(index)}
-                                                            disabled={!customValues[index]}
-                                                        >
-                                                            应用自定义值
-                                                        </Button>
+                                                        <Space direction="vertical" style={{ width: '100%' }}>
+                                                            <div>
+                                                                <Text strong>自定义路径:</Text>
+                                                                <Input
+                                                                    value={customPaths[index] || ''}
+                                                                    onChange={e => handleCustomPathChange(index, e.target.value)}
+                                                                    placeholder={`输入自定义路径，留空则使用 ${path}`}
+                                                                    style={{ width: '100%', marginTop: '4px' }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Text strong>自定义值:</Text>
+                                                                <TextArea
+                                                                    value={customValues[index] || ''}
+                                                                    onChange={e => handleCustomInputChange(index, e.target.value)}
+                                                                    rows={4}
+                                                                    placeholder="输入自定义JSON值"
+                                                                    style={{ fontFamily: 'monospace', marginTop: '4px' }}
+                                                                />
+                                                            </div>
+                                                            <Button
+                                                                size="small"
+                                                                onClick={() => applyCustomValue(index)}
+                                                                disabled={!customValues[index]}
+                                                            >
+                                                                应用自定义值
+                                                            </Button>
+                                                        </Space>
                                                     </div>
                                                 </Radio>
                                             </Space>

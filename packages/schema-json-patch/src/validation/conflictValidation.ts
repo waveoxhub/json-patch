@@ -114,13 +114,10 @@ export const validateResolvedConflicts = (
         conflictPaths.add(conflict.path);
 
         // 找出选中的哈希值
-        let selectedHash = conflict.options[0]; // 默认选第一个
-
-        // 查找是否有针对此路径的解决方案
         const resolution = resolutions.find(res => res.path === conflict.path);
-        if (resolution && conflict.options.includes(resolution.selectedHash)) {
-            selectedHash = resolution.selectedHash;
-        }
+        const selectedHash = resolution && conflict.options.includes(resolution.selectedHash)
+            ? resolution.selectedHash 
+            : conflict.options[0];
 
         // 找到匹配哈希值的补丁
         const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);

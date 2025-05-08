@@ -10,16 +10,13 @@ export const deepClone = <T>(obj: T): T => {
     }
 
     if (Array.isArray(obj)) {
-        return obj.map(item => deepClone(item)) as unknown as T;
+        return obj.map(deepClone) as unknown as T;
     }
 
     const result = {} as Record<string, unknown>;
-
-    for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            result[key] = deepClone((obj as Record<string, unknown>)[key]);
-        }
-    }
+    Object.entries(obj as Record<string, unknown>).forEach(([key, value]) => {
+        result[key] = deepClone(value);
+    });
 
     return result as T;
 };

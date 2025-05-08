@@ -16,13 +16,15 @@ export const generatePatchOptionHash = (
     try {
         const serializedValue = value !== undefined ? JSON.stringify(value) : 'undefined';
         const hashInput = `${op}_${path}_${serializedValue}`;
+        
         let hash = 0;
         for (let i = 0; i < hashInput.length; i++) {
             const char = hashInput.charCodeAt(i);
             hash = (hash << 5) - hash + char;
         }
+        
         return Math.abs(hash).toString(16);
-    } catch (e) {
+    } catch {
         throw new Error('Failed to generate patch option hash');
     }
 };
