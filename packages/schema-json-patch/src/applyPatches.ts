@@ -332,8 +332,7 @@ const modifyAtPath = (
             if (current[index] === undefined) {
                 if (isObject(arraySchema.$item)) {
                     const itemType = arraySchema.$item.$type;
-                    current[index] = itemType === 'array' ? [] : 
-                                     itemType === 'object' ? {} : null;
+                    current[index] = itemType === 'object' ? {} : null;
                 } else {
                     // 基本类型的数组项
                     current[index] = null;
@@ -343,14 +342,16 @@ const modifyAtPath = (
             current = current[index];
             // 明确处理$item可能的两种类型
             if (isObject(arraySchema.$item) && 
-                (arraySchema.$item.$type === 'object' || arraySchema.$item.$type === 'array')) {
+                arraySchema.$item.$type === 'object') {
                 currentSchema = arraySchema.$item;
             } else {
                 // 如果是基本类型，则没有进一步的schema
                 currentSchema = undefined;
             }
         } else {
-            throw new Error(`Unexpected schema type: ${currentSchema.$type}`);
+            throw new Error(`Unexpected schema type: ${
+                currentSchema ? (currentSchema as any).$type : 'unknown'
+            }`);
         }
     }
 
