@@ -91,7 +91,7 @@ const modified = {
 };
 
 // Generate patches from original to modified
-const patches = generatePatches(original, modified, schema);
+const patches = generatePatches(schema, JSON.stringify(original), JSON.stringify(modified));
 
 console.log(patches);
 // Output:
@@ -107,8 +107,8 @@ console.log(patches);
 import { applyPatches } from '@waveox/schema-json-patch';
 
 // Apply patches to the original data
-const result = applyPatches(original, patches, schema);
-// result now equals modified
+const result = applyPatches(JSON.stringify(original), patches, schema);
+// result is now a JSON string, can be converted to an object with JSON.parse(result)
 ```
 
 ### Conflict Detection and Resolution
@@ -129,14 +129,22 @@ if (conflicts.length > 0) {
     // Resolve conflicts by choosing which patch to apply
     const resolutions = conflicts.map(conflict => ({
         path: conflict.path,
-        selectedHash: conflict.options[1] // Choose the second option
+        selectedHash: conflict.options[1], // Choose the second option
     }));
 
+    // Optional custom resolutions
+    const customResolutions = [];
+
     // Apply resolution
-    const resolvedPatches = resolveConflicts(patches1.concat(patches2), conflicts, resolutions);
+    const resolvedPatches = resolveConflicts(
+        patches1.concat(patches2), 
+        conflicts, 
+        resolutions,
+        customResolutions // Optional parameter
+    );
 
     // Apply the resolved patches
-    const result = applyPatches(original, resolvedPatches, schema);
+    const result = applyPatches(JSON.stringify(original), resolvedPatches, schema);
 }
 ```
 
@@ -172,8 +180,8 @@ SchemaJSONPatch uses semantic paths. For object members in arrays, it uses the s
 
 For example, to modify the `name` field:
 
-- Traditional JSON Patch path: `items/0/name`
-- SchemaJSONPatch path: `items/id1/name`
+- Traditional JSON Patch path: `/items/0/name`
+- SchemaJSONPatch path: `/items/id1/name`
 
 **Advantage**: Even if the order of array elements changes, the patch can still be applied to the target object correctly.
 
@@ -181,12 +189,12 @@ For example, to modify the `name` field:
 
 ### Core Functions
 
-| Function                                        | Description                                            |
-| ----------------------------------------------- | ------------------------------------------------------ |
-| `generatePatches(original, modified, schema)`   | Generate patches from source state to target state     |
-| `applyPatches(state, patches, schema)`          | Apply patches to data state                            |
-| `detectConflicts(patchGroups)`                  | Detect conflicts between multiple sets of patches      |
-| `resolveConflicts(patches, conflicts, resolutions)` | Merge conflicting patches according to resolution plan |
+| Function                                                | Description                                            |
+| ------------------------------------------------------- | ------------------------------------------------------ |
+| `generatePatches(schema, sourceJson, targetJson)`       | Generate patches from source state to target state     |
+| `applyPatches(sourceJson, patches, schema)`             | Apply patches to data state                            |
+| `detectConflicts(patchGroups)`                          | Detect conflicts between multiple sets of patches      |
+| `resolveConflicts(patches, conflicts, resolutions, customResolutions)` | Merge conflicting patches according to resolution plan |
 
 ### Validation Functions
 
@@ -201,13 +209,13 @@ For example, to modify the `name` field:
 
 ### Type Definitions
 
-| Type                  | Description                     |
-| --------------------- | ------------------------------- |
-| `Schema`              | Data structure definition       |
-| `Patch`               | Patch operation object          |
+| Type                  | Description                              |
+| --------------------- | ---------------------------------------- |
+| `Schema`              | Data structure definition                |
+| `Patch`               | Patch operation object                   |
 | `UnresolvedConflicts` | Array of unresolved conflict hash values |
-| `ConflictResolutions` | Conflict resolution plan        |
-| `ValidationResult`    | Result of validation operations |
+| `ConflictResolutions` | Conflict resolution plan                 |
+| `ValidationResult`    | Result of validation operations          |
 
 ## Development & Contribution
 
