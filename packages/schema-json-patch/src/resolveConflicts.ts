@@ -2,140 +2,125 @@ import {
     Patch,
     ConflictDetail,
     ConflictResolutions,
-    ConflictResult,
-    CustomResolution,
+    UnresolvedConflicts,
+    CustomConflictResolutions,
 } from './types/patch';
 
 /**
- * Apply conflict resolutions to generate processed patch set
- * @param patches Original patch collection (flattened array of all patch groups)
- * @param conflicts Conflict details array
- * @param resolutions Conflict resolution choices
- * @param customResolutions Custom resolutions (optional)
- * @returns Processed patch array
+ * 从所有补丁中找到与指定哈希匹配的补丁
+ * @param patches 所有补丁数组
+ * @param optionHash 选项哈希
+ * @returns 匹配的补丁
+ */
+const findMatchingPatch = (
+    patches: ReadonlyArray<Patch>,
+    optionHash: string
+): Patch | undefined => {
+    return patches.find(patch => patch.hash === optionHash);
+};
+
+/**
+ * 应用冲突解决方案生成处理后的补丁集
+ * @param patches 原始补丁集合（所有补丁组的扁平数组）
+ * @param conflicts 冲突详情数组
+ * @param resolutions 冲突解决方案数组
+ * @param customResolutions 自定义解决方案
+ * @returns 处理后的补丁数组
  */
 export const resolveConflicts = (
     patches: ReadonlyArray<Patch>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    customResolutions: CustomConflictResolutions = []
 ): ReadonlyArray<Patch> => {
-    // If no conflicts, return all patches
     if (conflicts.length === 0) {
         return [...patches];
     }
 
-    // Create set of patch indices to exclude
-    const excludedPatchIndices = new Set<number>();
+    const includedPatches = new Set<Patch>();
 
-    // Mark patches to exclude based on user resolutions
-    conflicts.forEach((conflict, index) => {
-        // Get user's selected operation index
-        const selectedOperationIndex = resolutions[index.toString()] ?? 0;
+    conflicts.forEach(conflict => {
+        const resolution = resolutions.find(res => res.path === conflict.path);
 
-        // Exclude all conflict patches not selected
-        conflict.operations.forEach((op, opIndex) => {
-            if (opIndex !== selectedOperationIndex) {
-                excludedPatchIndices.add(op.index);
+        if (resolution && conflict.options.includes(resolution.selectedHash)) {
+            const matchingPatch = findMatchingPatch(patches, resolution.selectedHash);
+            if (matchingPatch) {
+                includedPatches.add(matchingPatch);
             }
-        });
+        } else if (conflict.options.length > 0) {
+            // 如果没有指定解决方案，默认选择第一个选项
+            const defaultHash = conflict.options[0];
+            const matchingPatch = findMatchingPatch(patches, defaultHash);
+            if (matchingPatch) {
+                includedPatches.add(matchingPatch);
+            }
+        }
     });
 
-    // Collect patches to apply (excluding marked patches)
-    const resolvedPatches = patches.filter((_, index) => !excludedPatchIndices.has(index));
+    // 收集非冲突路径的补丁
+    const conflictPaths = new Set(conflicts.map(conflict => conflict.path));
+    const nonConflictPatches = patches.filter(patch => !conflictPaths.has(patch.path));
 
-    // Add custom resolutions
-    if (customResolutions.length > 0) {
-        return [...resolvedPatches, ...customResolutions.map(cr => cr.patch)];
-    }
-
-    return resolvedPatches;
+    // 合并补丁和自定义解决方案
+    return [
+        ...nonConflictPatches, 
+        ...Array.from(includedPatches),
+        ...(customResolutions.length > 0 ? customResolutions.map(cr => cr.patch) : [])
+    ];
 };
 
 /**
- * Process patch conflicts and generate conflict result
- * @param patches Multiple patch groups
- * @param conflicts Conflict details array
- * @returns Result object containing conflict information
- */
-export const processConflicts = (
-    patches: ReadonlyArray<ReadonlyArray<Patch>>,
-    conflicts: ReadonlyArray<ConflictDetail>
-): ConflictResult => {
-    if (conflicts.length === 0) {
-        // No conflicts, return flattened array of all patches
-        const allPatches = patches.flat();
-        return {
-            hasConflicts: false,
-            conflicts: [],
-            resolvedPatches: allPatches,
-        };
-    }
-
-    return {
-        hasConflicts: true,
-        conflicts: conflicts as ConflictDetail[],
-        resolvedPatches: [], // Empty by default, filled after conflict resolution
-    };
-};
-
-/**
- * Generate merged patch after conflict resolution
- * @param patches Original patch array (multiple groups)
- * @param conflicts Conflict details array
- * @param resolutions Conflict resolution choices
- * @param customResolutions Custom resolutions (optional)
- * @returns Conflict resolution result object
+ * 冲突解决后生成合并的补丁
+ * @param patches 原始补丁数组（多个组）
+ * @param conflicts 冲突详情数组
+ * @param resolutions 冲突解决选择
+ * @param customResolutions 自定义解决方案
+ * @returns 处理结果对象
  */
 export const generateResolvedPatch = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
-): ConflictResult => {
-    // Flatten all patches
+    customResolutions: CustomConflictResolutions = []
+): { unresolvedConflicts: UnresolvedConflicts; resolvedPatches: ReadonlyArray<Patch> } => {
     const allPatches = patches.flat();
 
     if (allPatches.length === 0) {
-        return {
-            hasConflicts: false,
-            conflicts: [],
-            resolvedPatches: [],
-        };
+        return { unresolvedConflicts: [], resolvedPatches: [] };
     }
 
-    // If no conflicts, return all patches
     if (conflicts.length === 0) {
-        return {
-            hasConflicts: false,
-            conflicts: [],
-            resolvedPatches: allPatches as Patch[],
-        };
+        return { unresolvedConflicts: [], resolvedPatches: allPatches };
     }
 
-    // Apply conflict resolutions
+    // 收集所有未解决的冲突哈希值
+    const unresolvedHashes = new Set<string>();
+    conflicts.forEach(conflict => {
+        const resolution = resolutions.find(r => r.path === conflict.path);
+        if (!resolution) {
+            conflict.options.forEach(hash => unresolvedHashes.add(hash));
+        }
+    });
+
     const resolvedPatches = resolveConflicts(allPatches, conflicts, resolutions, customResolutions);
 
     return {
-        hasConflicts: true,
-        conflicts: conflicts as ConflictDetail[],
-        resolvedPatches: resolvedPatches as Patch[],
+        unresolvedConflicts: Array.from(unresolvedHashes),
+        resolvedPatches
     };
 };
 
 /**
- * Initialize conflict resolutions
- * @param conflicts Conflict details array
- * @returns Default conflict resolutions
+ * 初始化冲突解决方案
+ * @param conflicts 冲突详情数组
+ * @returns 默认冲突解决方案
  */
 export const initializeResolutions = (
     conflicts: ReadonlyArray<ConflictDetail>
-): ConflictResolutions => {
-    const initialResolutions: ConflictResolutions = {};
-
-    conflicts.forEach((_, index) => {
-        initialResolutions[index.toString()] = 0;
-    });
-
-    return initialResolutions;
-};
+): ConflictResolutions => 
+    conflicts
+        .filter(conflict => conflict.options.length > 0)
+        .map(conflict => ({
+            path: conflict.path,
+            selectedHash: conflict.options[0]
+        }));

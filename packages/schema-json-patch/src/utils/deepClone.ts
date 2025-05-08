@@ -1,8 +1,8 @@
 /**
- * Deep clone an object
+ * 深度克隆一个对象
  *
- * @param obj - Object to clone
- * @returns Cloned object
+ * @param obj - 要克隆的对象
+ * @returns 克隆后的对象
  */
 export const deepClone = <T>(obj: T): T => {
     if (obj === null || typeof obj !== 'object') {
@@ -10,16 +10,13 @@ export const deepClone = <T>(obj: T): T => {
     }
 
     if (Array.isArray(obj)) {
-        return obj.map(item => deepClone(item)) as unknown as T;
+        return obj.map(deepClone) as unknown as T;
     }
 
     const result = {} as Record<string, unknown>;
-
-    for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            result[key] = deepClone((obj as Record<string, unknown>)[key]);
-        }
-    }
+    Object.entries(obj as Record<string, unknown>).forEach(([key, value]) => {
+        result[key] = deepClone(value);
+    });
 
     return result as T;
 };

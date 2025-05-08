@@ -1,11 +1,16 @@
-import { Patch, ConflictDetail, ConflictResolutions, CustomResolution } from './types/patch';
+import {
+    Patch,
+    ConflictDetail,
+    ConflictResolutions,
+    CustomConflictResolution,
+} from './types/patch';
 import { Schema } from './types/schema';
 import { isObject } from './utils/isObject';
 import { detectConflicts } from './detectConflicts';
 import { parseJsonPath } from './utils/pathUtils';
 
 /**
- * Validation result type
+ * 验证结果类型
  */
 export type ValidationResult = {
     readonly isValid: boolean;
@@ -13,9 +18,9 @@ export type ValidationResult = {
 };
 
 /**
- * Validate if a JSON string is valid
- * @param jsonString JSON string
- * @returns Validation result
+ * 验证JSON字符串是否有效
+ * @param jsonString JSON字符串
+ * @returns 验证结果
  */
 export const validateJson = (jsonString: string): ValidationResult => {
     const errors: string[] = [];
@@ -37,9 +42,9 @@ export const validateJson = (jsonString: string): ValidationResult => {
 };
 
 /**
- * Validate if a patch array is valid
- * @param patches Patch array
- * @returns Validation result
+ * 验证补丁数组是否有效
+ * @param patches 补丁数组
+ * @returns 验证结果
  */
 export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult => {
     const errors: string[] = [];
@@ -55,21 +60,26 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
             return;
         }
 
-        // Validate patch operation type
+        // 验证补丁操作类型
         if (!patch.op || !['add', 'remove', 'replace'].includes(patch.op)) {
             errors.push(`Patch #${index} has invalid operation type: ${patch.op}`);
         }
 
-        // Validate patch path
+        // 验证补丁路径
         if (!patch.path || typeof patch.path !== 'string') {
             errors.push(`Patch #${index} has invalid path`);
         } else if (!patch.path.startsWith('/') && patch.path !== '') {
             errors.push(`Patch #${index} path must start with / or be empty`);
         }
 
-        // Validate patch value
+        // 验证补丁值
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
+        }
+
+        // 验证哈希值
+        if (!patch.hash || typeof patch.hash !== 'string') {
+            errors.push(`Patch #${index} must have a valid hash string`);
         }
     });
 
@@ -80,9 +90,9 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
 };
 
 /**
- * Validate if a patch group array is valid
- * @param patchGroups Patch group array
- * @returns Validation result
+ * 验证补丁组数组是否有效
+ * @param patchGroups 补丁组数组
+ * @returns 验证结果
  */
 export const validatePatchGroups = (
     patchGroups: ReadonlyArray<ReadonlyArray<Patch>>
@@ -116,16 +126,14 @@ export const validatePatchGroups = (
 };
 
 /**
- * Validate if resolutions are valid
- * @param conflicts Conflict details
- * @param resolutions Resolutions
- * @param customResolutions Custom resolutions
- * @returns Validation result
+ * 验证解决方案是否有效
+ * @param conflicts 冲突详情
+ * @param resolutions 冲突解决方案数组
+ * @returns 验证结果
  */
 export const validateResolutions = (
     conflicts: ReadonlyArray<ConflictDetail>,
-    resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    resolutions: ConflictResolutions
 ): ValidationResult => {
     const errors: string[] = [];
 
@@ -134,51 +142,40 @@ export const validateResolutions = (
         return { isValid: false, errors };
     }
 
-    if (!isObject(resolutions)) {
-        errors.push('Resolutions must be an object');
+    if (!Array.isArray(resolutions)) {
+        errors.push('Resolutions must be an array');
         return { isValid: false, errors };
     }
 
-    // Validate that each conflict has a corresponding resolution
-    conflicts.forEach((conflict, index) => {
-        const resolutionKey = index.toString();
+    // 检查每个解决方案是否有合法的路径和选中的哈希值
+    resolutions.forEach((resolution, index) => {
+        if (!resolution.path || typeof resolution.path !== 'string') {
+            errors.push(`Resolution #${index} has invalid path`);
+            return;
+        }
 
-        if (!(resolutionKey in resolutions)) {
-            errors.push(`Conflict #${index} is missing a resolution`);
-        } else {
-            const resolutionValue = resolutions[resolutionKey];
+        if (!resolution.selectedHash || typeof resolution.selectedHash !== 'string') {
+            errors.push(`Resolution #${index} has invalid selectedHash`);
+            return;
+        }
 
-            if (
-                typeof resolutionValue !== 'number' ||
-                resolutionValue < 0 ||
-                resolutionValue >= conflict.operations.length
-            ) {
-                errors.push(`Conflict #${index} has invalid resolution ${resolutionValue}`);
-            }
+        // 查找对应的冲突
+        const conflict = conflicts.find(c => c.path === resolution.path);
+        if (!conflict) {
+            errors.push(
+                `Resolution #${index} references a path "${resolution.path}" that doesn't exist in conflicts`
+            );
+            return;
+        }
+
+        // 验证选中的哈希是否在冲突选项中
+        if (!conflict.options.includes(resolution.selectedHash)) {
+            errors.push(
+                `Resolution #${index} selects a hash "${resolution.selectedHash}" ` +
+                    `that is not an option for conflict at path "${resolution.path}"`
+            );
         }
     });
-
-    // Validate custom resolutions
-    if (customResolutions && Array.isArray(customResolutions)) {
-        customResolutions.forEach((resolution, index) => {
-            if (!resolution || !isObject(resolution)) {
-                errors.push(`Custom resolution #${index} is not a valid object`);
-                return;
-            }
-
-            if (!resolution.path || typeof resolution.path !== 'string') {
-                errors.push(`Custom resolution #${index} is missing a valid path`);
-            }
-
-            const patchResult = validatePatches([resolution.patch]);
-            if (!patchResult.isValid) {
-                errors.push(`Custom resolution #${index} contains invalid patch:`);
-                patchResult.errors.forEach(error => {
-                    errors.push(`  - ${error}`);
-                });
-            }
-        });
-    }
 
     return {
         isValid: errors.length === 0,
@@ -187,57 +184,70 @@ export const validateResolutions = (
 };
 
 /**
- * Validate if there are still conflicts after applying resolutions
- * @param patches Original patch groups
- * @param conflicts Conflict details
- * @param resolutions Resolutions
- * @param customResolutions Custom resolutions
- * @returns Validation result
+ * 验证应用解决方案后是否仍存在冲突
+ * @param patches 原始补丁组
+ * @param conflicts 冲突详情
+ * @param resolutions 解决方案
+ * @param customResolutions 自定义解决方案
+ * @returns 验证结果
  */
 export const validateResolvedConflicts = (
     patches: ReadonlyArray<ReadonlyArray<Patch>>,
     conflicts: ReadonlyArray<ConflictDetail>,
     resolutions: ConflictResolutions,
-    customResolutions: ReadonlyArray<CustomResolution> = []
+    customResolutions: ReadonlyArray<CustomConflictResolution> = []
 ): ValidationResult => {
     const errors: string[] = [];
 
-    // First validate that resolutions are valid
-    const resolutionsValid = validateResolutions(conflicts, resolutions, customResolutions);
+    // 首先验证解决方案是否有效
+    const resolutionsValid = validateResolutions(conflicts, resolutions);
     if (!resolutionsValid.isValid) {
         return resolutionsValid;
     }
 
-    // Create a new patch set with resolved patches
+    // 创建已解决冲突的补丁集合
     const allPatches = patches.flat();
-    const excludedPatchIndices = new Set<number>();
+    const resolvedPatchSet = new Set<Patch>();
+    const conflictPaths = new Set<string>();
 
-    // Mark patches to exclude
-    conflicts.forEach((conflict, index) => {
-        const selectedOperationIndex = resolutions[index.toString()] ?? 0;
+    // 收集所有冲突路径
+    conflicts.forEach(conflict => {
+        conflictPaths.add(conflict.path);
 
-        conflict.operations.forEach((op, opIndex) => {
-            if (opIndex !== selectedOperationIndex) {
-                excludedPatchIndices.add(op.index);
-            }
-        });
+        // 找出选中的哈希值
+        let selectedHash = conflict.options[0]; // 默认选第一个
+
+        // 查找是否有针对此路径的解决方案
+        const resolution = resolutions.find(res => res.path === conflict.path);
+        if (resolution && conflict.options.includes(resolution.selectedHash)) {
+            selectedHash = resolution.selectedHash;
+        }
+
+        // 找到匹配哈希值的补丁
+        const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);
+
+        if (matchingPatch) {
+            resolvedPatchSet.add(matchingPatch);
+        }
     });
 
-    // Collect patches to apply
-    const resolvedPatches = allPatches.filter((_, index) => !excludedPatchIndices.has(index));
-
-    // Add custom resolutions
-    const finalPatches = [...resolvedPatches, ...(customResolutions?.map(cr => cr.patch) || [])];
+    // 添加非冲突补丁
+    const nonConflictPatches = allPatches.filter(patch => !conflictPaths.has(patch.path));
+    const resolvedPatches = [
+        ...nonConflictPatches,
+        ...Array.from(resolvedPatchSet),
+        ...(customResolutions?.map(cr => cr.patch) || []),
+    ];
 
     // Check if there are still conflicts after resolution
-    const remainingConflicts = detectConflicts([finalPatches]);
+    const remainingConflicts = detectConflicts([resolvedPatches]);
 
     if (remainingConflicts.length > 0) {
         errors.push(
             `There are still ${remainingConflicts.length} conflicts after applying resolutions`
         );
 
-        remainingConflicts.forEach((conflict, _index) => {
+        remainingConflicts.forEach(conflict => {
             errors.push(`  - Path ${conflict.path} has unresolved conflicts`);
         });
     }
@@ -471,3 +481,10 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
         }
     }
 };
+
+/**
+ * 验证模块导出文件
+ * 重新导出所有验证函数，保持向后兼容
+ */
+
+export * from './validation';

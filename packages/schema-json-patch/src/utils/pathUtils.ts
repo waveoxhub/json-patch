@@ -1,44 +1,42 @@
 import { Schema, ArrayItemObjectSchema } from '../types/schema';
 
 /**
- * Path component type
+ * 路径组件类型
  */
 type PathComponents = ReadonlyArray<string>;
 
 /**
- * Parse JSON Path string into array of path components
+ * 将JSON路径字符串解析为路径组件数组
  *
- * @param path - JSON Path string, format like "/a/b/c"
- * @returns Parsed path components array, like ["a", "b", "c"]
- * @throws Error when path format is invalid
+ * @param path - JSON路径字符串，格式如"/a/b/c"
+ * @returns 解析后的路径组件数组，如["a", "b", "c"]
+ * @throws 当路径格式无效时抛出错误
  */
 export const parseJsonPath = (path: string): PathComponents => {
     if (path === '') return [];
     if (path[0] !== '/') throw new Error('Invalid path: must start with /');
 
     const components = path.split('/');
-    // First element is empty string, remove it
-    components.shift();
-
+    components.shift(); // 移除第一个空字符串
     return components.map(component => component.replace(/~1/g, '/').replace(/~0/g, '~'));
 };
 
 /**
- * Escape special characters in path components
+ * 转义路径组件中的特殊字符
  *
- * @param component - Path component
- * @returns Escaped component
+ * @param component - 路径组件
+ * @returns 转义后的组件
  */
 export const escapePathComponent = (component: string): string => {
     return component.replace(/~/g, '~0').replace(/\//g, '~1');
 };
 
 /**
- * Get primary key value based on schema and object value
+ * 根据模式和对象值获取主键值
  *
- * @param schema - Object schema
- * @param obj - Object value
- * @returns Primary key value
+ * @param schema - 对象模式
+ * @param obj - 对象值
+ * @returns 主键值
  */
 export const getPrimaryKeyValue = (
     schema: ArrayItemObjectSchema,
@@ -52,10 +50,10 @@ export const getPrimaryKeyValue = (
 };
 
 /**
- * Collect path prefixes
+ * 收集路径前缀
  *
- * @param path - Path
- * @param results - Set to store results
+ * @param path - 路径
+ * @param results - 存储结果的集合
  */
 export const collectPathPrefixes = (path: string, results: Set<string>): void => {
     const components = parseJsonPath(path);
@@ -68,13 +66,13 @@ export const collectPathPrefixes = (path: string, results: Set<string>): void =>
 };
 
 /**
- * Extract complete path mapping from object
- * Used to support indexing and lookup
+ * 从对象中提取完整的路径映射
+ * 用于支持索引和查找
  *
- * @param schema - Data model schema
- * @param data - Data object
- * @param basePath - Base path
- * @param result - Collected path mapping result
+ * @param schema - 数据模型模式
+ * @param data - 数据对象
+ * @param basePath - 基础路径
+ * @param result - 收集的路径映射结果
  */
 export const extractPathMap = (
     schema: Schema,
@@ -87,30 +85,23 @@ export const extractPathMap = (
             throw new Error(`Path ${basePath} expected to be array, but found ${typeof data}`);
         }
 
-        // Process array elements
         data.forEach((item, index) => {
             const itemPath = `${basePath}/${index}`;
 
             if (schema.$item.$type === 'object') {
-                // For object arrays, use primary key as index
                 const pkValue = getPrimaryKeyValue(
                     schema.$item as ArrayItemObjectSchema,
                     item as Record<string, unknown>
                 );
                 const semanticPath = `${basePath}/${pkValue}`;
 
-                // Store mapping from semantic path to index path
                 result.set(semanticPath, { path: itemPath, value: item });
-
-                // Recursively process object fields
                 extractPathMap(schema.$item, item, semanticPath, result);
             } else {
-                // Primitive type array
                 result.set(itemPath, { path: itemPath, value: item });
             }
         });
     } else if (schema.$type === 'object') {
-        // Process object fields
         for (const [key, fieldSchema] of Object.entries(schema.$fields)) {
             const fieldPath = basePath ? `${basePath}/${key}` : key;
             const fieldValue = (data as Record<string, unknown>)[key];

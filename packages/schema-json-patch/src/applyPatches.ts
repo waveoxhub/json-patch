@@ -1,15 +1,14 @@
 import { Patch } from './types/patch';
 import { parseJsonPath } from './utils/pathUtils';
-import { deepClone } from './utils/deepClone';
-import { Schema } from './types/schema';
+import { Schema, ArraySchema } from './types/schema';
 
 /**
- * Apply patches to JSON state
+ * 将补丁应用到JSON状态
  *
- * @param sourceJson - Source JSON string
- * @param patches - Array of patches
- * @param schema - Data structure schema
- * @returns JSON string after applying patches
+ * @param sourceJson - 源JSON字符串
+ * @param patches - 补丁数组
+ * @param schema - 数据结构模式
+ * @returns 应用补丁后的JSON字符串
  */
 export const applyPatches = (
     sourceJson: string,
@@ -31,375 +30,332 @@ export const applyPatches = (
 };
 
 /**
- * Apply a single patch to state object
+ * 将单个补丁应用到状态对象
  *
- * @param state - Current state
- * @param patch - Patch object
- * @param schema - Data structure schema
- * @returns Updated state
+ * @param state - 当前状态
+ * @param patch - 补丁对象
+ * @param schema - 数据结构模式
+ * @returns 更新后的状态
  */
 const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
     const { op, path, value } = patch;
     const pathComponents = parseJsonPath(path);
 
+    // 处理空路径的情况（整个文档）
+    if (pathComponents.length === 0) {
+        return op === 'remove' ? null : value;
+    }
+
+    const result = clone(state);
+    
     switch (op) {
         case 'add':
-            return handleAdd(state, pathComponents, value, schema);
+            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                if (Array.isArray(parent)) {
+                    const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
+                    if (!arraySchema || arraySchema.$type !== 'array') {
+                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                    }
+                    
+                    if (isObject(value) && hasObjectItems(arraySchema)) {
+                        const pkField = getPrimaryKeyField(arraySchema);
+                        if (pkField in value) {
+                            const index = getOrCreateArrayIndex(parent, String(value[pkField]), arraySchema);
+                            parent[index] = value;
+                        } else {
+                            parent.push(value);
+                        }
+                    } else {
+                        parent[findInsertionIndex(parent, key, arraySchema)] = value;
+                    }
+                } else if (isObject(parent)) {
+                    const fieldSchema = getSchemaForPath(schema, pathComponents);
+                    
+                    if (fieldSchema && fieldSchema.$type === 'array') {
+                        if (!parent[key] || !Array.isArray(parent[key])) {
+                            parent[key] = [];
+                        }
+                        
+                        if (isObject(value) && hasObjectItems(fieldSchema)) {
+                            const array = parent[key] as unknown[];
+                            const pkField = getPrimaryKeyField(fieldSchema);
+                            let index;
+                            if (pkField in value) {
+                                index = getOrCreateArrayIndex(array, String(value[pkField]), fieldSchema);
+                            } else {
+                                array.push(value);
+                                index = array.length - 1;
+                            }
+                            array[index] = value;
+                        } else {
+                            (parent[key] as unknown[]).push(value);
+                        }
+                    } else {
+                        parent[key] = value;
+                    }
+                }
+            });
+            break;
 
         case 'remove':
-            return handleRemove(state, pathComponents, schema);
+            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                if (Array.isArray(parent)) {
+                    const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
+                    if (!arraySchema || arraySchema.$type !== 'array') {
+                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                    }
+                    const index = findArrayIndex(parent, key, arraySchema);
+                    if (index !== -1) {
+                        parent.splice(index, 1);
+                    }
+                } else if (isObject(parent)) {
+                    delete parent[key];
+                }
+            });
+            break;
 
         case 'replace':
-            return handleReplace(state, pathComponents, value, schema);
+            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                if (Array.isArray(parent)) {
+                    const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
+                    if (!arraySchema || arraySchema.$type !== 'array') {
+                        throw new Error(`Schema mismatch: expected array schema for path '${path}'`);
+                    }
+                    const index = getOrCreateArrayIndex(parent, key, arraySchema);
+                    parent[index] = value;
+                } else if (isObject(parent)) {
+                    parent[key] = value;
+                }
+            });
+            break;
 
         default:
             throw new Error(`Unsupported operation: ${op}`);
     }
+
+    return result;
 };
 
 /**
- * Check if value is a non-null object
+ * 获取指定路径的模式
+ */
+const getSchemaForPath = (schema: Schema, pathComponents: ReadonlyArray<string>): Schema | undefined => {
+    let currentSchema: Schema | undefined = schema;
+    
+    for (const component of pathComponents) {
+        if (!currentSchema) return undefined;
+        
+        if (currentSchema.$type === 'object') {
+            currentSchema = currentSchema.$fields[component] as Schema | undefined;
+        } else if (currentSchema.$type === 'array') {
+            currentSchema = currentSchema.$item as Schema;
+        } else {
+            return undefined;
+        }
+    }
+    
+    return currentSchema;
+};
+
+/**
+ * 在数组中查找适合插入的索引位置
+ */
+const findInsertionIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
+    const index = findArrayIndex(array, key, schema);
+    return index !== -1 ? index : array.length;
+};
+
+/**
+ * 检查值是否为非空对象
  */
 const isObject = (value: unknown): value is Record<string, unknown> => {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
 /**
- * Get primary key field name for array members
- *
- * @param schema - Structure that may be an array schema
- * @returns Primary key field name
+ * 检查数组模式是否包含对象项
  */
-const getPrimaryKeyField = (schema: Schema): string => {
-    if (!schema || !isObject(schema)) {
-        throw new Error('Invalid schema: schema is not an object');
-    }
+const hasObjectItems = (schema: ArraySchema): boolean => {
+    return isObject(schema.$item) && schema.$item.$type === 'object' && '$pk' in schema.$item;
+};
 
-    if (!('$type' in schema) || schema.$type !== 'array') {
+/**
+ * 获取数组子模式中的主键字段名
+ */
+const getPrimaryKeyField = (schema: ArraySchema): string => {
+    if (schema.$type !== 'array') {
         throw new Error('Invalid schema: not an array type');
     }
 
-    if (!('$item' in schema) || !schema.$item || !isObject(schema.$item)) {
-        throw new Error('Invalid schema: missing $item or $item is not an object');
+    const item = schema.$item;
+    if (!isObject(item) || item.$type !== 'object' || !('$pk' in item)) {
+        throw new Error('Invalid schema: array item must be an object with $pk field');
     }
 
-    if (!('$type' in schema.$item) || schema.$item.$type !== 'object') {
-        throw new Error('Invalid schema: $item is not an object type');
-    }
-
-    if (!('$pk' in schema.$item)) {
-        throw new Error('Invalid schema: missing primary key definition');
-    }
-
-    return schema.$item.$pk;
+    return item.$pk;
 };
 
 /**
- * Get sub-schema for a specific path
- *
- * @param schema - Current schema
- * @param component - Current path component
- * @returns Sub-schema or undefined
+ * 在数组中查找项目的索引
  */
-const getSubSchema = (schema: Schema, component: string): Schema | undefined => {
-    if (!schema || !isObject(schema)) return undefined;
-
-    if ('$type' in schema) {
-        const schemaType = schema.$type;
-
-        if (
-            schemaType === 'object' &&
-            '$fields' in schema &&
-            schema.$fields &&
-            isObject(schema.$fields)
-        ) {
-            return component in schema.$fields ? (schema.$fields[component] as Schema) : undefined;
-        } else if (schemaType === 'array' && '$item' in schema) {
-            return schema.$item as Schema;
-        }
-    }
-
-    return undefined;
-};
-
-/**
- * Find or create item in array
- */
-const findOrCreateArrayItem = (
+const findArrayIndex = (
     array: unknown[],
     key: string,
-    schema: Schema,
-    shouldCreate = false
-): [Record<string, unknown> | undefined, number] => {
-    try {
-        const primaryKey = getPrimaryKeyField(schema);
-
-        const index = array.findIndex(
-            item => isObject(item) && primaryKey in item && item[primaryKey] === key
-        );
-
-        if (index !== -1) {
-            return [array[index] as Record<string, unknown>, index];
-        }
-
-        if (shouldCreate) {
-            const newItem = { [primaryKey]: key } as Record<string, unknown>;
-            array.push(newItem);
-            return [newItem, array.length - 1];
-        }
-
-        return [undefined, -1];
-    } catch (error) {
-        throw new Error(
-            `Failed to process array path ${key}: ${error instanceof Error ? error.message : String(error)}`
-        );
+    schema: ArraySchema
+): number => {
+    if (!hasObjectItems(schema)) {
+        // 如果不是对象数组，尝试直接使用索引
+        const index = parseInt(key, 10);
+        return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
     }
+
+    // 使用主键查找
+    const pkField = getPrimaryKeyField(schema);
+    return array.findIndex(item => 
+        isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
+    );
 };
 
 /**
- * Handle add operation
- *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param value - Value to add
- * @param schema - Data structure schema
- * @returns Updated state
+ * 在数组中查找或创建项目，返回其索引
  */
-const handleAdd = (
-    state: unknown,
-    pathComponents: ReadonlyArray<string>,
-    value: unknown,
-    schema: Schema
-): unknown => {
-    if (pathComponents.length === 0) {
-        // Replace entire document
+const getOrCreateArrayIndex = (
+    array: unknown[],
+    key: string,
+    schema: ArraySchema
+): number => {
+    const index = findArrayIndex(array, key, schema);
+    if (index !== -1) {
+        return index;
+    }
+
+    // 如果是主键查找，需要创建一个新对象
+    if (hasObjectItems(schema)) {
+        const pkField = getPrimaryKeyField(schema);
+        const newItem = { [pkField]: key };
+        array.push(newItem);
+        return array.length - 1;
+    }
+
+    // 对于非对象数组，使用键作为索引
+    const numIndex = parseInt(key, 10);
+    if (!isNaN(numIndex) && numIndex >= 0) {
+        // 如果索引超出范围，填充数组
+        if (numIndex >= array.length) {
+            for (let i = array.length; i < numIndex; i++) {
+                array.push(null);
+            }
+            array.push(null);
+        }
+        return numIndex;
+    }
+
+    // 如果无法使用键作为索引，添加到数组末尾
+    array.push(null);
+    return array.length - 1;
+};
+
+/**
+ * 智能克隆对象（仅复制必要的层级）
+ */
+const clone = (value: unknown): unknown => {
+    if (value === null || typeof value !== 'object') {
         return value;
     }
-    const result = deepClone(state);
-    addToPath(result, pathComponents, value, schema);
+
+    if (Array.isArray(value)) {
+        return value.map(clone);
+    }
+
+    const result = {} as Record<string, unknown>;
+    for (const key in value) {
+        if (Object.prototype.hasOwnProperty.call(value, key)) {
+            result[key] = clone((value as Record<string, unknown>)[key]);
+        }
+    }
     return result;
 };
 
 /**
- * Recursively add value to path
- *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param value - Value to add
- * @param schema - Schema for current path
+ * 在指定路径修改对象，使用迭代而非递归方式
  */
-const addToPath = (
-    current: unknown,
+const modifyAtPath = (
+    root: unknown,
     pathComponents: ReadonlyArray<string>,
-    value: unknown,
-    schema: Schema
+    schema: Schema,
+    modifierFn: (parent: Record<string, unknown> | unknown[], key: string) => void
 ): void => {
-    const [head, ...tail] = pathComponents;
-
-    if (tail.length === 0) {
-        // Reached target path, add value
-        if (Array.isArray(current)) {
-            if (!schema) {
-                throw new Error('Schema must be provided when processing array data');
-            }
-
-            const [, index] = findOrCreateArrayItem(current, head, schema, true);
-            if (index !== -1) {
-                current[index] = value;
-            }
-        } else if (isObject(current)) {
-            current[head] = value;
-        } else {
-            throw new Error(`Cannot add to non-object or array: ${typeof current}`);
-        }
-
+    if (pathComponents.length === 0) {
         return;
     }
 
-    // Get schema for next level
-    const nextSchema = getSubSchema(schema, head);
+    let current = root;
+    let currentSchema: Schema | undefined = schema;
+    const lastIndex = pathComponents.length - 1;
 
-    // Continue recursion to next level
-    if (Array.isArray(current)) {
-        if (!schema) {
-            throw new Error('Schema must be provided when processing array data');
+    // 遍历路径直到倒数第二个组件
+    for (let i = 0; i < lastIndex; i++) {
+        const component = pathComponents[i];
+        
+        if (!currentSchema) {
+            throw new Error(`Schema not found for path component: ${component}`);
         }
 
-        const [item] = findOrCreateArrayItem(current, head, schema, true);
-        if (item) {
-            addToPath(item, tail, value, nextSchema as Schema);
-        }
-    } else if (isObject(current)) {
-        // Ensure child path exists
-        if (!(head in current)) {
-            current[head] = {};
-        }
-
-        addToPath(current[head], tail, value, nextSchema as Schema);
-    } else {
-        throw new Error(`Cannot navigate to non-object or array: ${typeof current}`);
-    }
-};
-
-/**
- * Handle remove operation
- *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param schema - Data structure schema
- * @returns Updated state
- */
-const handleRemove = (
-    state: unknown,
-    pathComponents: ReadonlyArray<string>,
-    schema: Schema
-): unknown => {
-    if (pathComponents.length === 0) {
-        // Remove entire document
-        return null;
-    }
-    const result = deepClone(state);
-    removeFromPath(result, pathComponents, schema);
-
-    return result;
-};
-
-/**
- * Recursively remove value from path
- *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param schema - Schema for current path
- * @returns Whether value is successfully removed
- */
-const removeFromPath = (
-    current: unknown,
-    pathComponents: ReadonlyArray<string>,
-    schema: Schema
-): boolean => {
-    const [head, ...tail] = pathComponents;
-
-    if (tail.length === 0) {
-        // Reached target path, remove value
-        if (Array.isArray(current)) {
-            if (!schema) {
-                throw new Error('Schema must be provided when processing array data');
+        if (currentSchema.$type === 'object') {
+            if (!isObject(current)) {
+                throw new Error(`Expected object at path component: ${component}`);
             }
 
-            const [, index] = findOrCreateArrayItem(current, head, schema);
-            if (index === -1) {
-                return false;
+            // 获取字段模式
+            const fieldSchema = currentSchema.$fields[component];
+            if (!fieldSchema) {
+                throw new Error(`Schema field not found: ${component}`);
             }
 
-            // Remove matching array item
-            current.splice(index, 1);
-            return true;
-        } else if (isObject(current)) {
-            return delete current[head];
+            // 如果字段不存在，创建它
+            if (current[component] === undefined) {
+                current[component] = fieldSchema.$type === 'array' ? [] : {};
+            }
+
+            current = current[component];
+            currentSchema = fieldSchema as Schema;
+        } else if (currentSchema.$type === 'array') {
+            if (!Array.isArray(current)) {
+                throw new Error(`Expected array at path component: ${component}`);
+            }
+
+            // 显式类型注释，确保完整的ArraySchema类型
+            const arraySchema: ArraySchema = currentSchema;
+            const index = getOrCreateArrayIndex(current, component, arraySchema);
+            
+            // 确保索引位置有值
+            if (current[index] === undefined) {
+                if (isObject(arraySchema.$item)) {
+                    const itemType = arraySchema.$item.$type;
+                    current[index] = itemType === 'object' ? {} : null;
+                } else {
+                    // 基本类型的数组项
+                    current[index] = null;
+                }
+            }
+
+            current = current[index];
+            // 明确处理$item可能的两种类型
+            if (isObject(arraySchema.$item) && 
+                arraySchema.$item.$type === 'object') {
+                currentSchema = arraySchema.$item;
+            } else {
+                // 如果是基本类型，则没有进一步的schema
+                currentSchema = undefined;
+            }
         } else {
-            throw new Error(`Cannot remove from non-object or array: ${typeof current}`);
+            throw new Error(`Unexpected schema type: ${
+                currentSchema ? (currentSchema as any).$type : 'unknown'
+            }`);
         }
     }
 
-    // Get schema for next level
-    const nextSchema = getSubSchema(schema, head);
-
-    // Continue recursion to next level
-    if (Array.isArray(current)) {
-        if (!schema) {
-            throw new Error('Schema must be provided when processing array data');
-        }
-
-        const [item] = findOrCreateArrayItem(current, head, schema);
-        if (!item) {
-            return false;
-        }
-
-        return removeFromPath(item, tail, nextSchema as Schema);
-    } else if (isObject(current)) {
-        if (!(head in current)) {
-            return false;
-        }
-
-        return removeFromPath(current[head], tail, nextSchema as Schema);
-    } else {
-        throw new Error(`Cannot navigate to non-object or array: ${typeof current}`);
-    }
-};
-
-/**
- * Handle replace operation
- *
- * @param state - Current state
- * @param pathComponents - Path components
- * @param value - Replacement value
- * @param schema - Data structure schema
- * @returns Updated state
- */
-const handleReplace = (
-    state: unknown,
-    pathComponents: ReadonlyArray<string>,
-    value: unknown,
-    schema: Schema
-): unknown => {
-    if (pathComponents.length === 0) {
-        // Replace entire document
-        return value;
-    }
-
-    const result = deepClone(state);
-    replaceAtPath(result, pathComponents, value, schema);
-    return result;
-};
-
-/**
- * Recursively replace value at path
- *
- * @param current - Current object
- * @param pathComponents - Remaining path components
- * @param value - Replacement value
- * @param schema - Schema for current path
- * @returns Whether value is successfully replaced
- */
-const replaceAtPath = (
-    current: unknown,
-    pathComponents: ReadonlyArray<string>,
-    value: unknown,
-    schema: Schema
-): boolean => {
-    const [head, ...tail] = pathComponents;
-
-    if (tail.length === 0) {
-        // Reached target path, replace value
-        if (isObject(current)) {
-            current[head] = value;
-            return true;
-        } else {
-            throw new Error(`Cannot replace value in non-object: ${typeof current}`);
-        }
-    }
-
-    // Get schema for next level
-    const nextSchema = getSubSchema(schema, head);
-
-    // Continue recursion to next level
-    if (Array.isArray(current)) {
-        if (!schema) {
-            throw new Error('Schema must be provided when processing array data');
-        }
-
-        const [item] = findOrCreateArrayItem(current, head, schema, true);
-        if (item) {
-            return replaceAtPath(item, tail, value, nextSchema as Schema);
-        }
-        return false;
-    } else if (isObject(current)) {
-        if (!(head in current)) {
-            current[head] = {};
-        }
-
-        return replaceAtPath(current[head], tail, value, nextSchema as Schema);
-    } else {
-        throw new Error(`Cannot navigate to non-object or array: ${typeof current}`);
-    }
+    // 对最后一个路径组件应用修改函数
+    const lastComponent = pathComponents[lastIndex];
+    modifierFn(current as Record<string, unknown> | unknown[], lastComponent);
 };

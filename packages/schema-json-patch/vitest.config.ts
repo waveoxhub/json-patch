@@ -2,6 +2,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
     test: {
+        api: {
+            host: '0.0.0.0',
+        },
         include: ['test/**/*.test.ts'],
         environment: 'node',
         coverage: {

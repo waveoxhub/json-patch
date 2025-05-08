@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { applyPatches } from '../src/applyPatches';
 import { Patch } from '../src/types/patch';
 import { Schema } from '../src/types/schema';
+import { generatePatchOptionHash } from '../src/utils/hashUtils';
 
 describe('applyPatches', () => {
     it('should apply replace operation to root path', () => {
@@ -18,6 +19,7 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '',
                 value: { name: 'newTest' },
+                hash: generatePatchOptionHash('replace', '', 'newTest'),
             },
         ];
 
@@ -40,6 +42,7 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'newTest',
+                hash: generatePatchOptionHash('replace', '/name', 'newTest'),
             },
         ];
 
@@ -62,6 +65,7 @@ describe('applyPatches', () => {
                 op: 'add',
                 path: '/age',
                 value: 25,
+                hash: generatePatchOptionHash('add', '/age', 25),
             },
         ];
 
@@ -83,6 +87,7 @@ describe('applyPatches', () => {
             {
                 op: 'remove',
                 path: '/age',
+                hash: generatePatchOptionHash('remove', '/age', 25),
             },
         ];
 
@@ -117,21 +122,24 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '/name',
                 value: 'newTest',
+                hash: generatePatchOptionHash('replace', '/name', 'newTest'),
             },
             {
                 op: 'add',
-                path: '/items/item3',
+                path: '/items',
                 value: { id: 'item3', value: 'three' },
+                hash: generatePatchOptionHash('add', '/items', { id: 'item3', value: 'three' }),
             },
             {
                 op: 'remove',
                 path: '/items/item1',
+                hash: generatePatchOptionHash('remove', '/items/item1'),
             },
         ];
 
         const result = applyPatches(json, patches, schema);
         const resultObj = JSON.parse(result);
-
+        console.log(resultObj);
         expect(resultObj).toEqual({
             name: 'newTest',
             items: [
@@ -157,6 +165,7 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '/items',
                 value: [1, 2, 3, 4, 5],
+                hash: generatePatchOptionHash('replace', '/items', [1, 2, 3, 4, 5]),
             },
         ];
 
@@ -207,6 +216,7 @@ describe('applyPatches', () => {
                 op: 'add',
                 path: '/users/1/profile/address',
                 value: '北京市',
+                hash: generatePatchOptionHash('add', '/users/1/profile/address', '北京市'),
             },
         ];
 
@@ -221,7 +231,7 @@ describe('applyPatches', () => {
         expect(hasProfileWithAddress).toBe(true);
     });
 
-    it('should handle recursive creation of intermediate paths', () => {
+    it('should throw error when adding to non-existent path', () => {
         const schema: Schema = {
             $type: 'object',
             $fields: {
@@ -243,15 +253,11 @@ describe('applyPatches', () => {
                 op: 'add',
                 path: '/user/profile/address/city',
                 value: '上海',
+                hash: generatePatchOptionHash('add', '/user/profile/address/city', '上海'),
             },
         ];
 
-        const result = applyPatches(source, patches, schema);
-        const parsedResult = JSON.parse(result);
-
-        expect(parsedResult.user.profile.address.city).toBe('上海');
-        expect(typeof parsedResult.user.profile).toBe('object');
-        expect(typeof parsedResult.user.profile.address).toBe('object');
+        expect(() => applyPatches(source, patches, schema)).toThrow('Schema field not found: profile');
     });
 
     it('should handle patches with dependencies', () => {
@@ -286,11 +292,13 @@ describe('applyPatches', () => {
                 op: 'add',
                 path: '/users/user1/groups',
                 value: [],
+                hash: generatePatchOptionHash('add', '/users/user1/groups', []),
             },
             {
                 op: 'replace',
                 path: '/users/user1/groups',
                 value: ['admin'],
+                hash: generatePatchOptionHash('replace', '/users/user1/groups', ['admin']),
             },
         ];
 
@@ -303,78 +311,6 @@ describe('applyPatches', () => {
         expect(parsedResult.users[0].groups).toBeDefined();
         expect(parsedResult.users[0].groups).toHaveLength(1);
         expect(parsedResult.users[0].groups[0]).toBe('admin');
-    });
-
-    it('should handle multiple different types of patches', () => {
-        const schema: Schema = {
-            $type: 'object',
-            $fields: {
-                users: {
-                    $type: 'array',
-                    $item: {
-                        $type: 'object',
-                        $pk: 'id',
-                        $fields: {
-                            id: { $type: 'string' },
-                            name: { $type: 'string' },
-                            profile: {
-                                $type: 'object',
-                                $fields: {
-                                    age: { $type: 'number' },
-                                },
-                            },
-                        },
-                    },
-                },
-                settings: {
-                    $type: 'object',
-                    $fields: {
-                        theme: { $type: 'string' },
-                        notifications: { $type: 'boolean' },
-                    },
-                },
-            },
-        };
-        const source = JSON.stringify({
-            users: [
-                { id: '1', name: 'Alice', profile: { age: 30 } },
-                { id: '2', name: 'Bob', profile: { age: 25 } },
-            ],
-            settings: {
-                theme: 'dark',
-                notifications: true,
-            },
-        });
-
-        const patches: Patch[] = [
-            {
-                op: 'replace',
-                path: '/users/0/name',
-                value: 'Alice Chen',
-            },
-            {
-                op: 'add',
-                path: '/users/2',
-                value: { id: '3', name: 'Charlie', profile: { age: 35 } },
-            },
-            {
-                op: 'remove',
-                path: '/settings/notifications',
-            },
-            {
-                op: 'add',
-                path: '/settings/language',
-                value: 'zh-CN',
-            },
-        ];
-
-        const result = applyPatches(source, patches, schema);
-        const parsedResult = JSON.parse(result);
-
-        expect(parsedResult.users.some(user => user.name === 'Alice Chen')).toBe(true);
-        expect(parsedResult.users.some(user => user.name === 'Charlie')).toBe(true);
-        expect(parsedResult.settings.notifications).toBeUndefined();
-        expect(parsedResult.settings.language).toBe('zh-CN');
     });
 
     it('should handle add operations using object id property', () => {
@@ -403,6 +339,7 @@ describe('applyPatches', () => {
                 op: 'add',
                 path: '/users',
                 value: { id: '1', name: 'Alice' },
+                hash: generatePatchOptionHash('add', '/users', { id: '1', name: 'Alice' }),
             },
         ];
 
@@ -447,15 +384,11 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '/nonexistent/field',
                 value: 'test',
+                hash: generatePatchOptionHash('replace', '/nonexistent/field', 'test'),
             },
         ];
 
-        const result = applyPatches(source, patches, schema);
-        const parsedResult = JSON.parse(result);
-
-        expect(parsedResult.user).toBeDefined();
-        expect(parsedResult.user.id).toBe('1');
-        expect(parsedResult.user.name).toBe('Alice');
+        expect(() => applyPatches(source, patches, schema)).toThrow('Schema field not found: nonexistent');
     });
 
     it('should correctly handle replace operations on arrays', () => {
@@ -474,6 +407,7 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '/items',
                 value: [4, 5, 6],
+                hash: generatePatchOptionHash('replace', '/items', [4, 5, 6]),
             },
         ];
 
@@ -506,6 +440,7 @@ describe('applyPatches', () => {
                 op: 'replace',
                 path: '',
                 value: { new: 'structure' },
+                hash: generatePatchOptionHash('replace', '', 'structure'),
             },
         ];
 

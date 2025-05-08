@@ -1,28 +1,28 @@
-// Basic types
+// 基本类型
 export type PrimitiveType = 'string' | 'number' | 'boolean' | 'null';
 
-// Object Schema
+// 对象模式
 export type ObjectSchema = {
     readonly $type: 'object';
     readonly $fields: Record<string, FieldSchema>;
 };
 
-// Array object member Schema
+// 数组对象成员模式
 export type ArrayItemObjectSchema = ObjectSchema & {
-    readonly $pk: string; // Only objects in arrays have primary keys
+    readonly $pk: string; // 只有数组中的对象有主键
 };
 
-// Array Schema
+// 数组模式
 export type ArraySchema = {
     readonly $type: 'array';
     readonly $item: ArrayItemObjectSchema | { readonly $type: PrimitiveType };
 };
 
-// Object field Schema
+// 对象字段模式
 export type FieldSchema =
     | { readonly $type: PrimitiveType }
     | { readonly $type: 'object'; readonly $fields: Record<string, FieldSchema> }
     | ArraySchema;
 
-// Root Schema definition
+// 根模式定义
 export type Schema = ObjectSchema | ArraySchema;
