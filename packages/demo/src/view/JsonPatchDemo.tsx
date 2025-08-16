@@ -14,8 +14,8 @@ import ConflictResolutionSection from './ConflictResolutionSection';
 import ResultSection from './ResultSection';
 import SchemaEditSection from './SchemaEditSection';
 import PatchPreviewSection from './PatchPreviewSection';
-import DataStatusIndicator from './DataStatusIndicator';
-import WelcomeMessage from './WelcomeMessage';
+import DataStatusIndicator from '../components/DataStatusIndicator';
+import WelcomeMessage from '../components/WelcomeMessage';
 
 const { Title } = Typography;
 
@@ -130,3 +130,5 @@ const JsonPatchDemo: React.FC = () => {
 };
 
 export default JsonPatchDemo;
+
+

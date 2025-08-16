@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Button, Space, Tabs, Divider, Typography } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
-import JsonEditor from './JsonEditor';
+import JsonEditor from '../components/JsonEditor';
 
 const { Text } = Typography;
 
@@ -92,3 +92,5 @@ const PatchPreviewSection: React.FC = () => {
 };
 
 export default PatchPreviewSection;
+
+

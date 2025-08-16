@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button, Tabs, Divider, Space, Typography } from 'antd';
 import { PlusOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import JsonEditor from './JsonEditor';
+import JsonEditor from '../components/JsonEditor';
 import { usePatchContext } from '../context/PatchContext';
 
 const { Text } = Typography;
@@ -70,12 +70,7 @@ const JsonPatchEditor: React.FC = () => {
 
                     <div className="target-editors">
                         <div className="target-actions" style={{ marginBottom: '16px' }}>
-                            <Button
-                                type="dashed"
-                                icon={<PlusOutlined />}
-                                onClick={addTargetJson}
-                                size="middle"
-                            >
+                            <Button type="dashed" icon={<PlusOutlined />} onClick={addTargetJson} size="middle">
                                 添加目标
                             </Button>
                         </div>
@@ -130,3 +125,5 @@ const JsonPatchEditor: React.FC = () => {
 };
 
 export default JsonPatchEditor;
+
+

@@ -3,7 +3,7 @@ import { Card, Button, Space, Divider, Input, Typography, Empty, Tag, Collapse }
 import { CheckOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
 import { Patch } from '@waveox/schema-json-patch';
-import OptionSelect from './OptionSelect';
+import OptionSelect from '../components/OptionSelect';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -163,32 +163,30 @@ const ConflictResolutionSection: React.FC = () => {
                                             <OptionSelect
                                                 value={selectedHash}
                                                 onChange={val => handleConflictResolution(path, val)}
-                                                options={
-                                                    (options || []).map(hash => {
-                                                        const patch = findPatchByHash(hash);
-                                                        return {
-                                                            value: hash,
-                                                            title: (
-                                                                <>
-                                                                    <Text strong>{getTargetLabelFromHash(hash)}</Text>
-                                                                    <Tag color="blue" style={{ marginLeft: '8px' }}>hash: {hash.substring(0, 8)}</Tag>
-                                                                    {patch && (
-                                                                        <>
-                                                                            <Tag color="green" style={{ marginLeft: '8px' }}>{patch.op}</Tag>
-                                                                            <Tag color="purple" style={{ marginLeft: '8px' }}>路径: {patch.path}</Tag>
-                                                                        </>
-                                                                    )}
-                                                                </>
-                                                            ),
-                                                            content: (
-                                                                <div className="value-display">
-                                                                    <Text type="secondary">值:</Text>
-                                                                    <pre>{getConflictValueDisplay(patch?.value)}</pre>
-                                                                </div>
-                                                            ),
-                                                        };
-                                                    })
-                                                }
+                                                options={(options || []).map(hash => {
+                                                    const patch = findPatchByHash(hash);
+                                                    return {
+                                                        value: hash,
+                                                        title: (
+                                                            <>
+                                                                <Text strong>{getTargetLabelFromHash(hash)}</Text>
+                                                                <Tag color="blue" style={{ marginLeft: '8px' }}>hash: {hash.substring(0, 8)}</Tag>
+                                                                {patch && (
+                                                                    <>
+                                                                        <Tag color="green" style={{ marginLeft: '8px' }}>{patch.op}</Tag>
+                                                                        <Tag color="purple" style={{ marginLeft: '8px' }}>路径: {patch.path}</Tag>
+                                                                    </>
+                                                                )}
+                                                            </>
+                                                        ),
+                                                        content: (
+                                                            <div className="value-display">
+                                                                <Text type="secondary">值:</Text>
+                                                                <pre>{getConflictValueDisplay(patch?.value)}</pre>
+                                                            </div>
+                                                        ),
+                                                    };
+                                                })}
                                             />
 
                                             {/* 自定义选项 */}
@@ -217,11 +215,7 @@ const ConflictResolutionSection: React.FC = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <Button
-                                                        size="small"
-                                                        onClick={() => applyCustomValue(index)}
-                                                        disabled={!customValues[index] || !!customErrors[index]}
-                                                    >
+                                                    <Button size="small" onClick={() => applyCustomValue(index)} disabled={!customValues[index] || !!customErrors[index]}>
                                                         应用自定义值
                                                     </Button>
                                                 </div>
@@ -235,11 +229,7 @@ const ConflictResolutionSection: React.FC = () => {
 
                     <div className="actions actions--sticky">
                         <Space>
-                            <Button
-                                type="primary"
-                                onClick={applyResolutions}
-                                icon={<CheckOutlined />}
-                            >
+                            <Button type="primary" onClick={applyResolutions} icon={<CheckOutlined />}>
                                 应用解决方案
                             </Button>
                         </Space>
@@ -251,3 +241,5 @@ const ConflictResolutionSection: React.FC = () => {
 };
 
 export default ConflictResolutionSection;
+
+
