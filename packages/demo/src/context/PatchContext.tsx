@@ -161,10 +161,12 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                     // 生成补丁
                     const generatedPatches = generatePatches(schema, sourceJson, targetJson);
-                    console.log(
-                        `目标 ${index + 1} 生成的补丁:`,
-                        JSON.stringify(generatedPatches, null, 2)
-                    );
+                    if (import.meta.env.DEV) {
+                        console.log(
+                            `目标 ${index + 1} 生成的补丁:`,
+                            JSON.stringify(generatedPatches, null, 2)
+                        );
+                    }
                     newPatches[index] = [...generatedPatches];
                     newPatchStrings[index] = JSON.stringify(generatedPatches, null, 2);
                 } catch (err) {
@@ -196,7 +198,9 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         try {
             // 检测补丁间的冲突
             const detectedConflicts = detectConflicts(patches);
-            console.log('检测到的冲突:', JSON.stringify(detectedConflicts, null, 2));
+            if (import.meta.env.DEV) {
+                console.log('检测到的冲突:', JSON.stringify(detectedConflicts, null, 2));
+            }
 
             setConflicts([...detectedConflicts]);
             setHasConflicts(detectedConflicts.length > 0);
@@ -209,7 +213,9 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
             // 初始化冲突解决方案（默认选择第一个选项）
             const initialResolutions = initializeResolutions(detectedConflicts);
-            console.log('初始化的冲突解决方案:', JSON.stringify(initialResolutions, null, 2));
+            if (import.meta.env.DEV) {
+                console.log('初始化的冲突解决方案:', JSON.stringify(initialResolutions, null, 2));
+            }
             setConflictResolutions(initialResolutions);
 
             // 生成初始结果

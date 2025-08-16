@@ -19,9 +19,8 @@ const WelcomeMessage: React.FC = () => {
             message="欢迎使用 Schema JSON Patch Demo"
             description={
                 <div>
-                    <p>✨ 您的所有输入数据都会自动保存到本地存储中</p>
-                    <p>🔄 刷新页面后数据会自动恢复</p>
-                    <p>🗑️ 您可以随时清除保存的数据</p>
+                    <p>您的输入会自动保存至本地，刷新后可恢复。</p>
+                    <p>可在右上角随时清除保存的数据。</p>
                 </div>
             }
             type="info"

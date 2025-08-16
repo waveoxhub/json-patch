@@ -37,11 +37,13 @@ const ConflictResolutionSection: React.FC = () => {
     const [customValues, setCustomValues] = useState<Record<string, string>>({});
     const [customPaths, setCustomPaths] = useState<Record<string, string>>({});
 
-    // 调试信息
+    // 调试信息（仅在开发环境输出）
     useEffect(() => {
-        console.log('冲突数据:', conflicts);
-        console.log('解决方案:', conflictResolutions);
-        console.log('补丁数据:', patches);
+        if (import.meta.env.DEV) {
+            console.log('冲突数据:', conflicts);
+            console.log('解决方案:', conflictResolutions);
+            console.log('补丁数据:', patches);
+        }
     }, [conflicts, conflictResolutions, patches]);
 
     if (!hasConflicts) {
@@ -90,10 +92,9 @@ const ConflictResolutionSection: React.FC = () => {
         }
     };
 
-    const getConflictValueDisplay = (value: any) => {
+    const getConflictValueDisplay = (value: unknown) => {
         if (value === undefined) return '(未定义)';
         if (value === null) return 'null';
-
         try {
             return JSON.stringify(value, null, 2);
         } catch {
@@ -116,7 +117,7 @@ const ConflictResolutionSection: React.FC = () => {
     return (
         <div className="conflict-resolution-section">
             <Card title="冲突解决" className="conflict-card">
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                <div className="flex flex-col gap-6 w-full">
                     <div className="conflict-intro">
                         <Paragraph>
                             以下是检测到的冲突。对于每个冲突的路径，请选择一个解决方案。
@@ -133,7 +134,7 @@ const ConflictResolutionSection: React.FC = () => {
 
                             return (
                                 <List.Item className="conflict-item">
-                                    <div className="conflict-content" style={{ width: '100%' }}>
+                                    <div className="conflict-content w-full">
                                         <Title level={5}>
                                             冲突 {index + 1}: {path}
                                         </Title>
@@ -147,7 +148,7 @@ const ConflictResolutionSection: React.FC = () => {
                                             value={selectedHash}
                                             className="resolution-options"
                                         >
-                                            <Space direction="vertical" style={{ width: '100%' }}>
+                                            <div className="flex flex-col gap-4 w-full">
                                                 {options &&
                                                     options.map(hash => {
                                                         const patch = findPatchByHash(hash);
@@ -155,49 +156,25 @@ const ConflictResolutionSection: React.FC = () => {
                                                             <Radio
                                                                 key={hash}
                                                                 value={hash}
-                                                                style={{ marginBottom: '16px' }}
                                                             >
-                                                                <div className="resolution-option">
-                                                                    <div
-                                                                        style={{
-                                                                            marginBottom: '8px',
-                                                                        }}
-                                                                    >
+                                                                <div className="resolution-option rounded-md border border-gray-200 bg-gray-50 p-3 hover:bg-gray-100">
+                                                                    <div className="mb-2">
                                                                         <Text strong>
                                                                             {getTargetLabelFromHash(
                                                                                 hash,
                                                                                 patches
                                                                             )}
                                                                         </Text>
-                                                                        <Tag
-                                                                            color="blue"
-                                                                            style={{
-                                                                                marginLeft: '8px',
-                                                                            }}
-                                                                        >
-                                                                            hash:{' '}
-                                                                            {hash.substring(0, 8)}
+                                                                        <Tag color="blue" style={{ marginLeft: '8px' }}>
+                                                                            hash: {hash.substring(0, 8)}
                                                                         </Tag>
                                                                         {patch && (
                                                                             <>
-                                                                                <Tag
-                                                                                    color="green"
-                                                                                    style={{
-                                                                                        marginLeft:
-                                                                                            '8px',
-                                                                                    }}
-                                                                                >
+                                                                                <Tag color="green" style={{ marginLeft: '8px' }}>
                                                                                     {patch.op}
                                                                                 </Tag>
-                                                                                <Tag
-                                                                                    color="purple"
-                                                                                    style={{
-                                                                                        marginLeft:
-                                                                                            '8px',
-                                                                                    }}
-                                                                                >
-                                                                                    路径:{' '}
-                                                                                    {patch.path}
+                                                                                <Tag color="purple" style={{ marginLeft: '8px' }}>
+                                                                                    路径: {patch.path}
                                                                                 </Tag>
                                                                             </>
                                                                         )}
@@ -217,15 +194,9 @@ const ConflictResolutionSection: React.FC = () => {
                                                         );
                                                     })}
 
-                                                <Radio
-                                                    value="custom"
-                                                    style={{ marginBottom: '8px' }}
-                                                >
-                                                    <div className="custom-resolution">
-                                                        <Space
-                                                            direction="vertical"
-                                                            style={{ width: '100%' }}
-                                                        >
+                                                <Radio value="custom">
+                                                    <div className="custom-resolution rounded-md border border-dashed border-gray-300 p-3 bg-white">
+                                                        <div className="flex flex-col gap-3 w-full">
                                                             <div>
                                                                 <Text strong>自定义路径:</Text>
                                                                 <Input
@@ -237,10 +208,6 @@ const ConflictResolutionSection: React.FC = () => {
                                                                         )
                                                                     }
                                                                     placeholder={`输入自定义路径，留空则使用 ${path}`}
-                                                                    style={{
-                                                                        width: '100%',
-                                                                        marginTop: '4px',
-                                                                    }}
                                                                 />
                                                             </div>
                                                             <div>
@@ -257,10 +224,7 @@ const ConflictResolutionSection: React.FC = () => {
                                                                     }
                                                                     rows={4}
                                                                     placeholder="输入自定义JSON值"
-                                                                    style={{
-                                                                        fontFamily: 'monospace',
-                                                                        marginTop: '4px',
-                                                                    }}
+                                                                    style={{ fontFamily: 'monospace', marginTop: 4 }}
                                                                 />
                                                             </div>
                                                             <Button
@@ -272,10 +236,10 @@ const ConflictResolutionSection: React.FC = () => {
                                                             >
                                                                 应用自定义值
                                                             </Button>
-                                                        </Space>
+                                                        </div>
                                                     </div>
                                                 </Radio>
-                                            </Space>
+                                            </div>
                                         </Radio.Group>
                                     </div>
                                 </List.Item>
@@ -294,7 +258,7 @@ const ConflictResolutionSection: React.FC = () => {
                             </Button>
                         </Space>
                     </div>
-                </Space>
+                </div>
             </Card>
         </div>
     );

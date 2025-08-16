@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Tabs, Button, Space } from 'antd';
+import { Typography, Tabs, Button, Space, Badge } from 'antd';
 import type { TabsProps } from 'antd';
 import {
     EditOutlined,
@@ -63,8 +63,9 @@ const JsonPatchDemoContent: React.FC = () => {
             label: (
                 <span>
                     <WarningOutlined />
-                    冲突解决
-                    {hasConflicts && <span className="conflict-badge"> !</span>}
+                    <Badge dot={hasConflicts} offset={[6, -2]}>
+                        <span style={{ marginLeft: 4 }}>冲突解决</span>
+                    </Badge>
                 </span>
             ),
             children: <ConflictResolutionSection />,

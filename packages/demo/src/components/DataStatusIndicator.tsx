@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tag, Tooltip, Space } from 'antd';
+import { Tooltip } from 'antd';
 import { SaveOutlined, DeleteOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
 
@@ -34,30 +34,32 @@ const DataStatusIndicator: React.FC = () => {
     };
 
     return (
-        <Space size="small">
-            <Tag color="green" icon={<SaveOutlined />}>
+        <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1 rounded-md border border-green-300 bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
+                <SaveOutlined />
                 已保存
-            </Tag>
+            </span>
 
             {lastSavedTime && (
                 <Tooltip title={`最后保存时间: ${lastSavedTime.toLocaleString('zh-CN')}`}>
-                    <Tag color="blue" icon={<ClockCircleOutlined />}>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                        <ClockCircleOutlined />
                         {formatTime(lastSavedTime)}
-                    </Tag>
+                    </span>
                 </Tooltip>
             )}
 
             <Tooltip title="清除所有保存的数据">
-                <Tag
-                    color="red"
-                    icon={<DeleteOutlined />}
-                    style={{ cursor: 'pointer' }}
+                <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-md border border-red-300 bg-red-50 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-100 active:bg-red-200 transition"
                     onClick={clearStoredData}
                 >
+                    <DeleteOutlined />
                     清除数据
-                </Tag>
+                </button>
             </Tooltip>
-        </Space>
+        </div>
     );
 };
 
