@@ -27,11 +27,16 @@ const SchemaEditSection: React.FC = () => {
                     <div style={{ backgroundColor: '#f0f7ff', padding: '12px', borderRadius: '6px' }}>
                         <Paragraph style={{ marginBottom: '8px' }}>
                             <InfoCircleOutlined style={{ color: '#1677ff', marginRight: '8px' }} />
-                            请定义您的数据模型，用于指导补丁的生成和应用。
+                            本模型用于告诉 <code>@waveox/schema-json-patch</code> 如何在 JSON 中“定位与解释”数据，以生成语义化路径、产出补丁，并在应用/冲突检测时做类型校验。
                         </Paragraph>
 
                         <Paragraph style={{ marginBottom: 0 }}>
-                            模型描述了您的数据结构，包括主键、字段类型等信息，这些信息将用于更精确地生成和应用补丁。
+                            <ul style={{ paddingLeft: 16, margin: 0 }}>
+                                <li>根仅支持 <code>object</code> 或 <code>array</code>；对象通过 <code>$fields</code> 描述子结构，数组通过 <code>$item</code> 描述元素类型。</li>
+                                <li>当 <code>$item.$type === 'object'</code> 时，必须提供 <code>$pk</code> 作为对象数组的主键，补丁路径以主键而非索引定位元素（如：<code>/contacts/contact-1/email</code>）。</li>
+                                <li>仅对 Schema 覆盖的字段生成补丁；纯数组重排不会产生补丁。</li>
+                                <li>补丁生成、应用以及冲突检测均依赖此 Schema，请确保其与实际数据结构保持一致。</li>
+                            </ul>
                         </Paragraph>
                     </div>
 

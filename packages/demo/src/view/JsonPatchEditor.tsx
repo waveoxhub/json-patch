@@ -60,7 +60,6 @@ const JsonPatchEditor: React.FC = () => {
                             value={sourceJson}
                             onChange={handleSourceChange}
                             height="200px"
-                            placeholder="请输入源JSON数据"
                             title="源JSON"
                             showSaveIndicator={true}
                         />
@@ -96,7 +95,6 @@ const JsonPatchEditor: React.FC = () => {
                                             value={json}
                                             onChange={value => handleTargetChange(index, value)}
                                             height="200px"
-                                            placeholder="请输入目标JSON数据"
                                             title={`目标 ${index + 1} JSON`}
                                             showSaveIndicator={true}
                                         />
