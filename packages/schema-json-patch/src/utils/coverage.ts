@@ -46,6 +46,3 @@ export const hasWriteOverlap = (a: Coverage, b: Coverage): boolean => {
     }
     return false;
 };
-
-
-

@@ -60,7 +60,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                     }
 
                     assertArrayObjectHasPkIfObjectArray(arraySchema);
-                    
 
                     if (isObject(value) && hasObjectItems(arraySchema)) {
                         const pkField = getPrimaryKeyField(arraySchema);

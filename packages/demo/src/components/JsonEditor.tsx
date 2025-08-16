@@ -16,7 +16,16 @@ const JsonEditor: React.FC<
         style?: React.CSSProperties;
         showSaveIndicator?: boolean;
     }
-> = ({ value, onChange, height = '150px', placeholder, readOnly = false, title, style = {}, showSaveIndicator = false }) => {
+> = ({
+    value,
+    onChange,
+    height = '150px',
+    placeholder,
+    readOnly = false,
+    title,
+    style = {},
+    showSaveIndicator = false,
+}) => {
     const [error, setError] = useState<string | null>(null);
     const [displayValue, setDisplayValue] = useState<string | null>(null);
 
@@ -162,7 +171,7 @@ const JsonEditor: React.FC<
                 <Editor
                     language="json"
                     value={actualValue}
-                    onChange={(value) => handleEditorChange(value)}
+                    onChange={value => handleEditorChange(value)}
                     height={height}
                     options={{
                         readOnly,

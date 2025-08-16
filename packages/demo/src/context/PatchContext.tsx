@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useCallback,
+    ReactNode,
+    useEffect,
+} from 'react';
 import {
     Patch,
     ConflictResolutions,
@@ -14,7 +21,14 @@ import {
 } from '@waveox/schema-json-patch';
 import { defaultSchemaData, original, version1, version2, version3 } from '../data/sampleJsonData';
 import { isValidJson } from '../utils/jsonUtils';
-import { loadFromStorage, saveToStorage, saveToStorageImmediate, clearStorage, hasStoredData, getLastSavedTime } from '../utils/storage';
+import {
+    loadFromStorage,
+    saveToStorage,
+    saveToStorageImmediate,
+    clearStorage,
+    hasStoredData,
+    getLastSavedTime,
+} from '../utils/storage';
 
 interface PatchContextType {
     // 源数据相关
@@ -114,7 +128,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setSchema(parsedSchema);
             setSchemaString(newSchemaString);
             setError(null);
-            
+
             // 立即保存到localStorage（Schema变更需要立即保存）
             saveToStorageImmediate({ schemaString: newSchemaString });
         } catch (err) {
@@ -364,7 +378,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setResultJson('');
         setError(null);
         setActiveTab('schema');
-        
+
         // 清除localStorage数据
         clearStorage();
         setHasStoredDataState(false);
@@ -377,12 +391,12 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setTargetJsons([version1, version2, version3]);
         setActiveTargetIndex(0);
         setActiveTab('editor');
-        
+
         // 立即保存示例数据到localStorage
         saveToStorageImmediate({
             sourceJson: original,
             targetJsons: [version1, version2, version3],
-            activeTab: 'editor'
+            activeTab: 'editor',
         });
     }, []);
 
@@ -400,7 +414,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 sourceJson,
                 targetJsons,
                 activeTargetIndex,
-                activeTab
+                activeTab,
             });
             setLastSavedTime(new Date());
         }
@@ -411,10 +425,10 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const storedData = loadFromStorage();
         const hasData = hasStoredData();
         const lastSaved = getLastSavedTime();
-        
+
         setHasStoredDataState(hasData);
         setLastSavedTime(lastSaved);
-        
+
         if (hasData && storedData) {
             if (storedData.sourceJson) setSourceJson(storedData.sourceJson);
             if (storedData.targetJsons) setTargetJsons(storedData.targetJsons);
@@ -428,7 +442,8 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 }
             }
             if (storedData.activeTab) setActiveTab(storedData.activeTab);
-            if (storedData.activeTargetIndex !== undefined) setActiveTargetIndex(storedData.activeTargetIndex);
+            if (storedData.activeTargetIndex !== undefined)
+                setActiveTargetIndex(storedData.activeTargetIndex);
         }
     }, []);
 

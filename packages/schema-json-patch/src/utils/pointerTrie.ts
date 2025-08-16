@@ -65,6 +65,3 @@ export class PointerTrie {
         return false;
     }
 }
-
-
-

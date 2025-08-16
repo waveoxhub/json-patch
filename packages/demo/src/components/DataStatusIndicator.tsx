@@ -24,12 +24,12 @@ const DataStatusIndicator: React.FC = () => {
         if (minutes < 60) return `${minutes}分钟前`;
         if (hours < 24) return `${hours}小时前`;
         if (days < 7) return `${days}天前`;
-        
+
         return date.toLocaleDateString('zh-CN', {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -38,7 +38,7 @@ const DataStatusIndicator: React.FC = () => {
             <Tag color="green" icon={<SaveOutlined />}>
                 已保存
             </Tag>
-            
+
             {lastSavedTime && (
                 <Tooltip title={`最后保存时间: ${lastSavedTime.toLocaleString('zh-CN')}`}>
                     <Tag color="blue" icon={<ClockCircleOutlined />}>
@@ -46,10 +46,10 @@ const DataStatusIndicator: React.FC = () => {
                     </Tag>
                 </Tooltip>
             )}
-            
+
             <Tooltip title="清除所有保存的数据">
-                <Tag 
-                    color="red" 
+                <Tag
+                    color="red"
                     icon={<DeleteOutlined />}
                     style={{ cursor: 'pointer' }}
                     onClick={clearStoredData}

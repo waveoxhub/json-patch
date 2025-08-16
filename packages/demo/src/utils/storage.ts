@@ -33,11 +33,11 @@ let saveTimeout: NodeJS.Timeout | null = null;
 export const loadFromStorage = (): Partial<StoredData> => {
     try {
         const data: Partial<StoredData> = {};
-        
+
         // 读取源JSON
         const sourceJson = localStorage.getItem(STORAGE_KEYS.SOURCE_JSON);
         if (sourceJson) data.sourceJson = sourceJson;
-        
+
         // 读取目标JSON列表
         const targetJsons = localStorage.getItem(STORAGE_KEYS.TARGET_JSONS);
         if (targetJsons) {
@@ -47,21 +47,21 @@ export const loadFromStorage = (): Partial<StoredData> => {
                 data.targetJsons = [''];
             }
         }
-        
+
         // 读取Schema字符串
         const schemaString = localStorage.getItem(STORAGE_KEYS.SCHEMA_STRING);
         if (schemaString) data.schemaString = schemaString;
-        
+
         // 读取当前标签页
         const activeTab = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
         if (activeTab) data.activeTab = activeTab;
-        
+
         // 读取当前目标索引
         const activeTargetIndex = localStorage.getItem(STORAGE_KEYS.ACTIVE_TARGET_INDEX);
         if (activeTargetIndex) {
             data.activeTargetIndex = parseInt(activeTargetIndex, 10);
         }
-        
+
         return data;
     } catch (error) {
         console.warn('从localStorage读取数据失败:', error);
@@ -77,37 +77,40 @@ export const saveToStorage = (data: Partial<StoredData>): void => {
     if (saveTimeout) {
         clearTimeout(saveTimeout);
     }
-    
+
     // 设置新的定时器
     saveTimeout = setTimeout(() => {
         try {
             const timestamp = Date.now();
-            
+
             // 保存源JSON
             if (data.sourceJson !== undefined) {
                 localStorage.setItem(STORAGE_KEYS.SOURCE_JSON, data.sourceJson);
             }
-            
+
             // 保存目标JSON列表
             if (data.targetJsons !== undefined) {
                 localStorage.setItem(STORAGE_KEYS.TARGET_JSONS, JSON.stringify(data.targetJsons));
             }
-            
+
             // 保存Schema字符串
             if (data.schemaString !== undefined) {
                 localStorage.setItem(STORAGE_KEYS.SCHEMA_STRING, data.schemaString);
             }
-            
+
             // 保存当前标签页
             if (data.activeTab !== undefined) {
                 localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, data.activeTab);
             }
-            
+
             // 保存当前目标索引
             if (data.activeTargetIndex !== undefined) {
-                localStorage.setItem(STORAGE_KEYS.ACTIVE_TARGET_INDEX, data.activeTargetIndex.toString());
+                localStorage.setItem(
+                    STORAGE_KEYS.ACTIVE_TARGET_INDEX,
+                    data.activeTargetIndex.toString()
+                );
             }
-            
+
             // 保存时间戳
             localStorage.setItem('schema-json-patch:last-saved', timestamp.toString());
         } catch (error) {
@@ -122,32 +125,35 @@ export const saveToStorage = (data: Partial<StoredData>): void => {
 export const saveToStorageImmediate = (data: Partial<StoredData>): void => {
     try {
         const timestamp = Date.now();
-        
+
         // 保存源JSON
         if (data.sourceJson !== undefined) {
             localStorage.setItem(STORAGE_KEYS.SOURCE_JSON, data.sourceJson);
         }
-        
+
         // 保存目标JSON列表
         if (data.targetJsons !== undefined) {
             localStorage.setItem(STORAGE_KEYS.TARGET_JSONS, JSON.stringify(data.targetJsons));
         }
-        
+
         // 保存Schema字符串
         if (data.schemaString !== undefined) {
             localStorage.setItem(STORAGE_KEYS.SCHEMA_STRING, data.schemaString);
         }
-        
+
         // 保存当前标签页
         if (data.activeTab !== undefined) {
             localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, data.activeTab);
         }
-        
+
         // 保存当前目标索引
         if (data.activeTargetIndex !== undefined) {
-            localStorage.setItem(STORAGE_KEYS.ACTIVE_TARGET_INDEX, data.activeTargetIndex.toString());
+            localStorage.setItem(
+                STORAGE_KEYS.ACTIVE_TARGET_INDEX,
+                data.activeTargetIndex.toString()
+            );
         }
-        
+
         // 保存时间戳
         localStorage.setItem('schema-json-patch:last-saved', timestamp.toString());
     } catch (error) {
@@ -174,9 +180,7 @@ export const clearStorage = (): void => {
  */
 export const hasStoredData = (): boolean => {
     try {
-        return Object.values(STORAGE_KEYS).some(key => 
-            localStorage.getItem(key) !== null
-        );
+        return Object.values(STORAGE_KEYS).some(key => localStorage.getItem(key) !== null);
     } catch {
         return false;
     }

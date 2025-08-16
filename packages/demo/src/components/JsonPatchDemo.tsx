@@ -85,7 +85,7 @@ const JsonPatchDemoContent: React.FC = () => {
     return (
         <div className="json-patch-demo">
             <WelcomeMessage />
-            
+
             <div className="demo-header">
                 <div className="header-left">
                     <Title level={2}>Schema JSON Patch Demo</Title>
