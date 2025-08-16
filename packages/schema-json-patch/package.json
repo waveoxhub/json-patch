@@ -1,0 +1,64 @@
+{
+    "name": "@waveox/schema-json-patch",
+    "version": "1.0.0",
+    "description": "Patch libraries for handling fixed-structure JSON data, providing patch generation, conflict handling, and patch application capabilities",
+    "type": "module",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/cjs/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc && tsc -p tsconfig.cjs.json",
+        "clean": "tsc --build --clean && rm -rf dist",
+        "watch": "tsc -w",
+        "watch:cjs": "tsc -w -p tsconfig.cjs.json",
+        "dev": "concurrently \"pnpm run watch\" \"pnpm run watch:cjs\"",
+        "lint": "eslint src",
+        "format": "prettier --check .",
+        "format:fix": "prettier --write .",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:ui": "vitest --ui --coverage",
+        "coverage": "vitest run --coverage",
+        "prepublishOnly": "pnpm run test && pnpm run build"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "README-EN.md",
+        "LICENSE"
+    ],
+    "keywords": [
+        "json",
+        "patch",
+        "schema",
+        "diff",
+        "rfc6902",
+        "jsonpatch"
+    ],
+    "author": "WaveOX",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/waveoxhub/schema-json-patch"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {
+        "@vitest/ui": "^3.0.9",
+        "concurrently": "^8.2.2",
+        "eslint": "^9.23.0",
+        "prettier": "^3.5.3",
+        "typescript": "~5.8.2",
+        "typescript-eslint": "^8.27.0",
+        "vitest": "^3.0.9"
+    }
+}

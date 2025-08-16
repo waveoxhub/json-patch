@@ -1,0 +1,83 @@
+<svg width="100%" height="300" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6f8ff" />
+      <stop offset="100%" stop-color="#e6eaff" />
+    </linearGradient>
+    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+    <linearGradient id="glow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22DDCB" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#4FACFE" stop-opacity="0.8" />
+    </linearGradient>
+
+    <radialGradient id="radial-glow" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5">
+      <stop offset="0%" stop-color="#4FACFE" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#4FACFE" stop-opacity="0" />
+    </radialGradient>
+    
+
+    <linearGradient id="title-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22DDCB" />
+      <stop offset="100%" stop-color="#4FACFE" />
+    </linearGradient>
+    
+    <linearGradient id="company-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A365D" />
+      <stop offset="50%" stop-color="#2D3748" />
+      <stop offset="100%" stop-color="#4A5568" />
+    </linearGradient>
+    
+    <filter id="soft-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 10 -5" result="glow" />
+      <feBlend in="SourceGraphic" in2="glow" mode="normal" />
+    </filter>
+    
+    <filter id="company-shadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#FFFFFF" flood-opacity="0.8" />
+    </filter>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bg-gradient)" rx="20" ry="20" />
+  
+  <circle cx="950" cy="150" r="250" fill="url(#radial-glow)" opacity="0.8" />
+  
+  <g opacity="0.7">
+    <path d="M0,0 L250,0 Q270,120 200,200 Q120,270 0,250 Z" fill="url(#accent-gradient)" opacity="0.1" />
+    
+    <path d="M1200,0 L1200,200 L900,0 Z" fill="url(#accent-gradient)" opacity="0.2" />
+    
+    <circle cx="950" cy="120" r="60" fill="url(#glow-gradient)" opacity="0.6" />
+    <circle cx="880" cy="180" r="30" fill="url(#glow-gradient)" opacity="0.4" />
+    
+    <rect x="100" y="200" width="80" height="80" rx="15" ry="15" fill="url(#accent-gradient)" opacity="0.05" transform="rotate(-15 100 200)" />
+    <rect x="150" y="220" width="40" height="40" rx="10" ry="10" fill="url(#glow-gradient)" opacity="0.2" transform="rotate(15 150 220)" />
+  </g>
+
+  <text x="100" y="180" 
+        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-size="110" 
+        font-weight="800" 
+        letter-spacing="-2" 
+        fill="url(#title-gradient)"
+        shape-rendering="geometricPrecision"
+        text-rendering="optimizeLegibility"
+        filter="url(#soft-glow)">
+    Schema JSON Patch
+  </text>
+  
+  <text x="1080" y="260"
+        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        font-size="28"
+        font-weight="700"
+        fill="url(#company-gradient)"
+        text-anchor="end"
+        filter="url(#company-shadow)">
+    @waveox
+  </text>
+  
+  <rect x="985" y="240" width="100" height="30" rx="15" ry="15" fill="white" opacity="0.15" />
+</svg>

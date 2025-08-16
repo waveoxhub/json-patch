@@ -1,0 +1,26 @@
+{
+	"name": "JSON Patch Dev",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"forwardPorts": [
+		8080
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"wdhongtw.gpg-indicator",
+				"christian-kohler.path-intellisense"
+			]
+		}
+	},
+	
+	"remoteUser": "root"
+}

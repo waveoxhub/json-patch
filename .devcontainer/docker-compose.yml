@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:delegated
+      - ./scripts:/scripts
+      - maven-cache:/root/.m2
+      - cursor_cache:/root/.cursor-server
+      - vscode_cache:/root/.vscode-server
+      - ~/.gnupg:/root/tmp/.gnupg:ro
+      - ~/.ssh:/root/tmp/.ssh:ro
+    command: bash -c "chown -R root:root /scripts && chmod -R 755 /scripts && /scripts/setup-gpg-ssh.sh && sleep infinity"
+    networks:
+      - dev_network
+
+volumes:
+  maven-cache:
+  cursor_cache:
+  vscode_cache:
+
+networks:
+  dev_network:
+    driver: bridge 

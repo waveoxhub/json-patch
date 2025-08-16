@@ -1,0 +1,24 @@
+{
+  "name": "schema-json-patch-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:package": "pnpm -F @waveox/schema-json-patch build",
+    "dev": "concurrently \"pnpm -F @waveox/schema-json-patch dev\" \"pnpm -F @schema-json-patch/demo dev\"",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "format:fix": "pnpm -r format:fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.12",
+    "@vitest/coverage-v8": "^3.0.9",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.23.0",
+    "prettier": "^3.5.3",
+    "typescript": "~5.8.2"
+  },
+  "packageManager": "pnpm@8.15.4"
+}
