@@ -20,7 +20,7 @@ import {
     UnresolvedConflicts,
 } from '@waveox/schema-json-patch';
 import { defaultSchemaData, original, version1, version2, version3 } from '../data/sampleJsonData';
-import { isValidJson } from '../utils/jsonUtils';
+import { isValidJson, formatJson } from '../utils/jsonUtils';
 import { CustomResolutionInput } from '../types/types';
 import {
     loadFromStorage,
@@ -247,7 +247,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                 // 应用补丁
                 const result = applyPatches(sourceJson, patchesToApply, schema);
-                setResultJson(result);
+                setResultJson(formatJson(result));
                 setError(null);
                 setActiveTab('result');
             } catch (err) {
