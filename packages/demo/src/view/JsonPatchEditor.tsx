@@ -68,12 +68,6 @@ const JsonPatchEditor: React.FC = () => {
                     <Divider style={{ margin: '24px 0 16px' }}>目标JSON</Divider>
 
                     <div className="target-editors">
-                        <div className="target-actions" style={{ marginBottom: '16px' }}>
-                            <Button type="dashed" icon={<PlusOutlined />} onClick={addTargetJson} size="middle">
-                                添加目标
-                            </Button>
-                        </div>
-
                         <Tabs
                             type="editable-card"
                             activeKey={activeTargetIndex.toString()}
@@ -81,7 +75,10 @@ const JsonPatchEditor: React.FC = () => {
                             className="modern-tabs"
                             destroyInactiveTabPane={true}
                             onEdit={(targetKey, action) => {
-                                if (action === 'remove' && typeof targetKey === 'string') {
+                                if (action === 'add') {
+                                    addTargetJson();
+                                    setActiveTargetIndex(targetJsons.length);
+                                } else if (action === 'remove' && typeof targetKey === 'string') {
                                     removeTargetJson(parseInt(targetKey));
                                 }
                             }}
