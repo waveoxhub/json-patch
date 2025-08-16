@@ -21,6 +21,7 @@ import {
 } from '@waveox/schema-json-patch';
 import { defaultSchemaData, original, version1, version2, version3 } from '../data/sampleJsonData';
 import { isValidJson } from '../utils/jsonUtils';
+import { CustomResolutionInput } from '../types/types';
 import {
     loadFromStorage,
     saveToStorage,
@@ -62,7 +63,7 @@ interface PatchContextType {
     customResolutions: CustomConflictResolution[];
     checkForConflicts: () => void;
     handleConflictResolution: (path: string, selectedHash: string) => void;
-    handleCustomResolution: (conflictIndex: number, customValue: any) => void;
+    handleCustomResolution: (conflictIndex: number, customValue: CustomResolutionInput) => void;
     applyResolutions: () => void;
 
     // 结果相关
@@ -274,7 +275,7 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // 处理自定义解决方案
     const handleCustomResolution = useCallback(
-        (conflictIndex: number, customValue: any) => {
+        (conflictIndex: number, customValue: CustomResolutionInput) => {
             const conflict = conflicts[conflictIndex];
             if (!conflict) return;
 
@@ -289,8 +290,9 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 'path' in customValue &&
                 'value' in customValue
             ) {
-                patchPath = customValue.path;
-                patchValue = customValue.value;
+                const valueWithPath = customValue as { path: string; value: unknown };
+                patchPath = valueWithPath.path;
+                patchValue = valueWithPath.value;
             }
 
             // 创建自定义解决方案补丁

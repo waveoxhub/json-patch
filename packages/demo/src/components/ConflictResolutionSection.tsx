@@ -1,23 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, List, Radio, Space, Divider, Input, Typography, Empty, Tag } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Card, Button, Space, Divider, Input, Typography, Empty, Tag, Collapse } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
 import { Patch } from '@waveox/schema-json-patch';
+import OptionSelect from './OptionSelect';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 /**
- * 从hash中匹配目标索引，返回对应的目标标签
+ * 基于当前补丁集建立 hash -> patch 与 hash -> 目标索引 的映射
  */
-const getTargetLabelFromHash = (hash: string, patches: Patch[][]): string => {
-    for (let i = 0; i < patches.length; i++) {
-        const patchGroup = patches[i];
-        if (patchGroup.some(patch => patch.hash === hash)) {
-            return `目标 ${i + 1}`;
-        }
-    }
-    return '未知';
+const useHashIndexes = (patches: Patch[][]) => {
+    return useMemo(() => {
+        const hashToPatch = new Map<string, Patch>();
+        const hashToTargetIndex = new Map<string, number>();
+        patches.forEach((group, targetIndex) => {
+            group.forEach(patch => {
+                hashToPatch.set(patch.hash, patch);
+                hashToTargetIndex.set(patch.hash, targetIndex);
+            });
+        });
+        return { hashToPatch, hashToTargetIndex } as const;
+    }, [patches]);
 };
 
 /**
@@ -36,6 +41,17 @@ const ConflictResolutionSection: React.FC = () => {
 
     const [customValues, setCustomValues] = useState<Record<string, string>>({});
     const [customPaths, setCustomPaths] = useState<Record<string, string>>({});
+    const [customErrors, setCustomErrors] = useState<Record<string, string | null>>({});
+
+    const { hashToPatch, hashToTargetIndex } = useHashIndexes(patches);
+
+    const getTargetLabelFromHash = useCallback(
+        (hash: string): string => {
+            const idx = hashToTargetIndex.get(hash);
+            return typeof idx === 'number' ? `目标 ${idx + 1}` : '未知';
+        },
+        [hashToTargetIndex]
+    );
 
     // 调试信息（仅在开发环境输出）
     useEffect(() => {
@@ -59,6 +75,18 @@ const ConflictResolutionSection: React.FC = () => {
             ...prev,
             [conflictIndex]: value,
         }));
+
+        // 实时校验 JSON
+        if (!value.trim()) {
+            setCustomErrors(prev => ({ ...prev, [conflictIndex]: null }));
+            return;
+        }
+        try {
+            JSON.parse(value);
+            setCustomErrors(prev => ({ ...prev, [conflictIndex]: null }));
+        } catch (e) {
+            setCustomErrors(prev => ({ ...prev, [conflictIndex]: 'JSON格式错误' }));
+        }
     };
 
     const handleCustomPathChange = (conflictIndex: number, path: string) => {
@@ -102,17 +130,8 @@ const ConflictResolutionSection: React.FC = () => {
         }
     };
 
-    // 查找给定哈希对应的补丁
-    const findPatchByHash = (hash: string): Patch | undefined => {
-        for (const patchGroup of patches) {
-            for (const patch of patchGroup) {
-                if (patch.hash === hash) {
-                    return patch;
-                }
-            }
-        }
-        return undefined;
-    };
+    // 查找给定哈希对应的补丁（O(1)）
+    const findPatchByHash = (hash: string): Patch | undefined => hashToPatch.get(hash);
 
     return (
         <div className="conflict-resolution-section">
@@ -124,130 +143,97 @@ const ConflictResolutionSection: React.FC = () => {
                         </Paragraph>
                     </div>
 
-                    <List
-                        dataSource={conflicts}
-                        renderItem={(conflict, index) => {
+                    <Collapse
+                        items={conflicts.map((conflict, index) => {
                             const { path, options } = conflict;
-                            const selectedHash = conflictResolutions.find(
-                                res => res.path === path
-                            )?.selectedHash;
-
-                            return (
-                                <List.Item className="conflict-item">
-                                    <div className="conflict-content w-full">
-                                        <Title level={5}>
-                                            冲突 {index + 1}: {path}
-                                        </Title>
-
-                                        <Divider orientation="left">选择一个解决方案</Divider>
-
-                                        <Radio.Group
-                                            onChange={e =>
-                                                handleConflictResolution(path, e.target.value)
-                                            }
-                                            value={selectedHash}
-                                            className="resolution-options"
-                                        >
-                                            <div className="flex flex-col gap-4 w-full">
-                                                {options &&
-                                                    options.map(hash => {
-                                                        const patch = findPatchByHash(hash);
-                                                        return (
-                                                            <Radio
-                                                                key={hash}
-                                                                value={hash}
-                                                            >
-                                                                <div className="resolution-option rounded-md border border-gray-200 bg-gray-50 p-3 hover:bg-gray-100">
-                                                                    <div className="mb-2">
-                                                                        <Text strong>
-                                                                            {getTargetLabelFromHash(
-                                                                                hash,
-                                                                                patches
-                                                                            )}
-                                                                        </Text>
-                                                                        <Tag color="blue" style={{ marginLeft: '8px' }}>
-                                                                            hash: {hash.substring(0, 8)}
-                                                                        </Tag>
-                                                                        {patch && (
-                                                                            <>
-                                                                                <Tag color="green" style={{ marginLeft: '8px' }}>
-                                                                                    {patch.op}
-                                                                                </Tag>
-                                                                                <Tag color="purple" style={{ marginLeft: '8px' }}>
-                                                                                    路径: {patch.path}
-                                                                                </Tag>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="value-display">
-                                                                        <Text type="secondary">
-                                                                            值:
-                                                                        </Text>
-                                                                        <pre>
-                                                                            {getConflictValueDisplay(
-                                                                                patch?.value
-                                                                            )}
-                                                                        </pre>
-                                                                    </div>
-                                                                </div>
-                                                            </Radio>
-                                                        );
-                                                    })}
-
-                                                <Radio value="custom">
-                                                    <div className="custom-resolution rounded-md border border-dashed border-gray-300 p-3 bg-white">
-                                                        <div className="flex flex-col gap-3 w-full">
-                                                            <div>
-                                                                <Text strong>自定义路径:</Text>
-                                                                <Input
-                                                                    value={customPaths[index] || ''}
-                                                                    onChange={e =>
-                                                                        handleCustomPathChange(
-                                                                            index,
-                                                                            e.target.value
-                                                                        )
-                                                                    }
-                                                                    placeholder={`输入自定义路径，留空则使用 ${path}`}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <Text strong>自定义值:</Text>
-                                                                <TextArea
-                                                                    value={
-                                                                        customValues[index] || ''
-                                                                    }
-                                                                    onChange={e =>
-                                                                        handleCustomInputChange(
-                                                                            index,
-                                                                            e.target.value
-                                                                        )
-                                                                    }
-                                                                    rows={4}
-                                                                    placeholder="输入自定义JSON值"
-                                                                    style={{ fontFamily: 'monospace', marginTop: 4 }}
-                                                                />
-                                                            </div>
-                                                            <Button
-                                                                size="small"
-                                                                onClick={() =>
-                                                                    applyCustomValue(index)
-                                                                }
-                                                                disabled={!customValues[index]}
-                                                            >
-                                                                应用自定义值
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </Radio>
-                                            </div>
-                                        </Radio.Group>
+                            const selectedHash = conflictResolutions.find(res => res.path === path)?.selectedHash;
+                            return {
+                                key: String(index),
+                                label: (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <Text strong style={{ wordBreak: 'break-all' }}>{path}</Text>
+                                        <Tag color="geekblue">选项 {options?.length ?? 0}</Tag>
+                                        {selectedHash && <Tag color="green">已选 {getTargetLabelFromHash(selectedHash)}</Tag>}
                                     </div>
-                                </List.Item>
-                            );
-                        }}
+                                ),
+                                children: (
+                                    <div className="conflict-content w-full">
+                                        <Divider orientation="left">选择一个解决方案</Divider>
+                                        <div className="resolution-options">
+                                            <OptionSelect
+                                                value={selectedHash}
+                                                onChange={val => handleConflictResolution(path, val)}
+                                                options={
+                                                    (options || []).map(hash => {
+                                                        const patch = findPatchByHash(hash);
+                                                        return {
+                                                            value: hash,
+                                                            title: (
+                                                                <>
+                                                                    <Text strong>{getTargetLabelFromHash(hash)}</Text>
+                                                                    <Tag color="blue" style={{ marginLeft: '8px' }}>hash: {hash.substring(0, 8)}</Tag>
+                                                                    {patch && (
+                                                                        <>
+                                                                            <Tag color="green" style={{ marginLeft: '8px' }}>{patch.op}</Tag>
+                                                                            <Tag color="purple" style={{ marginLeft: '8px' }}>路径: {patch.path}</Tag>
+                                                                        </>
+                                                                    )}
+                                                                </>
+                                                            ),
+                                                            content: (
+                                                                <div className="value-display">
+                                                                    <Text type="secondary">值:</Text>
+                                                                    <pre>{getConflictValueDisplay(patch?.value)}</pre>
+                                                                </div>
+                                                            ),
+                                                        };
+                                                    })
+                                                }
+                                            />
+
+                                            {/* 自定义选项 */}
+                                            <div className="custom-resolution rounded-md border border-dashed border-gray-300 p-3 bg-white" style={{ marginTop: 12 }}>
+                                                <div className="flex flex-col gap-3 w-full">
+                                                    <div>
+                                                        <Text strong>自定义路径:</Text>
+                                                        <Input
+                                                            value={customPaths[index] || ''}
+                                                            onChange={e => handleCustomPathChange(index, e.target.value)}
+                                                            placeholder={`输入自定义路径，留空则使用 ${path}`}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Text strong>自定义值:</Text>
+                                                        <TextArea
+                                                            value={customValues[index] || ''}
+                                                            onChange={e => handleCustomInputChange(index, e.target.value)}
+                                                            rows={4}
+                                                            placeholder="输入自定义JSON值"
+                                                            style={{ fontFamily: 'monospace', marginTop: 4 }}
+                                                        />
+                                                        {customErrors[index] && (
+                                                            <div style={{ marginTop: 6 }}>
+                                                                <Text type="danger">{customErrors[index]}</Text>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        size="small"
+                                                        onClick={() => applyCustomValue(index)}
+                                                        disabled={!customValues[index] || !!customErrors[index]}
+                                                    >
+                                                        应用自定义值
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ),
+                            };
+                        })}
                     />
 
-                    <div className="actions">
+                    <div className="actions actions--sticky">
                         <Space>
                             <Button
                                 type="primary"

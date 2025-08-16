@@ -6,6 +6,13 @@ import {
 } from '@waveox/schema-json-patch';
 
 /**
+ * 自定义冲突输入类型
+ * - 可以是直接替换的任意JSON值
+ * - 或者是包含自定义路径与值的对象
+ */
+export type CustomResolutionInput = { path: string; value: unknown } | unknown;
+
+/**
  * JSON补丁编辑器属性
  */
 export interface JsonPatchEditorProps {
@@ -31,7 +38,7 @@ export interface ConflictResolutionSectionProps {
     resolvedPatches: Array<Patch>;
     conflictResolutions: ConflictResolutions;
     onResolutionSelect: (path: string, selectedHash: string) => void;
-    onCustomResolution: (conflictIndex: number, customValue: any) => void;
+    onCustomResolution: (conflictIndex: number, customValue: CustomResolutionInput) => void;
     onApplyResolutions: () => void;
 }
 
