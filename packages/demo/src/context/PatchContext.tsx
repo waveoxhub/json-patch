@@ -162,12 +162,6 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                     // 生成补丁
                     const generatedPatches = generatePatches(schema, sourceJson, targetJson);
-                    if (import.meta.env.DEV) {
-                        console.log(
-                            `目标 ${index + 1} 生成的补丁:`,
-                            JSON.stringify(generatedPatches, null, 2)
-                        );
-                    }
                     newPatches[index] = [...generatedPatches];
                     newPatchStrings[index] = JSON.stringify(generatedPatches, null, 2);
                 } catch (err) {

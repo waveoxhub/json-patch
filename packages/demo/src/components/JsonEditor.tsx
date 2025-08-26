@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Typography, Tag } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { Typography, Tag, Button, message } from 'antd';
+import { SaveOutlined, CopyOutlined } from '@ant-design/icons';
 import { JsonEditorProps } from '../types/types';
+import { escapeJsonString } from '../utils/jsonUtils';
 import Editor from '@monaco-editor/react';
 
 const { Text } = Typography;
@@ -45,6 +46,24 @@ const JsonEditor: React.FC<
         [onChange]
     );
 
+    // 复制内容到剪贴板
+    const handleCopy = async () => {
+        try {
+            if (!value.trim()) {
+                message.warning('没有内容可复制');
+                return;
+            }
+
+            // 使用工具函数进行JSON字符串转义
+            const escapedValue = escapeJsonString(value);
+            
+            await navigator.clipboard.writeText(escapedValue);
+            message.success('内容已复制到剪贴板（已转义）');
+        } catch (error) {
+            message.error('复制失败：JSON格式错误');
+        }
+    };
+
     // 使用 Monaco 内置格式化能力，无需额外按钮
 
     return (
@@ -78,6 +97,17 @@ const JsonEditor: React.FC<
                         </Tag>
                     )}
                 </div>
+                {readOnly && value.trim() && (
+                    <Button
+                        type="text"
+                        icon={<CopyOutlined />}
+                        onClick={handleCopy}
+                        size="small"
+                        title="复制内容"
+                    >
+                        复制
+                    </Button>
+                )}
             </div>
 
             {error && (

@@ -35,3 +35,27 @@ export const safeParseJson = <T>(json: string): T | undefined => {
         return undefined;
     }
 };
+
+/**
+ * 将JSON字符串转换为转义后的字符串
+ * 适合在POST请求body中作为字符串值使用
+ * @param jsonString 原始JSON字符串
+ * @returns 转义后的字符串，以双引号包围
+ */
+export const escapeJsonString = (jsonString: string): string => {
+    if (!jsonString.trim()) {
+        return '""';
+    }
+
+    try {
+        // 先解析JSON确保格式正确
+        JSON.parse(jsonString);
+        
+        // 将JSON字符串转换为转义后的字符串
+        // 使用JSON.stringify的第二个参数来转义特殊字符
+        return JSON.stringify(jsonString);
+    } catch {
+        // 如果解析失败，返回空字符串
+        return '""';
+    }
+};

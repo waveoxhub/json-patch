@@ -14,7 +14,7 @@ import ConflictResolutionSection from './ConflictResolutionSection';
 import ResultSection from './ResultSection';
 import SchemaEditSection from './SchemaEditSection';
 import PatchPreviewSection from './PatchPreviewSection';
- 
+import DataStatusIndicator from '../components/DataStatusIndicator';
 
 const { Title } = Typography;
 
@@ -84,11 +84,10 @@ const JsonPatchDemoContent: React.FC = () => {
 
     return (
         <div className="json-patch-demo">
-            
-
             <div className="demo-header">
                 <div className="header-left">
                     <Title level={2}>Schema JSON Patch Demo</Title>
+                    <DataStatusIndicator />
                 </div>
                 <Space>
                     <Button icon={<ReloadOutlined />} onClick={resetWorkflow}>
