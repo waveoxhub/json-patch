@@ -79,7 +79,7 @@ describe('Integration Tests', () => {
             },
         ];
 
-        const resolvedPatches = resolveConflicts([...patch1, ...patch2], conflicts, resolveResult);
+        const resolvedPatches = resolveConflicts([patch1, patch2], conflicts, resolveResult);
 
         // Apply resolved patches
         const result = applyPatches(sampleJsonA, resolvedPatches, testSchema);

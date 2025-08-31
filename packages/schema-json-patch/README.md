@@ -137,7 +137,7 @@ if (conflicts.length > 0) {
 
     // Apply resolution
     const resolvedPatches = resolveConflicts(
-        patches1.concat(patches2),
+        [patches1, patches2],
         conflicts,
         resolutions,
         customResolutions // Optional parameter
@@ -194,7 +194,7 @@ For example, to modify the `name` field:
 | `generatePatches(schema, sourceJson, targetJson)`                      | Generate patches from source state to target state     |
 | `applyPatches(sourceJson, patches, schema)`                            | Apply patches to data state                            |
 | `detectConflicts(patchGroups)`                                         | Detect conflicts between multiple sets of patches      |
-| `resolveConflicts(patches, conflicts, resolutions, customResolutions)` | Merge conflicting patches according to resolution plan |
+| `resolveConflicts(patchGroups, conflicts, resolutions, customResolutions)` | Merge conflicting patches according to resolution plan |
 
 ### Validation Functions
 
