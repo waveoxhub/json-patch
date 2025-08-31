@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Typography, Button, Space, Tooltip, Tag } from 'antd';
-import { FormatPainterOutlined, MinusSquareOutlined, SaveOutlined } from '@ant-design/icons';
+import React, { useState, useCallback } from 'react';
+import { Typography, Tag, Button, message } from 'antd';
+import { SaveOutlined, CopyOutlined } from '@ant-design/icons';
 import { JsonEditorProps } from '../types/types';
-import { formatJson } from '../utils/jsonUtils';
+import { escapeJsonString } from '../utils/jsonUtils';
 import Editor from '@monaco-editor/react';
 
 const { Text } = Typography;
@@ -27,28 +27,11 @@ const JsonEditor: React.FC<
     showSaveIndicator = false,
 }) => {
     const [error, setError] = useState<string | null>(null);
-    const [displayValue, setDisplayValue] = useState<string | null>(null);
-
-    // 默认压缩显示
-    useEffect(() => {
-        if (value && value.trim()) {
-            try {
-                const parsed = JSON.parse(value);
-                const compressed = JSON.stringify(parsed);
-                setDisplayValue(compressed);
-            } catch {
-                // 如果解析失败，使用原始值
-                setDisplayValue(null);
-            }
-        }
-    }, [value]);
 
     const handleEditorChange = useCallback(
         (newValue?: string) => {
             const newText = newValue ?? '';
             onChange(newText);
-            setDisplayValue(null);
-
             if (newText.trim()) {
                 try {
                     JSON.parse(newText);
@@ -63,44 +46,25 @@ const JsonEditor: React.FC<
         [onChange]
     );
 
-    const handleFormat = useCallback(() => {
+    // 复制内容到剪贴板
+    const handleCopy = async () => {
         try {
-            const formatted = formatJson(value);
-            if (readOnly) {
-                setDisplayValue(formatted);
-            } else {
-                onChange(formatted);
-                setDisplayValue(null);
+            if (!value.trim()) {
+                message.warning('没有内容可复制');
+                return;
             }
-        } catch {
-            // 如果解析失败，保持原状
+
+            // 使用工具函数进行JSON字符串转义
+            const escapedValue = escapeJsonString(value);
+            
+            await navigator.clipboard.writeText(escapedValue);
+            message.success('内容已复制到剪贴板（已转义）');
+        } catch (error) {
+            message.error('复制失败：JSON格式错误');
         }
-    }, [value, onChange, readOnly]);
+    };
 
-    const handleCompress = useCallback(() => {
-        if (!value.trim()) return;
-
-        try {
-            const parsed = JSON.parse(value);
-            const compressed = JSON.stringify(parsed);
-            if (readOnly) {
-                setDisplayValue(compressed);
-            } else {
-                onChange(compressed);
-                setDisplayValue(null);
-            }
-        } catch {
-            // 如果解析失败，保持原状
-        }
-    }, [value, onChange, readOnly]);
-
-    // 重置展示值回原始值
-    const handleResetDisplay = useCallback(() => {
-        setDisplayValue(null);
-    }, []);
-
-    // 实际显示的值
-    const actualValue = displayValue !== null ? displayValue : value;
+    // 使用 Monaco 内置格式化能力，无需额外按钮
 
     return (
         <div
@@ -133,32 +97,17 @@ const JsonEditor: React.FC<
                         </Tag>
                     )}
                 </div>
-
-                <Space>
-                    <Tooltip title="格式化JSON">
-                        <Button
-                            icon={<FormatPainterOutlined />}
-                            size="small"
-                            onClick={handleFormat}
-                            type="text"
-                        />
-                    </Tooltip>
-                    <Tooltip title="压缩为单行">
-                        <Button
-                            icon={<MinusSquareOutlined />}
-                            size="small"
-                            onClick={handleCompress}
-                            type="text"
-                        />
-                    </Tooltip>
-                    {readOnly && displayValue !== null && (
-                        <Tooltip title="还原显示">
-                            <Button size="small" onClick={handleResetDisplay} type="text">
-                                还原
-                            </Button>
-                        </Tooltip>
-                    )}
-                </Space>
+                {readOnly && value.trim() && (
+                    <Button
+                        type="text"
+                        icon={<CopyOutlined />}
+                        onClick={handleCopy}
+                        size="small"
+                        title="复制内容"
+                    >
+                        复制
+                    </Button>
+                )}
             </div>
 
             {error && (
@@ -170,7 +119,7 @@ const JsonEditor: React.FC<
             <div style={{ width: '100%', height, position: 'relative' }}>
                 <Editor
                     language="json"
-                    value={actualValue}
+                    value={value}
                     onChange={value => handleEditorChange(value)}
                     height={height}
                     options={{
@@ -185,7 +134,7 @@ const JsonEditor: React.FC<
                     }}
                 />
                 {/* 占位符逻辑：只在为空且非只读时显示 */}
-                {!actualValue && !readOnly && placeholder && (
+                {!value && !readOnly && placeholder && (
                     <div
                         style={{
                             position: 'absolute',

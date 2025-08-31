@@ -42,7 +42,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
+        const resolvedPatches = resolveConflicts([[patches[0]], [patches[1]]], conflicts, resolutions);
 
         expect(resolvedPatches).toHaveLength(1);
         expect(resolvedPatches[0]).toEqual({
@@ -76,7 +76,7 @@ describe('resolveConflicts', () => {
 
         const resolutions: ConflictResolutions = [];
 
-        const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
+        const resolvedPatches = resolveConflicts([[patches[0]], [patches[1]]], conflicts, resolutions);
 
         expect(resolvedPatches).toHaveLength(1);
         expect(resolvedPatches[0]).toEqual({
@@ -136,7 +136,10 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
+        const resolvedPatches = resolveConflicts([
+            [patches[0], patches[2]],
+            [patches[1], patches[3]],
+        ], conflicts, resolutions);
 
         expect(resolvedPatches).toHaveLength(2);
         expect(resolvedPatches).toContainEqual({
@@ -175,7 +178,7 @@ describe('resolveConflicts', () => {
         const conflicts: ConflictDetail[] = [];
         const resolutions: ConflictResolutions = [];
 
-        const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
+        const resolvedPatches = resolveConflicts([[patches[0]], [patches[1]]], conflicts, resolutions);
 
         expect(resolvedPatches).toHaveLength(2);
         expect(resolvedPatches).toEqual(patches);
@@ -223,7 +226,7 @@ describe('resolveConflicts', () => {
         ];
 
         const resolvedPatches = resolveConflicts(
-            patches,
+            [patches],
             conflicts,
             resolutions,
             customResolutions
@@ -279,7 +282,7 @@ describe('resolveConflicts', () => {
             },
         ];
 
-        const resolvedPatches = resolveConflicts(patches, conflicts, resolutions);
+        const resolvedPatches = resolveConflicts([patches], conflicts, resolutions);
 
         // Should only have one patch retained
         expect(resolvedPatches).toHaveLength(1);

@@ -1,7 +1,7 @@
 import { ConfigProvider, App as AntApp } from 'antd';
 import '@ant-design/v5-patch-for-react-19';
 import zhCN from 'antd/locale/zh_CN';
-import JsonPatchDemo from './components/JsonPatchDemo';
+import JsonPatchDemo from '@src/view/JsonPatchDemo';
 import React from 'react';
 
 /**

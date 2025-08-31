@@ -24,6 +24,7 @@
         /* Path aliases */
         "paths": {
             "@/*": ["./src/*"],
+            "@src/*": ["./src/*"],
             "@waveox/schema-json-patch": ["../schema-json-patch/src"]
         }
     },

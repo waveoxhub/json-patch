@@ -1,8 +1,9 @@
 import React from 'react';
-import { Card, Button, Space, Tabs, Divider, Typography } from 'antd';
-import { CheckOutlined } from '@ant-design/icons';
+import { Card, Button, Space, Tabs, Divider, Typography, message } from 'antd';
+import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
-import JsonEditor from './JsonEditor';
+import { escapeJsonString } from '../utils/jsonUtils';
+import JsonEditor from '../components/JsonEditor';
 
 const { Text } = Typography;
 
@@ -26,9 +27,43 @@ const PatchPreviewSection: React.FC = () => {
         setActiveTargetIndex(parseInt(key));
     };
 
+    // 复制当前激活的补丁到剪贴板
+    const handleCopyCurrentPatch = async () => {
+        const currentPatch = patchStrings[activeTargetIndex];
+        if (!currentPatch || !currentPatch.trim()) {
+            message.warning('没有可复制的补丁内容');
+            return;
+        }
+
+        try {
+            // 使用工具函数进行JSON字符串转义
+            const escapedPatch = escapeJsonString(currentPatch);
+            
+            await navigator.clipboard.writeText(escapedPatch);
+            message.success(`目标 ${activeTargetIndex + 1} 的补丁已复制到剪贴板（已转义）`);
+        } catch (error) {
+            message.error('复制失败：补丁格式错误');
+        }
+    };
+
     return (
         <div className="patch-preview-section">
-            <Card title="补丁预览" className="preview-card">
+            <Card 
+                title="补丁预览" 
+                className="preview-card"
+                extra={
+                    hasPatches && (
+                        <Button
+                            type="text"
+                            icon={<CopyOutlined />}
+                            onClick={handleCopyCurrentPatch}
+                            size="small"
+                        >
+                            复制当前补丁
+                        </Button>
+                    )
+                }
+            >
                 <Text>
                     以下是根据源JSON和目标JSON生成的补丁。您可以检查生成的补丁，然后检测冲突并应用。
                 </Text>
@@ -51,7 +86,7 @@ const PatchPreviewSection: React.FC = () => {
                                         onChange={() => {}}
                                         readOnly={true}
                                         height="300px"
-                                        title="补丁内容"
+                                        title=""
                                     />
                                 </div>
                             ),
@@ -66,7 +101,7 @@ const PatchPreviewSection: React.FC = () => {
                             onChange={() => {}}
                             readOnly={true}
                             height="300px"
-                            title="补丁内容"
+                            title=""
                         />
                     </div>
                 )}
@@ -92,3 +127,5 @@ const PatchPreviewSection: React.FC = () => {
 };
 
 export default PatchPreviewSection;
+
+
