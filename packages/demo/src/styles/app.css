@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* 布局容器 */
 .container {
@@ -148,7 +148,7 @@
     background: #f9fafb;
     border-radius: 8px;
     padding: 12px;
-    transition: all .15s ease;
+    transition: all 0.15s ease;
 }
 
 .option-card:hover {
@@ -157,7 +157,7 @@
 
 .option-card--active {
     border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22,119,255,.15);
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
     background: #fff;
 }
 
@@ -221,5 +221,3 @@
 .json-editor textarea {
     font-family: 'Courier New', Courier, monospace;
 }
-
-

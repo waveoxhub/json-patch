@@ -146,14 +146,22 @@ const ConflictResolutionSection: React.FC = () => {
                     <Collapse
                         items={conflicts.map((conflict, index) => {
                             const { path, options } = conflict;
-                            const selectedHash = conflictResolutions.find(res => res.path === path)?.selectedHash;
+                            const selectedHash = conflictResolutions.find(
+                                res => res.path === path
+                            )?.selectedHash;
                             return {
                                 key: String(index),
                                 label: (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <Text strong style={{ wordBreak: 'break-all' }}>{path}</Text>
+                                        <Text strong style={{ wordBreak: 'break-all' }}>
+                                            {path}
+                                        </Text>
                                         <Tag color="geekblue">选项 {options?.length ?? 0}</Tag>
-                                        {selectedHash && <Tag color="green">已选 {getTargetLabelFromHash(selectedHash)}</Tag>}
+                                        {selectedHash && (
+                                            <Tag color="green">
+                                                已选 {getTargetLabelFromHash(selectedHash)}
+                                            </Tag>
+                                        )}
                                     </div>
                                 ),
                                 children: (
@@ -162,19 +170,42 @@ const ConflictResolutionSection: React.FC = () => {
                                         <div className="resolution-options">
                                             <OptionSelect
                                                 value={selectedHash}
-                                                onChange={val => handleConflictResolution(path, val)}
+                                                onChange={val =>
+                                                    handleConflictResolution(path, val)
+                                                }
                                                 options={(options || []).map(hash => {
                                                     const patch = findPatchByHash(hash);
                                                     return {
                                                         value: hash,
                                                         title: (
                                                             <>
-                                                                <Text strong>{getTargetLabelFromHash(hash)}</Text>
-                                                                <Tag color="blue" style={{ marginLeft: '8px' }}>hash: {hash.substring(0, 8)}</Tag>
+                                                                <Text strong>
+                                                                    {getTargetLabelFromHash(hash)}
+                                                                </Text>
+                                                                <Tag
+                                                                    color="blue"
+                                                                    style={{ marginLeft: '8px' }}
+                                                                >
+                                                                    hash: {hash.substring(0, 8)}
+                                                                </Tag>
                                                                 {patch && (
                                                                     <>
-                                                                        <Tag color="green" style={{ marginLeft: '8px' }}>{patch.op}</Tag>
-                                                                        <Tag color="purple" style={{ marginLeft: '8px' }}>路径: {patch.path}</Tag>
+                                                                        <Tag
+                                                                            color="green"
+                                                                            style={{
+                                                                                marginLeft: '8px',
+                                                                            }}
+                                                                        >
+                                                                            {patch.op}
+                                                                        </Tag>
+                                                                        <Tag
+                                                                            color="purple"
+                                                                            style={{
+                                                                                marginLeft: '8px',
+                                                                            }}
+                                                                        >
+                                                                            路径: {patch.path}
+                                                                        </Tag>
                                                                     </>
                                                                 )}
                                                             </>
@@ -182,7 +213,11 @@ const ConflictResolutionSection: React.FC = () => {
                                                         content: (
                                                             <div className="value-display">
                                                                 <Text type="secondary">值:</Text>
-                                                                <pre>{getConflictValueDisplay(patch?.value)}</pre>
+                                                                <pre>
+                                                                    {getConflictValueDisplay(
+                                                                        patch?.value
+                                                                    )}
+                                                                </pre>
                                                             </div>
                                                         ),
                                                     };
@@ -190,13 +225,21 @@ const ConflictResolutionSection: React.FC = () => {
                                             />
 
                                             {/* 自定义选项 */}
-                                            <div className="custom-resolution rounded-md border border-dashed border-gray-300 p-3 bg-white" style={{ marginTop: 12 }}>
+                                            <div
+                                                className="custom-resolution rounded-md border border-dashed border-gray-300 p-3 bg-white"
+                                                style={{ marginTop: 12 }}
+                                            >
                                                 <div className="flex flex-col gap-3 w-full">
                                                     <div>
                                                         <Text strong>自定义路径:</Text>
                                                         <Input
                                                             value={customPaths[index] || ''}
-                                                            onChange={e => handleCustomPathChange(index, e.target.value)}
+                                                            onChange={e =>
+                                                                handleCustomPathChange(
+                                                                    index,
+                                                                    e.target.value
+                                                                )
+                                                            }
                                                             placeholder={`输入自定义路径，留空则使用 ${path}`}
                                                         />
                                                     </div>
@@ -204,18 +247,35 @@ const ConflictResolutionSection: React.FC = () => {
                                                         <Text strong>自定义值:</Text>
                                                         <TextArea
                                                             value={customValues[index] || ''}
-                                                            onChange={e => handleCustomInputChange(index, e.target.value)}
+                                                            onChange={e =>
+                                                                handleCustomInputChange(
+                                                                    index,
+                                                                    e.target.value
+                                                                )
+                                                            }
                                                             rows={4}
                                                             placeholder="输入自定义JSON值"
-                                                            style={{ fontFamily: 'monospace', marginTop: 4 }}
+                                                            style={{
+                                                                fontFamily: 'monospace',
+                                                                marginTop: 4,
+                                                            }}
                                                         />
                                                         {customErrors[index] && (
                                                             <div style={{ marginTop: 6 }}>
-                                                                <Text type="danger">{customErrors[index]}</Text>
+                                                                <Text type="danger">
+                                                                    {customErrors[index]}
+                                                                </Text>
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <Button size="small" onClick={() => applyCustomValue(index)} disabled={!customValues[index] || !!customErrors[index]}>
+                                                    <Button
+                                                        size="small"
+                                                        onClick={() => applyCustomValue(index)}
+                                                        disabled={
+                                                            !customValues[index] ||
+                                                            !!customErrors[index]
+                                                        }
+                                                    >
                                                         应用自定义值
                                                     </Button>
                                                 </div>
@@ -229,7 +289,11 @@ const ConflictResolutionSection: React.FC = () => {
 
                     <div className="actions actions--sticky">
                         <Space>
-                            <Button type="primary" onClick={applyResolutions} icon={<CheckOutlined />}>
+                            <Button
+                                type="primary"
+                                onClick={applyResolutions}
+                                icon={<CheckOutlined />}
+                            >
                                 应用解决方案
                             </Button>
                         </Space>
@@ -241,5 +305,3 @@ const ConflictResolutionSection: React.FC = () => {
 };
 
 export default ConflictResolutionSection;
-
-

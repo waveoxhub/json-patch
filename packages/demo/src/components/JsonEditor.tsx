@@ -56,7 +56,7 @@ const JsonEditor: React.FC<
 
             // 使用工具函数进行JSON字符串转义
             const escapedValue = escapeJsonString(value);
-            
+
             await navigator.clipboard.writeText(escapedValue);
             message.success('内容已复制到剪贴板（已转义）');
         } catch (error) {
