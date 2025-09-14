@@ -58,7 +58,7 @@ export const getPrimaryKeyValue = (
 ): string => {
     const pkField = schema.$pk;
     if (!pkField || !obj[pkField]) {
-        throw new Error(`Object missing primary key: ${pkField}`);
+        throw new Error(`Object missing primary key: ${pkField} \n obj: ${JSON.stringify(obj)} \n schema: ${JSON.stringify(schema)}`);
     }
     return String(obj[pkField]);
 };
