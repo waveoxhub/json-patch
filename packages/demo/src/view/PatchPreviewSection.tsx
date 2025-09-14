@@ -38,7 +38,7 @@ const PatchPreviewSection: React.FC = () => {
         try {
             // 使用工具函数进行JSON字符串转义
             const escapedPatch = escapeJsonString(currentPatch);
-            
+
             await navigator.clipboard.writeText(escapedPatch);
             message.success(`目标 ${activeTargetIndex + 1} 的补丁已复制到剪贴板（已转义）`);
         } catch (error) {
@@ -48,8 +48,8 @@ const PatchPreviewSection: React.FC = () => {
 
     return (
         <div className="patch-preview-section">
-            <Card 
-                title="补丁预览" 
+            <Card
+                title="补丁预览"
                 className="preview-card"
                 extra={
                     hasPatches && (
@@ -127,5 +127,3 @@ const PatchPreviewSection: React.FC = () => {
 };
 
 export default PatchPreviewSection;
-
-

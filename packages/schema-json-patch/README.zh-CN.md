@@ -186,11 +186,11 @@ SchemaJSONPatch使用语义化路径，对于数组中的对象成员，使用�
 
 ### 核心函数
 
-| 函数                                                                   | 描述                         |
-| ---------------------------------------------------------------------- | ---------------------------- |
-| `generatePatches(schema, sourceJson, targetJson)`                      | 生成从源状态到目标状态的补丁 |
-| `applyPatches(sourceJson, patches, schema)`                            | 将补丁应用到数据状态         |
-| `detectConflicts(patchGroups)`                                         | 检测多组补丁间的冲突         |
+| 函数                                                                       | 描述                         |
+| -------------------------------------------------------------------------- | ---------------------------- |
+| `generatePatches(schema, sourceJson, targetJson)`                          | 生成从源状态到目标状态的补丁 |
+| `applyPatches(sourceJson, patches, schema)`                                | 将补丁应用到数据状态         |
+| `detectConflicts(patchGroups)`                                             | 检测多组补丁间的冲突         |
 | `resolveConflicts(patchGroups, conflicts, resolutions, customResolutions)` | 根据解决方案合并冲突补丁     |
 
 ### 验证函数

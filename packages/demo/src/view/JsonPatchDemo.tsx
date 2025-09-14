@@ -127,5 +127,3 @@ const JsonPatchDemo: React.FC = () => {
 };
 
 export default JsonPatchDemo;
-
-

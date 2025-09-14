@@ -41,5 +41,3 @@ const OptionSelect: React.FC<OptionSelectProps> = ({ value, options, onChange })
 };
 
 export default OptionSelect;
-
-

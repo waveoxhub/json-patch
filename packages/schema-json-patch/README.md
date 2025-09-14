@@ -189,11 +189,11 @@ For example, to modify the `name` field:
 
 ### Core Functions
 
-| Function                                                               | Description                                            |
-| ---------------------------------------------------------------------- | ------------------------------------------------------ |
-| `generatePatches(schema, sourceJson, targetJson)`                      | Generate patches from source state to target state     |
-| `applyPatches(sourceJson, patches, schema)`                            | Apply patches to data state                            |
-| `detectConflicts(patchGroups)`                                         | Detect conflicts between multiple sets of patches      |
+| Function                                                                   | Description                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `generatePatches(schema, sourceJson, targetJson)`                          | Generate patches from source state to target state     |
+| `applyPatches(sourceJson, patches, schema)`                                | Apply patches to data state                            |
+| `detectConflicts(patchGroups)`                                             | Detect conflicts between multiple sets of patches      |
 | `resolveConflicts(patchGroups, conflicts, resolutions, customResolutions)` | Merge conflicting patches according to resolution plan |
 
 ### Validation Functions

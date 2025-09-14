@@ -50,7 +50,7 @@ export const escapeJsonString = (jsonString: string): string => {
     try {
         // 先解析JSON确保格式正确
         JSON.parse(jsonString);
-        
+
         // 将JSON字符串转换为转义后的字符串
         // 使用JSON.stringify的第二个参数来转义特殊字符
         return JSON.stringify(jsonString);

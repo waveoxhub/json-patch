@@ -120,5 +120,3 @@ const JsonPatchEditor: React.FC = () => {
 };
 
 export default JsonPatchEditor;
-
-
