@@ -487,4 +487,4 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
  * 重新导出所有验证函数，保持向后兼容
  */
 
-export * from './validation';
+export * from './validation/index.js';
