@@ -1,10 +1,10 @@
-import { Patch, ConflictDetail } from '../types/patch';
-import { Schema } from '../types/schema';
-import { isObject } from '../utils/isObject';
-import { parseJsonPath } from '../utils/pathUtils';
-import { ValidationResult } from './types';
-import { validateJson } from './jsonValidation';
-import { validatePatches } from './patchValidation';
+import { Patch, ConflictDetail } from '../types/patch.js';
+import { Schema } from '../types/schema.js';
+import { isObject } from '../utils/isObject.js';
+import { parseJsonPath } from '../utils/pathUtils.js';
+import { ValidationResult } from './types.js';
+import { validateJson } from './jsonValidation.js';
+import { validatePatches } from './patchValidation.js';
 
 /**
  * 验证补丁操作是否可以应用到JSON上

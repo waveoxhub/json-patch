@@ -1,7 +1,7 @@
-import { collectPathPrefixes } from './utils/pathUtils';
-import { deepEqual } from './utils/deepEqual';
-import { ConflictDetail, Patch } from './types/patch';
-import { computeCoverage, hasWriteOverlap } from './utils/coverage';
+import { collectPathPrefixes } from './utils/pathUtils.js';
+import { deepEqual } from './utils/deepEqual.js';
+import { ConflictDetail, Patch } from './types/patch.js';
+import { computeCoverage, hasWriteOverlap } from './utils/coverage.js';
 
 /**
  * 补丁操作的类型定义

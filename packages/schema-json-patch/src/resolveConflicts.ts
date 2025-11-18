@@ -4,7 +4,7 @@ import {
     ConflictResolutions,
     UnresolvedConflicts,
     CustomConflictResolutions,
-} from './types/patch';
+} from './types/patch.js';
 
 /**
  * 从所有补丁中找到与指定哈希匹配的补丁
