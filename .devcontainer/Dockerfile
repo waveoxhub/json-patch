@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     vim \
     unzip \
     zip \
+    libatomic1 \
     locales \
     mysql-client \
     && rm -rf /var/lib/apt/lists/*
