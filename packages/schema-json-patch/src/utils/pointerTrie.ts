@@ -1,4 +1,4 @@
-import { escapePathComponent, parseJsonPath } from './pathUtils';
+import { escapePathComponent, parseJsonPath } from './pathUtils.js';
 
 type TrieNode = {
     readonly children: Map<string, TrieNode>;

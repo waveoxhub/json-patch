@@ -3,9 +3,9 @@ import {
     ConflictDetail,
     ConflictResolutions,
     CustomConflictResolution,
-} from '../types/patch';
-import { ValidationResult } from './types';
-import { detectConflicts } from '../detectConflicts';
+} from '../types/patch.js';
+import { ValidationResult } from './types.js';
+import { detectConflicts } from '../detectConflicts.js';
 
 /**
  * 验证解决方案是否有效

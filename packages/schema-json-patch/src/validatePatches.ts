@@ -3,11 +3,11 @@ import {
     ConflictDetail,
     ConflictResolutions,
     CustomConflictResolution,
-} from './types/patch';
-import { Schema } from './types/schema';
-import { isObject } from './utils/isObject';
-import { detectConflicts } from './detectConflicts';
-import { parseJsonPath } from './utils/pathUtils';
+} from './types/patch.js';
+import { Schema } from './types/schema.js';
+import { isObject } from './utils/isObject.js';
+import { detectConflicts } from './detectConflicts.js';
+import { parseJsonPath } from './utils/pathUtils.js';
 
 /**
  * 验证结果类型

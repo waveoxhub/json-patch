@@ -1,8 +1,8 @@
-import { Schema } from './types/schema';
-import { PatchOperation, Patch } from './types/patch';
-import { extractPathMap } from './utils/pathUtils';
-import { deepEqual } from './utils/deepEqual';
-import { generatePatchOptionHash } from './utils/hashUtils';
+import { Schema } from './types/schema.js';
+import { PatchOperation, Patch } from './types/patch.js';
+import { extractPathMap } from './utils/pathUtils.js';
+import { deepEqual } from './utils/deepEqual.js';
+import { generatePatchOptionHash } from './utils/hashUtils.js';
 
 /**
  * 创建补丁对象

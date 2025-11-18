@@ -1,4 +1,4 @@
-import { ValidationResult } from './types';
+import { ValidationResult } from './types.js';
 
 /**
  * 验证JSON字符串是否有效

@@ -1,6 +1,6 @@
-import { Patch } from '../types/patch';
-import { normalizePointer } from './pathUtils';
-import { PointerTrie } from './pointerTrie';
+import { Patch } from '../types/patch.js';
+import { normalizePointer } from './pathUtils.js';
+import { PointerTrie } from './pointerTrie.js';
 
 export type Coverage = {
     readonly writeSet: ReadonlySet<string>;

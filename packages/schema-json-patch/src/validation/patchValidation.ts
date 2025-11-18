@@ -1,5 +1,5 @@
-import { Patch } from '../types/patch';
-import { ValidationResult } from './types';
+import { Patch } from '../types/patch.js';
+import { ValidationResult } from './types.js';
 
 /**
  * 验证补丁数组是否有效

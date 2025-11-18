@@ -1,6 +1,6 @@
-import { Patch } from './types/patch';
-import { parseJsonPath } from './utils/pathUtils';
-import { Schema, ArraySchema } from './types/schema';
+import { Patch } from './types/patch.js';
+import { parseJsonPath } from './utils/pathUtils.js';
+import { Schema, ArraySchema } from './types/schema.js';
 
 /**
  * 将补丁应用到JSON状态
