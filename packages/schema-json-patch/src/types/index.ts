@@ -1,2 +1,2 @@
-export * from './patch';
-export * from './schema';
+export * from './patch.js';
+export * from './schema.js';
