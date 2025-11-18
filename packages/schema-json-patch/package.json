@@ -1,6 +1,6 @@
 {
     "name": "@waveox/schema-json-patch",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Patch libraries for handling fixed-structure JSON data, providing patch generation, conflict handling, and patch application capabilities",
     "type": "module",
     "main": "./dist/cjs/index.js",
