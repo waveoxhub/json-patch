@@ -147,9 +147,7 @@ const ConflictResolutionSection: React.FC = () => {
                                 content: (
                                     <div className="value-display">
                                         <Text type="secondary">值:</Text>
-                                        <pre>
-                                            {getConflictValueDisplay(option.patch.value)}
-                                        </pre>
+                                        <pre>{getConflictValueDisplay(option.patch.value)}</pre>
                                     </div>
                                 ),
                             }));
@@ -161,9 +159,7 @@ const ConflictResolutionSection: React.FC = () => {
                                         <Text strong style={{ wordBreak: 'break-all' }}>
                                             {path}
                                         </Text>
-                                        <Tag color="geekblue">
-                                            选项 {resolutionOptions.length}
-                                        </Tag>
+                                        <Tag color="geekblue">选项 {resolutionOptions.length}</Tag>
                                         {selectedLabel && (
                                             <Tag color="green">已选 {selectedLabel}</Tag>
                                         )}
