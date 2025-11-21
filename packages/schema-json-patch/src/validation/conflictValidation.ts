@@ -51,7 +51,7 @@ export const validateResolutions = (
         }
 
         // 验证选中的哈希是否在冲突选项中
-        if (!conflict.options.includes(resolution.selectedHash)) {
+        if (!conflict.options.some(opt => opt.hash === resolution.selectedHash)) {
             errors.push(
                 `Resolution #${index} selected hash "${resolution.selectedHash}" ` +
                     `is not an option for conflict at path "${resolution.path}"`
@@ -116,9 +116,9 @@ export const validateResolvedConflicts = (
         // 找出选中的哈希值
         const resolution = resolutions.find(res => res.path === conflict.path);
         const selectedHash =
-            resolution && conflict.options.includes(resolution.selectedHash)
+            resolution && conflict.options.some(opt => opt.hash === resolution.selectedHash)
                 ? resolution.selectedHash
-                : conflict.options[0];
+                : conflict.options[0]?.hash;
 
         // 找到匹配哈希值的补丁
         const matchingPatch = allPatches.find(patch => patch.hash === selectedHash);

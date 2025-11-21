@@ -569,11 +569,11 @@ describe('initializeResolutions', () => {
         expect(resolutions).toEqual([
             {
                 path: conflicts[0].path,
-                selectedHash: conflicts[0].options[0],
+                selectedHash: conflicts[0].options[0]?.hash,
             },
             {
                 path: conflicts[1].path,
-                selectedHash: conflicts[1].options[0],
+                selectedHash: conflicts[1].options[0]?.hash,
             },
         ]);
     });

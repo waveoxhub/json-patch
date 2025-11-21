@@ -131,17 +131,8 @@ export const validateConflictsAgainstSchema = (
         }
 
         // 验证每个选项的补丁
-        conflict.options.forEach((optionHash: string, optionIndex: number) => {
-            // 查找对应的补丁
-            const patch = patches.find(p => p.hash === optionHash);
-
-            if (!patch) {
-                errors.push(
-                    `Option #${optionIndex} (hash: ${optionHash}) for conflict #${conflictIndex} ` +
-                        `not found in patch array`
-                );
-                return;
-            }
+        conflict.options.forEach((option, optionIndex) => {
+            const patch = option.patch;
 
             // 跳过非添加/替换操作
             if (patch.op !== 'add' && patch.op !== 'replace') {
@@ -151,7 +142,7 @@ export const validateConflictsAgainstSchema = (
             // 验证值是否符合模式
             if (!validateValueAgainstSchema(patch.value, schemaForPath)) {
                 errors.push(
-                    `Option #${optionIndex} (hash: ${optionHash}) for conflict #${conflictIndex}: ` +
+                    `Option #${optionIndex} (hash: ${option.hash}) for conflict #${conflictIndex}: ` +
                         `value does not conform to schema requirements`
                 );
             }
