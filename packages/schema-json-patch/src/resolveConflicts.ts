@@ -7,26 +7,6 @@ import {
 } from './types/patch.js';
 
 /**
- * 从所有补丁中找到与指定哈希匹配的补丁
- * @param patchGroups 补丁组数组
- * @param optionHash 选项哈希
- * @returns 匹配的补丁
- */
-const findMatchingPatch = (
-    patchGroups: ReadonlyArray<ReadonlyArray<Patch>>,
-    optionHash: string
-): Patch | undefined => {
-    for (const group of patchGroups) {
-        for (const patch of group) {
-            if (patch.hash === optionHash) {
-                return patch;
-            }
-        }
-    }
-    return undefined;
-};
-
-/**
  * 应用冲突解决方案生成处理后的补丁集
  * @param patchGroups 原始补丁组数组
  * @param conflicts 冲突详情数组

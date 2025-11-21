@@ -3,6 +3,7 @@ import {
     ConflictDetail,
     ConflictResolutions,
     CustomConflictResolution,
+    ConflictOptionDetail,
 } from '../types/patch.js';
 import { ValidationResult } from './types.js';
 import { detectConflicts } from '../detectConflicts.js';
@@ -51,7 +52,7 @@ export const validateResolutions = (
         }
 
         // 验证选中的哈希是否在冲突选项中
-        if (!conflict.options.some(opt => opt.hash === resolution.selectedHash)) {
+        if (!conflict.options.some((opt: ConflictOptionDetail) => opt.hash === resolution.selectedHash)) {
             errors.push(
                 `Resolution #${index} selected hash "${resolution.selectedHash}" ` +
                     `is not an option for conflict at path "${resolution.path}"`
