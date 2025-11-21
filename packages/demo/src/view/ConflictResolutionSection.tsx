@@ -1,29 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Space, Divider, Input, Typography, Empty, Tag, Collapse } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 import { usePatchContext } from '../context/PatchContext';
-import { Patch } from '@waveox/schema-json-patch';
 import OptionSelect from '../components/OptionSelect';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
-
-/**
- * 基于当前补丁集建立 hash -> patch 与 hash -> 目标索引 的映射
- */
-const useHashIndexes = (patches: Patch[][]) => {
-    return useMemo(() => {
-        const hashToPatch = new Map<string, Patch>();
-        const hashToTargetIndex = new Map<string, number>();
-        patches.forEach((group, targetIndex) => {
-            group.forEach(patch => {
-                hashToPatch.set(patch.hash, patch);
-                hashToTargetIndex.set(patch.hash, targetIndex);
-            });
-        });
-        return { hashToPatch, hashToTargetIndex } as const;
-    }, [patches]);
-};
 
 /**
  * 冲突解决部分组件，用于解决补丁冲突
@@ -36,31 +18,19 @@ const ConflictResolutionSection: React.FC = () => {
         handleConflictResolution,
         handleCustomResolution,
         applyResolutions,
-        patches,
     } = usePatchContext();
 
     const [customValues, setCustomValues] = useState<Record<string, string>>({});
     const [customPaths, setCustomPaths] = useState<Record<string, string>>({});
     const [customErrors, setCustomErrors] = useState<Record<string, string | null>>({});
 
-    const { hashToPatch, hashToTargetIndex } = useHashIndexes(patches);
-
-    const getTargetLabelFromHash = useCallback(
-        (hash: string): string => {
-            const idx = hashToTargetIndex.get(hash);
-            return typeof idx === 'number' ? `目标 ${idx + 1}` : '未知';
-        },
-        [hashToTargetIndex]
-    );
-
     // 调试信息（仅在开发环境输出）
     useEffect(() => {
         if (import.meta.env.DEV) {
             console.log('冲突数据:', conflicts);
             console.log('解决方案:', conflictResolutions);
-            console.log('补丁数据:', patches);
         }
-    }, [conflicts, conflictResolutions, patches]);
+    }, [conflicts, conflictResolutions]);
 
     if (!hasConflicts) {
         return (
@@ -130,8 +100,9 @@ const ConflictResolutionSection: React.FC = () => {
         }
     };
 
-    // 查找给定哈希对应的补丁（O(1)）
-    const findPatchByHash = (hash: string): Patch | undefined => hashToPatch.get(hash);
+    const getTargetLabel = (groupIndex: number): string => {
+        return `目标 ${groupIndex + 1}`;
+    };
 
     return (
         <div className="conflict-resolution-section">
@@ -149,6 +120,40 @@ const ConflictResolutionSection: React.FC = () => {
                             const selectedHash = conflictResolutions.find(
                                 res => res.path === path
                             )?.selectedHash;
+
+                            // 获取已选选项的标签（用于显示）
+                            const selectedOption = options.find(opt => opt.hash === selectedHash);
+                            const selectedLabel = selectedOption
+                                ? getTargetLabel(selectedOption.groupIndex)
+                                : undefined;
+
+                            // 直接使用 options 生成选项
+                            const resolutionOptions = options.map(option => ({
+                                value: option.hash,
+                                title: (
+                                    <>
+                                        <Text strong>{getTargetLabel(option.groupIndex)}</Text>
+                                        <Tag color="blue" style={{ marginLeft: '8px' }}>
+                                            hash: {option.hash.substring(0, 8)}
+                                        </Tag>
+                                        <Tag color="green" style={{ marginLeft: '8px' }}>
+                                            {option.patch.op}
+                                        </Tag>
+                                        <Tag color="purple" style={{ marginLeft: '8px' }}>
+                                            路径: {option.patch.path}
+                                        </Tag>
+                                    </>
+                                ),
+                                content: (
+                                    <div className="value-display">
+                                        <Text type="secondary">值:</Text>
+                                        <pre>
+                                            {getConflictValueDisplay(option.patch.value)}
+                                        </pre>
+                                    </div>
+                                ),
+                            }));
+
                             return {
                                 key: String(index),
                                 label: (
@@ -156,11 +161,11 @@ const ConflictResolutionSection: React.FC = () => {
                                         <Text strong style={{ wordBreak: 'break-all' }}>
                                             {path}
                                         </Text>
-                                        <Tag color="geekblue">选项 {options?.length ?? 0}</Tag>
-                                        {selectedHash && (
-                                            <Tag color="green">
-                                                已选 {getTargetLabelFromHash(selectedHash)}
-                                            </Tag>
+                                        <Tag color="geekblue">
+                                            选项 {resolutionOptions.length}
+                                        </Tag>
+                                        {selectedLabel && (
+                                            <Tag color="green">已选 {selectedLabel}</Tag>
                                         )}
                                     </div>
                                 ),
@@ -173,55 +178,7 @@ const ConflictResolutionSection: React.FC = () => {
                                                 onChange={val =>
                                                     handleConflictResolution(path, val)
                                                 }
-                                                options={(options || []).map(hash => {
-                                                    const patch = findPatchByHash(hash);
-                                                    return {
-                                                        value: hash,
-                                                        title: (
-                                                            <>
-                                                                <Text strong>
-                                                                    {getTargetLabelFromHash(hash)}
-                                                                </Text>
-                                                                <Tag
-                                                                    color="blue"
-                                                                    style={{ marginLeft: '8px' }}
-                                                                >
-                                                                    hash: {hash.substring(0, 8)}
-                                                                </Tag>
-                                                                {patch && (
-                                                                    <>
-                                                                        <Tag
-                                                                            color="green"
-                                                                            style={{
-                                                                                marginLeft: '8px',
-                                                                            }}
-                                                                        >
-                                                                            {patch.op}
-                                                                        </Tag>
-                                                                        <Tag
-                                                                            color="purple"
-                                                                            style={{
-                                                                                marginLeft: '8px',
-                                                                            }}
-                                                                        >
-                                                                            路径: {patch.path}
-                                                                        </Tag>
-                                                                    </>
-                                                                )}
-                                                            </>
-                                                        ),
-                                                        content: (
-                                                            <div className="value-display">
-                                                                <Text type="secondary">值:</Text>
-                                                                <pre>
-                                                                    {getConflictValueDisplay(
-                                                                        patch?.value
-                                                                    )}
-                                                                </pre>
-                                                            </div>
-                                                        ),
-                                                    };
-                                                })}
+                                                options={resolutionOptions}
                                             />
 
                                             {/* 自定义选项 */}

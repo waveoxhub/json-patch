@@ -1,6 +1,6 @@
 import { collectPathPrefixes } from './utils/pathUtils.js';
 import { deepEqual } from './utils/deepEqual.js';
-import { ConflictDetail, Patch } from './types/patch.js';
+import { ConflictDetail, ConflictOptionDetail, Patch } from './types/patch.js';
 import { computeCoverage, hasWriteOverlap } from './utils/coverage.js';
 
 /**
@@ -303,10 +303,8 @@ const createConflictWithOperations = (
         conflictsByPath[path] = { path, options: [] };
     }
 
-    const conflict = conflictsByPath[path];
-
     for (const op of operations) {
-        addOperationToConflict(conflict, op);
+        addOperationToConflict(conflictsByPath[path], op);
     }
 };
 
@@ -314,8 +312,15 @@ const createConflictWithOperations = (
  * 将操作添加到冲突
  */
 const addOperationToConflict = (conflict: ConflictDetail, op: PatchOperationWithIndex): void => {
-    // 确保哈希唯一性
-    if (!conflict.options.includes(op.patch.hash)) {
-        conflict.options.push(op.patch.hash);
+    const hash = op.patch.hash;
+
+    // 检查 options 中是否已存在该 hash
+    const exists = conflict.options.some(detail => detail.hash === hash);
+    if (!exists) {
+        conflict.options.push({
+            hash,
+            patch: op.patch,
+            groupIndex: op.groupIndex,
+        });
     }
 };

@@ -24,15 +24,17 @@ describe('detectConflicts', () => {
         ];
 
         const conflicts = detectConflicts([patch1, patch2]);
-        expect(conflicts).toStrictEqual([
-            {
-                path: '/name',
-                options: [
-                    generatePatchOptionHash('replace', '/name', 'patch1Name'),
-                    generatePatchOptionHash('replace', '/name', 'patch2Name'),
-                ],
-            },
-        ]);
+        expect(conflicts).toHaveLength(1);
+        expect(conflicts[0].path).toBe('/name');
+        expect(conflicts[0].options).toHaveLength(2);
+        expect(conflicts[0].options[0]?.hash).toBe(
+            generatePatchOptionHash('replace', '/name', 'patch1Name')
+        );
+        expect(conflicts[0].options[1]?.hash).toBe(
+            generatePatchOptionHash('replace', '/name', 'patch2Name')
+        );
+        expect(conflicts[0].options[0]?.patch).toMatchObject(patch1[0]);
+        expect(conflicts[0].options[1]?.patch).toMatchObject(patch2[0]);
     });
 
     it('should not have conflicts when patches modify different properties', () => {
@@ -78,16 +80,17 @@ describe('detectConflicts', () => {
         ];
 
         const conflicts = detectConflicts([patch1, patch2]);
-        console.log(conflicts);
-        expect(conflicts).toStrictEqual([
-            {
-                path: '/user',
-                options: [
-                    generatePatchOptionHash('remove', '/user'),
-                    generatePatchOptionHash('replace', '/user/name', 'newName'),
-                ],
-            },
-        ]);
+        expect(conflicts).toHaveLength(1);
+        expect(conflicts[0].path).toBe('/user');
+        expect(conflicts[0].options).toHaveLength(2);
+        expect(conflicts[0].options[0]?.hash).toBe(
+            generatePatchOptionHash('remove', '/user')
+        );
+        expect(conflicts[0].options[1]?.hash).toBe(
+            generatePatchOptionHash('replace', '/user/name', 'newName')
+        );
+        expect(conflicts[0].options[0]?.patch).toMatchObject(patch1[0]);
+        expect(conflicts[0].options[1]?.patch).toMatchObject(patch2[0]);
     });
 
     it('should not have conflicts when two patches modify different array indices', () => {
@@ -156,14 +159,14 @@ describe('detectConflicts', () => {
         // Check first conflict
         expect(conflicts[0].path).toBe('/users/0/name');
         expect(conflicts[0].options).toHaveLength(2);
-        expect(conflicts[0].options).toContain(hash1_1);
-        expect(conflicts[0].options).toContain(hash2_1);
+        expect(conflicts[0].options.some(opt => opt.hash === hash1_1)).toBe(true);
+        expect(conflicts[0].options.some(opt => opt.hash === hash2_1)).toBe(true);
 
         // Check second conflict
         expect(conflicts[1].path).toBe('/settings/language');
         expect(conflicts[1].options).toHaveLength(2);
-        expect(conflicts[1].options).toContain(hash1_2);
-        expect(conflicts[1].options).toContain(hash2_2);
+        expect(conflicts[1].options.some(opt => opt.hash === hash1_2)).toBe(true);
+        expect(conflicts[1].options.some(opt => opt.hash === hash2_2)).toBe(true);
     });
 
     it('should handle empty patch groups', () => {
@@ -235,8 +238,8 @@ describe('detectConflicts', () => {
 
         // Check for different operation types in options
         expect(conflicts[0].options).toHaveLength(2);
-        expect(conflicts[0].options).toContain(addHash);
-        expect(conflicts[0].options).toContain(replaceHash);
+        expect(conflicts[0].options.some(opt => opt.hash === addHash)).toBe(true);
+        expect(conflicts[0].options.some(opt => opt.hash === replaceHash)).toBe(true);
     });
 
     it('should identify path prefix conflicts', () => {
@@ -269,7 +272,9 @@ describe('detectConflicts', () => {
 
         // 找到包含这两个哈希之一的冲突
         const hasConflict = conflicts.some(
-            c => c.options.includes(parentHash) || c.options.includes(childHash)
+            c =>
+                c.options.some(opt => opt.hash === parentHash) ||
+                c.options.some(opt => opt.hash === childHash)
         );
         expect(hasConflict).toBe(true);
     });
@@ -321,8 +326,8 @@ describe('detectConflicts', () => {
         const conflicts = detectConflicts([patches1, patches2]);
         expect(conflicts.length).toBeGreaterThan(0);
         expect(conflicts.some(c => c.path === '/users/0')).toBe(true);
-        expect(conflicts.some(c => c.options.includes(removeHash))).toBe(true);
-        expect(conflicts.some(c => c.options.includes(replaceHash))).toBe(true);
+        expect(conflicts.some(c => c.options.some(opt => opt.hash === removeHash))).toBe(true);
+        expect(conflicts.some(c => c.options.some(opt => opt.hash === replaceHash))).toBe(true);
     });
 
     it('should identify complex conflicts in deeply nested structures', () => {
@@ -384,9 +389,13 @@ describe('detectConflicts', () => {
                     c.path === '/users/user123/addresses/0/zipcode'
             )
         ).toBe(true);
-        expect(conflicts.some(c => c.options.includes(removeHash))).toBe(true);
+        expect(conflicts.some(c => c.options.some(opt => opt.hash === removeHash))).toBe(true);
         expect(
-            conflicts.some(c => c.options.includes(cityHash) || c.options.includes(zipcodeHash))
+            conflicts.some(
+                c =>
+                    c.options.some(opt => opt.hash === cityHash) ||
+                    c.options.some(opt => opt.hash === zipcodeHash)
+            )
         ).toBe(true);
     });
 

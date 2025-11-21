@@ -49,17 +49,16 @@ export const resolveConflicts = (
     conflicts.forEach(conflict => {
         const resolution = resolutions.find(res => res.path === conflict.path);
 
-        if (resolution && conflict.options.includes(resolution.selectedHash)) {
-            const matchingPatch = findMatchingPatch(patchGroups, resolution.selectedHash);
-            if (matchingPatch) {
-                includedPatches.add(matchingPatch);
+        if (resolution && conflict.options.some(opt => opt.hash === resolution.selectedHash)) {
+            const optionDetail = conflict.options.find(opt => opt.hash === resolution.selectedHash);
+            if (optionDetail) {
+                includedPatches.add(optionDetail.patch);
             }
         } else if (conflict.options.length > 0) {
             // 如果没有指定解决方案，默认选择第一个选项
-            const defaultHash = conflict.options[0];
-            const matchingPatch = findMatchingPatch(patchGroups, defaultHash);
-            if (matchingPatch) {
-                includedPatches.add(matchingPatch);
+            const defaultOption = conflict.options[0];
+            if (defaultOption) {
+                includedPatches.add(defaultOption.patch);
             }
         }
     });
@@ -104,7 +103,7 @@ export const generateResolvedPatch = (
     conflicts.forEach(conflict => {
         const resolution = resolutions.find(r => r.path === conflict.path);
         if (!resolution) {
-            conflict.options.forEach(hash => unresolvedHashes.add(hash));
+            conflict.options.forEach(option => unresolvedHashes.add(option.hash));
         }
     });
 
@@ -128,5 +127,5 @@ export const initializeResolutions = (
         .filter(conflict => conflict.options.length > 0)
         .map(conflict => ({
             path: conflict.path,
-            selectedHash: conflict.options[0],
+            selectedHash: conflict.options[0]?.hash ?? '',
         }));

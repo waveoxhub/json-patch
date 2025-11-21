@@ -169,7 +169,7 @@ export const validateResolutions = (
         }
 
         // 验证选中的哈希是否在冲突选项中
-        if (!conflict.options.includes(resolution.selectedHash)) {
+        if (!conflict.options.some(opt => opt.hash === resolution.selectedHash)) {
             errors.push(
                 `Resolution #${index} selects a hash "${resolution.selectedHash}" ` +
                     `that is not an option for conflict at path "${resolution.path}"`
@@ -215,11 +215,11 @@ export const validateResolvedConflicts = (
         conflictPaths.add(conflict.path);
 
         // 找出选中的哈希值
-        let selectedHash = conflict.options[0]; // 默认选第一个
+        let selectedHash = conflict.options[0]?.hash; // 默认选第一个
 
         // 查找是否有针对此路径的解决方案
         const resolution = resolutions.find(res => res.path === conflict.path);
-        if (resolution && conflict.options.includes(resolution.selectedHash)) {
+        if (resolution && conflict.options.some(opt => opt.hash === resolution.selectedHash)) {
             selectedHash = resolution.selectedHash;
         }
 

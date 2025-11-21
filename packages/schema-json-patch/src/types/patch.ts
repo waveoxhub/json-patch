@@ -36,11 +36,20 @@ export type ConflictOperation = {
 };
 
 /**
+ * 冲突选项详情（用于可视化，包含完整补丁信息）
+ */
+export type ConflictOptionDetail = {
+    readonly hash: string; // 补丁哈希（用于选择）
+    readonly patch: Patch; // 完整补丁信息
+    readonly groupIndex: number; // 所属补丁组索引
+};
+
+/**
  * 补丁冲突详情
  */
 export type ConflictDetail = {
     readonly path: string; // 冲突的路径
-    readonly options: Array<string>; // 冲突选项哈希数组
+    readonly options: ReadonlyArray<ConflictOptionDetail>; // 冲突选项详情（包含完整补丁信息）
     readonly reason?: ConflictReason; // 可选：冲突原因
     readonly leftOps?: ReadonlyArray<ConflictOperation>; // 可选：左侧(或第一个)补丁组相关操作
     readonly rightOps?: ReadonlyArray<ConflictOperation>; // 可选：右侧(或第二个)补丁组相关操作

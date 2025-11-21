@@ -163,10 +163,26 @@ describe('Validation Functionality', () => {
             const hash1 = generatePatchOptionHash('add', '/name', 'test1');
             const hash2 = generatePatchOptionHash('replace', '/name', 'test2');
 
+            const patch1: Patch = {
+                op: 'add',
+                path: '/name',
+                value: 'test1',
+                hash: hash1,
+            };
+            const patch2: Patch = {
+                op: 'replace',
+                path: '/name',
+                value: 'test2',
+                hash: hash2,
+            };
+
             const conflicts: ConflictDetail[] = [
                 {
                     path: '/name',
-                    options: [hash1, hash2],
+                    options: [
+                        { hash: hash1, patch: patch1, groupIndex: 0 },
+                        { hash: hash2, patch: patch2, groupIndex: 1 },
+                    ],
                 },
             ];
             const resolutions = [
