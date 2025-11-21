@@ -1,4 +1,4 @@
-import { Patch, ConflictDetail } from '../types/patch.js';
+import { Patch, ConflictDetail, ConflictOptionDetail } from '../types/patch.js';
 import { Schema } from '../types/schema.js';
 import { isObject } from '../utils/isObject.js';
 import { parseJsonPath } from '../utils/pathUtils.js';
@@ -131,7 +131,7 @@ export const validateConflictsAgainstSchema = (
         }
 
         // 验证每个选项的补丁
-        conflict.options.forEach((option, optionIndex) => {
+        conflict.options.forEach((option: ConflictOptionDetail, optionIndex: number) => {
             const patch = option.patch;
 
             // 跳过非添加/替换操作
