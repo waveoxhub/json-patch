@@ -113,6 +113,7 @@ export const defaultSchemaData: Schema = {
     $item: {
         $type: 'object',
         $pk: 'id',
+        $split: true,
         $fields: {
             id: { $type: 'string' },
             name: { $type: 'string' },
