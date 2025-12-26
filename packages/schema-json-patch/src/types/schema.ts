@@ -5,6 +5,7 @@ export type PrimitiveType = 'string' | 'number' | 'boolean' | 'null';
 export type ObjectSchema = {
     readonly $type: 'object';
     readonly $fields: Record<string, FieldSchema>;
+    readonly $split?: boolean; // 启用时，add/replace 操作会拆分为细粒度操作
 };
 
 // 数组对象成员模式
@@ -21,7 +22,11 @@ export type ArraySchema = {
 // 对象字段模式
 export type FieldSchema =
     | { readonly $type: PrimitiveType }
-    | { readonly $type: 'object'; readonly $fields: Record<string, FieldSchema> }
+    | {
+          readonly $type: 'object';
+          readonly $fields: Record<string, FieldSchema>;
+          readonly $split?: boolean;
+      }
     | ArraySchema;
 
 // 根模式定义

@@ -75,8 +75,23 @@ export const generatePatches = (
             const item = targetData[targetIndex];
 
             if (!sourceIdMap.has(id)) {
-                // 新项目
-                patches.push(createPatch('add', `/${id}`, item));
+                // 新项目：检查是否需要拆分
+                const itemPath = `/${id}`;
+                if (schema.$item.$split === true) {
+                    const state: PathProcessingState = {
+                        handledPaths: new Set<string>(),
+                        allPaths: [],
+                    };
+                    generateSplitPatches(
+                        itemPath,
+                        item as Record<string, unknown>,
+                        patches,
+                        state,
+                        schema.$item
+                    );
+                } else {
+                    patches.push(createPatch('add', itemPath, item));
+                }
             } else {
                 // 修改的项目
                 const sourceIndex = sourceIdMap.get(id)!;
@@ -146,6 +161,57 @@ const buildPath = (basePath: string, key: string): string =>
     basePath.endsWith('/') ? `${basePath}${key}` : `${basePath}/${key}`;
 
 /**
+ * 为对象生成拆分的 add 补丁
+ * 递归遍历对象的每个字段，为每个叶子节点生成独立的 add 操作
+ * @param basePath - 当前对象的路径
+ * @param obj - 要拆分的对象
+ * @param patches - 补丁数组
+ * @param state - 路径处理状态
+ * @param schema - 当前对象的 Schema（可选）
+ */
+const generateSplitPatches = (
+    basePath: string,
+    obj: Record<string, unknown>,
+    patches: Patch[],
+    state: PathProcessingState,
+    schema?: Schema
+): void => {
+    for (const key of Object.keys(obj)) {
+        const fieldPath = buildPath(basePath, key);
+        const value = obj[key];
+
+        // 获取字段 Schema
+        let fieldSchema: Schema | undefined;
+        if (schema && schema.$type === 'object' && schema.$fields && key in schema.$fields) {
+            fieldSchema = schema.$fields[key] as Schema;
+        }
+
+        // 如果值是对象且对应 Schema 设置了 $split，继续递归拆分
+        if (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value) &&
+            fieldSchema &&
+            fieldSchema.$type === 'object' &&
+            '$split' in fieldSchema &&
+            fieldSchema.$split === true
+        ) {
+            generateSplitPatches(
+                fieldPath,
+                value as Record<string, unknown>,
+                patches,
+                state,
+                fieldSchema
+            );
+        } else {
+            // 叶子节点或不需要继续拆分的对象，生成单个 add 操作
+            patches.push(createPatch('add', fieldPath, value));
+            state.handledPaths.add(fieldPath);
+        }
+    }
+};
+
+/**
  * 为对象字段生成补丁
  */
 const generateObjectFieldPatches = (
@@ -158,6 +224,11 @@ const generateObjectFieldPatches = (
 ): void => {
     if (!deepEqual(sourceObj, targetObj)) {
         const shouldReplaceWhole = (): boolean => {
+            // 如果 Schema 配置了 $split，强制不整体替换
+            if (schema.$type === 'object' && '$split' in schema && schema.$split === true) {
+                return false;
+            }
+
             // 对于包含非对象成员的数组，替换整个数组
             if (schema.$type === 'array' && schema.$item && schema.$item.$type !== 'object') {
                 return true;
@@ -223,8 +294,35 @@ const generateObjectFieldPatches = (
         if (state.handledPaths.has(fieldPath)) continue;
 
         if (!sourceKeys.includes(key)) {
-            patches.push(createPatch('add', fieldPath, targetObj[key]));
-            state.handledPaths.add(fieldPath);
+            const targetValue = targetObj[key];
+
+            // 获取字段模式以检查 $split 配置
+            let fieldSchema: Schema | undefined;
+            if (schema.$type === 'object' && schema.$fields && key in schema.$fields) {
+                fieldSchema = schema.$fields[key] as Schema;
+            }
+
+            // 如果是对象且设置了 $split，拆分为细粒度操作
+            if (
+                fieldSchema &&
+                fieldSchema.$type === 'object' &&
+                '$split' in fieldSchema &&
+                fieldSchema.$split === true &&
+                typeof targetValue === 'object' &&
+                targetValue !== null &&
+                !Array.isArray(targetValue)
+            ) {
+                generateSplitPatches(
+                    fieldPath,
+                    targetValue as Record<string, unknown>,
+                    patches,
+                    state,
+                    fieldSchema
+                );
+            } else {
+                patches.push(createPatch('add', fieldPath, targetValue));
+                state.handledPaths.add(fieldPath);
+            }
         } else if (!deepEqual(sourceObj[key], targetObj[key])) {
             const sourceValue = sourceObj[key];
             const targetValue = targetObj[key];
