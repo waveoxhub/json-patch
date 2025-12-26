@@ -830,4 +830,201 @@ describe('patchGenerator', () => {
             });
         });
     });
+
+    describe('$split Configuration', () => {
+        it('should split add operation when $split is true for array item', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $split: true,
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                        age: { $type: 'number' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([]);
+            const target = JSON.stringify([{ id: 'user1', name: '张三', age: 25 }]);
+
+            const patches = generatePatches(schema, source, target);
+
+            // 应该生成 3 个独立的 add 操作，而不是 1 个整体 add
+            expect(patches).toHaveLength(3);
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user1/id',
+                value: 'user1',
+                hash: generatePatchOptionHash('add', '/user1/id', 'user1'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user1/name',
+                value: '张三',
+                hash: generatePatchOptionHash('add', '/user1/name', '张三'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user1/age',
+                value: 25,
+                hash: generatePatchOptionHash('add', '/user1/age', 25),
+            });
+        });
+
+        it('should not split add when $split is not set (default behavior)', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([]);
+            const target = JSON.stringify([{ id: 'user1', name: '张三' }]);
+
+            const patches = generatePatches(schema, source, target);
+
+            // 默认应该生成 1 个整体 add 操作
+            expect(patches).toHaveLength(1);
+            expect(patches[0].op).toBe('add');
+            expect(patches[0].path).toBe('/user1');
+            expect(patches[0].value).toEqual({ id: 'user1', name: '张三' });
+        });
+
+        it('should split nested object add when nested schema has $split', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    user: {
+                        $type: 'object',
+                        $split: true,
+                        $fields: {
+                            name: { $type: 'string' },
+                            config: {
+                                $type: 'object',
+                                $split: true,
+                                $fields: {
+                                    theme: { $type: 'string' },
+                                    lang: { $type: 'string' },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({});
+            const target = JSON.stringify({
+                user: {
+                    name: '李四',
+                    config: { theme: 'dark', lang: 'zh-CN' },
+                },
+            });
+
+            const patches = generatePatches(schema, source, target);
+
+            // user 字段拆分，其中 config 也拆分
+            expect(patches.length).toBeGreaterThanOrEqual(3);
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user/name',
+                value: '李四',
+                hash: generatePatchOptionHash('add', '/user/name', '李四'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user/config/theme',
+                value: 'dark',
+                hash: generatePatchOptionHash('add', '/user/config/theme', 'dark'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user/config/lang',
+                value: 'zh-CN',
+                hash: generatePatchOptionHash('add', '/user/config/lang', 'zh-CN'),
+            });
+        });
+
+        it('should not use whole replace when $split is true', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $split: true,
+                $fields: {
+                    name: { $type: 'string' },
+                    age: { $type: 'number' },
+                    email: { $type: 'string' },
+                },
+            };
+
+            const source = JSON.stringify({ name: 'old', age: 20, email: 'old@test.com' });
+            const target = JSON.stringify({ name: 'new', age: 30, email: 'new@test.com' });
+
+            const patches = generatePatches(schema, source, target);
+
+            // 尽管所有字段都变化，但因为 $split 设置，应该生成 3 个独立的 replace 操作
+            expect(patches).toHaveLength(3);
+            expect(patches.every(p => p.op === 'replace')).toBe(true);
+            expect(patches).toContainEqual({
+                op: 'replace',
+                path: '/name',
+                value: 'new',
+                hash: generatePatchOptionHash('replace', '/name', 'new'),
+            });
+        });
+
+        it('should handle $split with nested object not having $split', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    profile: {
+                        $type: 'object',
+                        $split: true,
+                        $fields: {
+                            name: { $type: 'string' },
+                            settings: {
+                                $type: 'object',
+                                // 没有设置 $split，应该作为整体添加
+                                $fields: {
+                                    a: { $type: 'string' },
+                                    b: { $type: 'string' },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({});
+            const target = JSON.stringify({
+                profile: {
+                    name: '王五',
+                    settings: { a: '1', b: '2' },
+                },
+            });
+
+            const patches = generatePatches(schema, source, target);
+
+            // profile 拆分，但 settings 作为整体添加
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/profile/name',
+                value: '王五',
+                hash: generatePatchOptionHash('add', '/profile/name', '王五'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/profile/settings',
+                value: { a: '1', b: '2' },
+                hash: generatePatchOptionHash('add', '/profile/settings', { a: '1', b: '2' }),
+            });
+        });
+    });
 });
