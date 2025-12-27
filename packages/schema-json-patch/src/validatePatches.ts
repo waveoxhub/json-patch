@@ -170,7 +170,11 @@ export const validateResolutions = (
         }
 
         // 验证选中的哈希是否在冲突选项中
-        if (!conflict.options.some((opt: ConflictOptionDetail) => opt.hash === resolution.selectedHash)) {
+        if (
+            !conflict.options.some(
+                (opt: ConflictOptionDetail) => opt.hash === resolution.selectedHash
+            )
+        ) {
             errors.push(
                 `Resolution #${index} selects a hash "${resolution.selectedHash}" ` +
                     `that is not an option for conflict at path "${resolution.path}"`
@@ -323,6 +327,14 @@ export const validatePatchApplication = (
                             `Parent path does not exist for add operation at "${patch.path}"`
                         );
                     }
+                }
+
+                // For add, validate that the target path does NOT already exist
+                // This enforces strict "add" semantics - add should only create new entries
+                if (pathExists(state, pathComponents, schema)) {
+                    errors.push(
+                        `Path "${patch.path}" already exists, cannot perform add operation (use replace instead)`
+                    );
                 }
 
                 // Validate value type according to schema

@@ -72,6 +72,14 @@ export const validatePatchApplication = (
                     }
                 }
 
+                // 对于添加操作，验证目标路径不能已存在
+                // 这强制执行严格的"add"语义 - add 只能创建新条目
+                if (pathExists(state, pathComponents, schema)) {
+                    errors.push(
+                        `Path "${patch.path}" already exists, cannot perform add operation (use replace instead)`
+                    );
+                }
+
                 // 根据模式验证值类型
                 const valueSchema = getSchemaForPath(schema, pathComponents);
                 if (valueSchema && !validateValueAgainstSchema(patch.value, valueSchema)) {

@@ -467,5 +467,55 @@ describe('Validation Functionality', () => {
                 'Schema must have a valid $type field with value "object" or "array"'
             );
         });
+
+        it('should reject add operation when path already exists', () => {
+            // 这个测试用例验证：当目标路径已存在时，add 操作应该被拒绝
+            const json = '{"name": "test", "value": 123}';
+            const patches: Patch[] = [
+                {
+                    op: 'add',
+                    path: '/name',
+                    value: 'new-name',
+                    hash: generatePatchOptionHash('add', '/name', 'new-name'),
+                },
+            ];
+            const schema: ObjectSchema = {
+                $type: 'object',
+                $fields: {
+                    name: { $type: 'string' },
+                    value: { $type: 'number' },
+                },
+            };
+
+            const result = validatePatchApplication(json, patches, schema);
+            expect(result.isValid).toBe(false);
+            expect(result.errors.length).toBeGreaterThan(0);
+            expect(result.errors[0]).toContain('already exists');
+            expect(result.errors[0]).toContain('cannot perform add operation');
+        });
+
+        it('should allow add operation when path does not exist', () => {
+            // 这个测试用例验证：当目标路径不存在时，add 操作应该被允许
+            const json = '{"name": "test"}';
+            const patches: Patch[] = [
+                {
+                    op: 'add',
+                    path: '/value',
+                    value: 123,
+                    hash: generatePatchOptionHash('add', '/value', 123),
+                },
+            ];
+            const schema: ObjectSchema = {
+                $type: 'object',
+                $fields: {
+                    name: { $type: 'string' },
+                    value: { $type: 'number' },
+                },
+            };
+
+            const result = validatePatchApplication(json, patches, schema);
+            expect(result.isValid).toBe(true);
+            expect(result.errors.length).toBe(0);
+        });
     });
 });
