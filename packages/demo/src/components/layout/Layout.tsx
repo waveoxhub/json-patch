@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Sidebar, { SceneKey } from './Sidebar';
 
 interface LayoutProps {
-    children: (activeScene: SceneKey) => React.ReactNode;
+    activeScene: SceneKey;
+    onSceneChange: (scene: SceneKey) => void;
+    children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-    const [activeScene, setActiveScene] = useState<SceneKey>('validate');
-
+const Layout: React.FC<LayoutProps> = ({ activeScene, onSceneChange, children }) => {
     return (
         <div className="flex h-screen overflow-hidden bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
-            <Sidebar activeScene={activeScene} onSceneChange={setActiveScene} />
+            <Sidebar activeScene={activeScene} onSceneChange={onSceneChange} />
             <main className="flex-1 overflow-auto">
-                {children(activeScene)}
+                {children}
             </main>
         </div>
     );
