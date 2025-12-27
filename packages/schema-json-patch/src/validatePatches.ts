@@ -6,7 +6,7 @@ import {
     ConflictOptionDetail,
 } from './types/patch.js';
 import { Schema } from './types/schema.js';
-import { isObject } from './utils/isObject.js';
+import { isObject, getSchemaForPath } from './utils/schemaUtils.js';
 import { detectConflicts } from './detectConflicts.js';
 import { parseJsonPath } from './utils/pathUtils.js';
 
@@ -422,42 +422,6 @@ const pathExists = (
 };
 
 /**
- * Get schema for a specific path
- * @param schema Base schema
- * @param pathComponents Path components
- * @returns Schema for the path or undefined
- */
-const getSchemaForPath = (
-    schema: Schema,
-    pathComponents: ReadonlyArray<string>
-): Schema | undefined => {
-    if (!pathComponents.length) {
-        return schema;
-    }
-
-    let currentSchema = schema;
-
-    for (const component of pathComponents) {
-        if (!currentSchema) {
-            return undefined;
-        }
-
-        if (currentSchema.$type === 'object' && '$fields' in currentSchema) {
-            // Navigate object field
-            currentSchema = currentSchema.$fields[component] as Schema;
-        } else if (currentSchema.$type === 'array' && '$item' in currentSchema) {
-            // For arrays, continue with the item schema
-            currentSchema = currentSchema.$item as Schema;
-        } else {
-            // Cannot navigate further
-            return undefined;
-        }
-    }
-
-    return currentSchema;
-};
-
-/**
  * Validate a value against a schema
  * @param value Value to validate
  * @param schema Schema to validate against
@@ -494,10 +458,3 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
         }
     }
 };
-
-/**
- * 验证模块导出文件
- * 重新导出所有验证函数，保持向后兼容
- */
-
-export * from './validation/index.js';

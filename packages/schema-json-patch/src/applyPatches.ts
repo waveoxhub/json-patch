@@ -1,6 +1,13 @@
 import { Patch } from './types/patch.js';
 import { parseJsonPath } from './utils/pathUtils.js';
 import { Schema, ArraySchema } from './types/schema.js';
+import {
+    getSchemaForPath,
+    isObject,
+    hasObjectItems,
+    getPrimaryKeyField,
+    assertArrayObjectHasPkIfObjectArray,
+} from './utils/schemaUtils.js';
 
 /**
  * 将补丁应用到JSON状态
@@ -156,77 +163,11 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
 };
 
 /**
- * 获取指定路径的模式
- */
-const getSchemaForPath = (
-    schema: Schema,
-    pathComponents: ReadonlyArray<string>
-): Schema | undefined => {
-    let currentSchema: Schema | undefined = schema;
-
-    for (const component of pathComponents) {
-        if (!currentSchema) return undefined;
-
-        if (currentSchema.$type === 'object') {
-            currentSchema = currentSchema.$fields[component] as Schema | undefined;
-        } else if (currentSchema.$type === 'array') {
-            currentSchema = currentSchema.$item as Schema;
-        } else {
-            return undefined;
-        }
-    }
-
-    return currentSchema;
-};
-
-/**
  * 在数组中查找适合插入的索引位置
  */
 const findInsertionIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
     const index = findArrayIndex(array, key, schema);
     return index !== -1 ? index : array.length;
-};
-
-/**
- * 检查值是否为非空对象
- */
-const isObject = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-};
-
-/**
- * 检查数组模式是否包含对象项
- */
-const hasObjectItems = (schema: ArraySchema): boolean => {
-    return isObject(schema.$item) && schema.$item.$type === 'object' && '$pk' in schema.$item;
-};
-
-/**
- * 获取数组子模式中的主键字段名
- */
-const getPrimaryKeyField = (schema: ArraySchema): string => {
-    if (schema.$type !== 'array') {
-        throw new Error('Invalid schema: not an array type');
-    }
-
-    const item = schema.$item;
-    if (!isObject(item) || item.$type !== 'object' || !('$pk' in item)) {
-        throw new Error('Invalid schema: array item must be an object with $pk field');
-    }
-
-    return item.$pk;
-};
-
-/**
- * 如果是对象数组但缺少 $pk，抛出错误
- */
-const assertArrayObjectHasPkIfObjectArray = (schema: ArraySchema): void => {
-    const item = schema.$item as unknown;
-    if (isObject(item) && (item as Record<string, unknown>).$type === 'object') {
-        if (!('$pk' in (item as Record<string, unknown>))) {
-            throw new Error('Invalid schema: object arrays must define $pk');
-        }
-    }
 };
 
 /**
