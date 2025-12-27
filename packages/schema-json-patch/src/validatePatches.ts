@@ -376,7 +376,7 @@ const pathExists = (
         return true;
     }
 
-    let current: any = state;
+    let current: unknown = state;
 
     for (const component of pathComponents) {
         if (Array.isArray(current)) {
@@ -400,7 +400,10 @@ const pathExists = (
                 }
 
                 const pkField = schema.$item.$pk;
-                const item = current.find((i: any) => isObject(i) && i[pkField] === component);
+                const item = current.find(
+                    (i: unknown) =>
+                        isObject(i) && (i as Record<string, unknown>)[pkField] === component
+                );
                 if (!item) {
                     return false;
                 }

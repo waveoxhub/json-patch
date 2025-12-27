@@ -1,6 +1,6 @@
 import { Patch, ConflictDetail, ConflictOptionDetail } from '../types/patch.js';
 import { Schema } from '../types/schema.js';
-import { isObject } from '../utils/isObject.js';
+import { isObject } from '../utils/schemaUtils.js';
 import { parseJsonPath } from '../utils/pathUtils.js';
 import { ValidationResult } from './types.js';
 import { validateJson } from './jsonValidation.js';

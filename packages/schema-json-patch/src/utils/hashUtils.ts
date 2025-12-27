@@ -1,11 +1,5 @@
-import { PatchOperation } from '../types/patch';
-
-/**
- * FNV-1a 哈希算法常量
- * 使用 32 位版本，提供更好的分布性和跨平台一致性
- */
-const FNV_OFFSET_BASIS = 2166136261;
-const FNV_PRIME = 16777619;
+import { PatchOperation } from '../types/patch.js';
+import { HASH_CONFIG } from '../constants.js';
 
 /**
  * 生成补丁选项的哈希值
@@ -24,10 +18,10 @@ export const generatePatchOptionHash = (
         const serializedValue = value !== undefined ? JSON.stringify(value) : 'undefined';
         const hashInput = `${op}_${path}_${serializedValue}`;
 
-        let hash = FNV_OFFSET_BASIS;
+        let hash: number = HASH_CONFIG.FNV_OFFSET_BASIS;
         for (let i = 0; i < hashInput.length; i++) {
             hash ^= hashInput.charCodeAt(i);
-            hash = Math.imul(hash, FNV_PRIME);
+            hash = Math.imul(hash, HASH_CONFIG.FNV_PRIME);
         }
 
         // 使用无符号右移确保正数，并转换为 8 位十六进制

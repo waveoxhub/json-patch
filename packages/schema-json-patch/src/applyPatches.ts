@@ -8,6 +8,7 @@ import {
     getPrimaryKeyField,
     assertArrayObjectHasPkIfObjectArray,
 } from './utils/schemaUtils.js';
+import { deepClone } from './utils/deepClone.js';
 
 /**
  * 将补丁应用到JSON状态
@@ -53,7 +54,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
         return op === 'remove' ? null : value;
     }
 
-    const result = clone(state);
+    const result = deepClone(state);
 
     switch (op) {
         case 'add':
@@ -220,27 +221,6 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
     // 如果无法使用键作为索引，添加到数组末尾
     array.push(null);
     return array.length - 1;
-};
-
-/**
- * 智能克隆对象（仅复制必要的层级）
- */
-const clone = (value: unknown): unknown => {
-    if (value === null || typeof value !== 'object') {
-        return value;
-    }
-
-    if (Array.isArray(value)) {
-        return value.map(clone);
-    }
-
-    const result = {} as Record<string, unknown>;
-    for (const key in value) {
-        if (Object.prototype.hasOwnProperty.call(value, key)) {
-            result[key] = clone((value as Record<string, unknown>)[key]);
-        }
-    }
-    return result;
 };
 
 /**

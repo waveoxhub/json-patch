@@ -1,4 +1,4 @@
-import { isObject } from './isObject.js';
+import { isObject } from './schemaUtils.js';
 
 /**
  * 两个值的深度比较是否相等
