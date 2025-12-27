@@ -9,9 +9,16 @@ export const isObject = (value: unknown): value is Record<string, unknown> => {
 };
 
 /**
- * 检查数组模式是否包含带主键的对象项
+ * 检查数组模式是否包含对象项（无论是否有主键）
  */
 export const hasObjectItems = (schema: ArraySchema): boolean => {
+    return isObject(schema.$item) && schema.$item.$type === 'object';
+};
+
+/**
+ * 检查数组模式是否包含带主键的对象项
+ */
+export const hasObjectItemsWithPk = (schema: ArraySchema): boolean => {
     return isObject(schema.$item) && schema.$item.$type === 'object' && '$pk' in schema.$item;
 };
 
@@ -19,30 +26,17 @@ export const hasObjectItems = (schema: ArraySchema): boolean => {
  * 获取数组模式中的主键字段名
  * @throws {SchemaJsonPatchError} 如果不是有效的对象数组模式
  */
-export const getPrimaryKeyField = (schema: ArraySchema): string => {
+export const getPrimaryKeyField = (schema: ArraySchema): string | undefined => {
     if (schema.$type !== 'array') {
         throw SchemaJsonPatchError.invalidSchema('not an array type');
     }
 
     const item = schema.$item;
-    if (!isObject(item) || item.$type !== 'object' || !('$pk' in item)) {
-        throw SchemaJsonPatchError.invalidSchema('array item must be an object with $pk field');
+    if (!isObject(item) || item.$type !== 'object') {
+        return undefined;
     }
 
     return item.$pk;
-};
-
-/**
- * 验证对象数组是否定义了主键
- * @throws {SchemaJsonPatchError} 如果对象数组缺少 $pk 定义
- */
-export const assertArrayObjectHasPkIfObjectArray = (schema: ArraySchema): void => {
-    const item = schema.$item as unknown;
-    if (isObject(item) && (item as Record<string, unknown>).$type === 'object') {
-        if (!('$pk' in (item as Record<string, unknown>))) {
-            throw SchemaJsonPatchError.invalidSchema('object arrays must define $pk');
-        }
-    }
 };
 
 /**

@@ -46,18 +46,21 @@ export const escapePathComponent = (component: string): string => {
 };
 
 /**
- * 根据模式和对象值获取主键值
+ * 根据模式和对象值获取主键值，或返回 undefined 表示应使用索引
  *
  * @param schema - 对象模式
  * @param obj - 对象值
- * @returns 主键值
+ * @returns 主键值，如果无 $pk 则返回 undefined
  */
 export const getPrimaryKeyValue = (
     schema: ArrayItemObjectSchema,
     obj: Record<string, unknown>
-): string => {
+): string | undefined => {
     const pkField = schema.$pk;
-    if (!pkField || !obj[pkField]) {
+    if (!pkField) {
+        return undefined;
+    }
+    if (!obj[pkField]) {
         throw new Error(
             `Object missing primary key: ${pkField} \n obj: ${JSON.stringify(obj)} \n schema: ${JSON.stringify(schema)}`
         );
@@ -127,11 +130,10 @@ export const extractPathMap = (
             const itemPath = `${basePath}/${index}`;
 
             if (schema.$item.$type === 'object') {
-                const pkValue = getPrimaryKeyValue(
-                    schema.$item as ArrayItemObjectSchema,
-                    item as Record<string, unknown>
-                );
-                const semanticPath = `${basePath}/${pkValue}`;
+                const itemSchema = schema.$item as ArrayItemObjectSchema;
+                const pkValue = getPrimaryKeyValue(itemSchema, item as Record<string, unknown>);
+                // 如果有主键则使用主键路径，否则使用索引路径
+                const semanticPath = pkValue !== undefined ? `${basePath}/${pkValue}` : itemPath;
 
                 result.set(semanticPath, { path: itemPath, value: item });
                 extractPathMap(schema.$item, item, semanticPath, result);

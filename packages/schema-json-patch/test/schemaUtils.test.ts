@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
     isObject,
     hasObjectItems,
+    hasObjectItemsWithPk,
     getPrimaryKeyField,
-    assertArrayObjectHasPkIfObjectArray,
     getSchemaForPath,
 } from '../src/utils/schemaUtils';
 import { Schema, ArraySchema } from '../src/types/schema';
@@ -50,12 +50,39 @@ describe('schemaUtils', () => {
             expect(hasObjectItems(schema)).toBe(false);
         });
 
+        it('should return true for object items without $pk', () => {
+            const schema: ArraySchema = {
+                $type: 'array',
+                $item: { $type: 'object', $fields: {} } as any,
+            };
+            // 新语义：hasObjectItems 只检查是否为对象数组，不检查 $pk
+            expect(hasObjectItems(schema)).toBe(true);
+        });
+    });
+
+    describe('hasObjectItemsWithPk', () => {
+        it('should return true for array schema with object items and $pk', () => {
+            const schema: ArraySchema = {
+                $type: 'array',
+                $item: { $type: 'object', $pk: 'id', $fields: {} },
+            };
+            expect(hasObjectItemsWithPk(schema)).toBe(true);
+        });
+
+        it('should return false for array schema with primitive items', () => {
+            const schema: ArraySchema = {
+                $type: 'array',
+                $item: { $type: 'string' },
+            };
+            expect(hasObjectItemsWithPk(schema)).toBe(false);
+        });
+
         it('should return false for object items without $pk', () => {
             const schema: ArraySchema = {
                 $type: 'array',
                 $item: { $type: 'object', $fields: {} } as any,
             };
-            expect(hasObjectItems(schema)).toBe(false);
+            expect(hasObjectItemsWithPk(schema)).toBe(false);
         });
     });
 
@@ -73,38 +100,21 @@ describe('schemaUtils', () => {
             expect(() => getPrimaryKeyField(invalidSchema)).toThrow(SchemaJsonPatchError);
         });
 
-        it('should throw SchemaJsonPatchError for array without object items', () => {
+        it('should return undefined for array without object items', () => {
             const schema: ArraySchema = {
                 $type: 'array',
                 $item: { $type: 'string' },
             };
-            expect(() => getPrimaryKeyField(schema)).toThrow(SchemaJsonPatchError);
-        });
-    });
-
-    describe('assertArrayObjectHasPkIfObjectArray', () => {
-        it('should not throw for array with object items and $pk', () => {
-            const schema: ArraySchema = {
-                $type: 'array',
-                $item: { $type: 'object', $pk: 'id', $fields: {} },
-            };
-            expect(() => assertArrayObjectHasPkIfObjectArray(schema)).not.toThrow();
+            // 新语义：返回 undefined 而不是抛出错误
+            expect(getPrimaryKeyField(schema)).toBeUndefined();
         });
 
-        it('should not throw for array with primitive items', () => {
-            const schema: ArraySchema = {
-                $type: 'array',
-                $item: { $type: 'string' },
-            };
-            expect(() => assertArrayObjectHasPkIfObjectArray(schema)).not.toThrow();
-        });
-
-        it('should throw for object array without $pk', () => {
+        it('should return undefined for object items without $pk', () => {
             const schema: ArraySchema = {
                 $type: 'array',
                 $item: { $type: 'object', $fields: {} } as any,
             };
-            expect(() => assertArrayObjectHasPkIfObjectArray(schema)).toThrow();
+            expect(getPrimaryKeyField(schema)).toBeUndefined();
         });
     });
 

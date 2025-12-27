@@ -5,8 +5,8 @@ import {
     getSchemaForPath,
     isObject,
     hasObjectItems,
+    hasObjectItemsWithPk,
     getPrimaryKeyField,
-    assertArrayObjectHasPkIfObjectArray,
 } from './utils/schemaUtils.js';
 import { deepClone } from './utils/deepClone.js';
 
@@ -67,11 +67,9 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                         );
                     }
 
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
-
-                    if (isObject(value) && hasObjectItems(arraySchema)) {
+                    if (isObject(value) && hasObjectItemsWithPk(arraySchema)) {
                         const pkField = getPrimaryKeyField(arraySchema);
-                        if (pkField in value) {
+                        if (pkField && pkField in value) {
                             const index = getOrCreateArrayIndex(
                                 parent,
                                 String(value[pkField]),
@@ -88,16 +86,15 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                     const fieldSchema = getSchemaForPath(schema, pathComponents);
 
                     if (fieldSchema && fieldSchema.$type === 'array') {
-                        assertArrayObjectHasPkIfObjectArray(fieldSchema);
                         if (!parent[key] || !Array.isArray(parent[key])) {
                             parent[key] = [];
                         }
 
-                        if (isObject(value) && hasObjectItems(fieldSchema)) {
+                        if (isObject(value) && hasObjectItemsWithPk(fieldSchema)) {
                             const array = parent[key] as unknown[];
                             const pkField = getPrimaryKeyField(fieldSchema);
                             let index;
-                            if (pkField in value) {
+                            if (pkField && pkField in value) {
                                 index = getOrCreateArrayIndex(
                                     array,
                                     String(value[pkField]),
@@ -127,7 +124,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
                     const index = findArrayIndex(parent, key, arraySchema);
                     if (index !== -1) {
                         parent.splice(index, 1);
@@ -147,7 +143,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
                     const index = getOrCreateArrayIndex(parent, key, arraySchema);
                     parent[index] = value;
                 } else if (isObject(parent)) {
@@ -175,17 +170,18 @@ const findInsertionIndex = (array: unknown[], key: string, schema: ArraySchema):
  * 在数组中查找项目的索引
  */
 const findArrayIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
-    if (!hasObjectItems(schema)) {
-        // 如果不是对象数组，尝试直接使用索引
-        const index = parseInt(key, 10);
-        return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
+    const pkField = getPrimaryKeyField(schema);
+
+    // 如果有主键，使用主键查找
+    if (pkField) {
+        return array.findIndex(
+            item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
+        );
     }
 
-    // 使用主键查找
-    const pkField = getPrimaryKeyField(schema);
-    return array.findIndex(
-        item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
-    );
+    // 无主键，尝试直接使用索引
+    const index = parseInt(key, 10);
+    return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
 };
 
 /**
@@ -197,9 +193,9 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
         return index;
     }
 
-    // 如果是主键查找，需要创建一个新对象
-    if (hasObjectItems(schema)) {
-        const pkField = getPrimaryKeyField(schema);
+    // 如果有主键，需要创建一个新对象
+    const pkField = getPrimaryKeyField(schema);
+    if (pkField) {
         const newItem = { [pkField]: key };
         array.push(newItem);
         return array.length - 1;

@@ -57,66 +57,123 @@ export const generatePatches = (
     const patches: Patch[] = [];
 
     // 处理顶层数组
-    if (schema.$type === 'array' && schema.$item.$type === 'object' && schema.$item.$pk) {
+    if (schema.$type === 'array' && schema.$item.$type === 'object') {
         if (!Array.isArray(sourceData) || !Array.isArray(targetData)) {
             throw new Error('Type mismatch: array expected');
         }
 
         const pkField = schema.$item.$pk;
-        const sourceIdMap = new Map(sourceData.map((item, index) => [item[pkField], index]));
-        const targetIdMap = new Map(targetData.map((item, index) => [item[pkField], index]));
 
-        // 处理已删除的项目
-        for (const [id] of sourceIdMap) {
-            if (!targetIdMap.has(id)) {
-                patches.push(createPatch('remove', `/${id}`));
-            }
-        }
+        if (pkField) {
+            // 有主键，使用主键匹配
+            const sourceIdMap = new Map(sourceData.map((item, index) => [item[pkField], index]));
+            const targetIdMap = new Map(targetData.map((item, index) => [item[pkField], index]));
 
-        // 处理新增和修改的项目
-        for (const [id, targetIndex] of targetIdMap.entries()) {
-            const item = targetData[targetIndex];
-
-            if (!sourceIdMap.has(id)) {
-                // 新项目：检查是否需要拆分
-                const itemPath = `/${id}`;
-                if (schema.$item.$split === true) {
-                    const state: PathProcessingState = {
-                        handledPaths: new Set<string>(),
-                        allPaths: [],
-                    };
-                    generateSplitPatches(
-                        itemPath,
-                        item as Record<string, unknown>,
-                        patches,
-                        state,
-                        schema.$item
-                    );
-                } else {
-                    patches.push(createPatch('add', itemPath, item));
+            // 处理已删除的项目
+            for (const [id] of sourceIdMap) {
+                if (!targetIdMap.has(id)) {
+                    patches.push(createPatch('remove', `/${id}`));
                 }
-            } else {
-                // 修改的项目
-                const sourceIndex = sourceIdMap.get(id)!;
-                const sourceItem = sourceData[sourceIndex];
+            }
 
-                if (!deepEqual(sourceItem, item)) {
+            // 处理新增和修改的项目
+            for (const [id, targetIndex] of targetIdMap.entries()) {
+                const item = targetData[targetIndex];
+
+                if (!sourceIdMap.has(id)) {
+                    // 新项目：检查是否需要拆分
                     const itemPath = `/${id}`;
-                    const state: PathProcessingState = {
-                        handledPaths: new Set<string>(),
-                        allPaths: Array.from(
-                            new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
-                        ),
-                    };
+                    if (schema.$item.$split === true) {
+                        const state: PathProcessingState = {
+                            handledPaths: new Set<string>(),
+                            allPaths: [],
+                        };
+                        generateSplitPatches(
+                            itemPath,
+                            item as Record<string, unknown>,
+                            patches,
+                            state,
+                            schema.$item
+                        );
+                    } else {
+                        patches.push(createPatch('add', itemPath, item));
+                    }
+                } else {
+                    // 修改的项目
+                    const sourceIndex = sourceIdMap.get(id)!;
+                    const sourceItem = sourceData[sourceIndex];
 
-                    generateObjectFieldPatches(
-                        itemPath,
-                        sourceItem as Record<string, unknown>,
-                        item as Record<string, unknown>,
-                        patches,
-                        state,
-                        schema.$item
-                    );
+                    if (!deepEqual(sourceItem, item)) {
+                        const itemPath = `/${id}`;
+                        const state: PathProcessingState = {
+                            handledPaths: new Set<string>(),
+                            allPaths: Array.from(
+                                new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
+                            ),
+                        };
+
+                        generateObjectFieldPatches(
+                            itemPath,
+                            sourceItem as Record<string, unknown>,
+                            item as Record<string, unknown>,
+                            patches,
+                            state,
+                            schema.$item
+                        );
+                    }
+                }
+            }
+        } else {
+            // 无主键，使用索引匹配
+            const maxLength = Math.max(sourceData.length, targetData.length);
+
+            // 处理删除的项目（目标数组比源数组短）
+            for (let i = targetData.length; i < sourceData.length; i++) {
+                patches.push(createPatch('remove', `/${i}`));
+            }
+
+            // 处理新增和修改的项目
+            for (let i = 0; i < targetData.length; i++) {
+                const targetItem = targetData[i];
+                const itemPath = `/${i}`;
+
+                if (i >= sourceData.length) {
+                    // 新增项目
+                    if (schema.$item.$split === true) {
+                        const state: PathProcessingState = {
+                            handledPaths: new Set<string>(),
+                            allPaths: [],
+                        };
+                        generateSplitPatches(
+                            itemPath,
+                            targetItem as Record<string, unknown>,
+                            patches,
+                            state,
+                            schema.$item
+                        );
+                    } else {
+                        patches.push(createPatch('add', itemPath, targetItem));
+                    }
+                } else {
+                    // 修改的项目
+                    const sourceItem = sourceData[i];
+                    if (!deepEqual(sourceItem, targetItem)) {
+                        const state: PathProcessingState = {
+                            handledPaths: new Set<string>(),
+                            allPaths: Array.from(
+                                new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
+                            ),
+                        };
+
+                        generateObjectFieldPatches(
+                            itemPath,
+                            sourceItem as Record<string, unknown>,
+                            targetItem as Record<string, unknown>,
+                            patches,
+                            state,
+                            schema.$item
+                        );
+                    }
                 }
             }
         }
@@ -375,6 +432,53 @@ const handleNestedArrayWithPk = (
 };
 
 /**
+ * 处理无主键的嵌套对象数组（按索引匹配）
+ */
+const handleNestedArrayByIndex = (
+    fieldPath: string,
+    sourceValue: Array<Record<string, unknown>>,
+    targetValue: Array<Record<string, unknown>>,
+    fieldSchema: Schema & { $type: 'array'; $item: { $type: 'object' } },
+    patches: Patch[],
+    state: PathProcessingState
+): void => {
+    // 处理删除的项目（目标数组比源数组短）
+    for (let i = targetValue.length; i < sourceValue.length; i++) {
+        const itemPath = buildPath(fieldPath, String(i));
+        if (state.handledPaths.has(itemPath)) continue;
+
+        patches.push(createPatch('remove', itemPath));
+        state.handledPaths.add(itemPath);
+    }
+
+    // 处理新增和修改的项目
+    for (let i = 0; i < targetValue.length; i++) {
+        const targetItem = targetValue[i];
+        const itemPath = buildPath(fieldPath, String(i));
+        if (state.handledPaths.has(itemPath)) continue;
+
+        if (i >= sourceValue.length) {
+            // 新增项目
+            patches.push(createPatch('add', itemPath, targetItem));
+            state.handledPaths.add(itemPath);
+        } else {
+            // 修改的项目
+            const sourceItem = sourceValue[i];
+            if (!deepEqual(sourceItem, targetItem)) {
+                generateObjectFieldPatches(
+                    itemPath,
+                    sourceItem,
+                    targetItem,
+                    patches,
+                    state,
+                    fieldSchema.$item
+                );
+            }
+        }
+    }
+};
+
+/**
  * 处理修改的字段
  */
 const handleModifiedField = (
@@ -402,22 +506,37 @@ const handleModifiedField = (
         typeof targetValue === 'object' &&
         targetValue !== null
     ) {
-        // 检查是否嵌套数组并且有主键
+        // 检查是否嵌套数组并且是对象数组
         if (
             fieldSchema.$type === 'array' &&
             fieldSchema.$item.$type === 'object' &&
-            fieldSchema.$item.$pk &&
             Array.isArray(sourceValue) &&
             Array.isArray(targetValue)
         ) {
-            handleNestedArrayWithPk(
-                fieldPath,
-                sourceValue as Array<Record<string, unknown>>,
-                targetValue as Array<Record<string, unknown>>,
-                fieldSchema as Schema & { $type: 'array'; $item: { $type: 'object'; $pk: string } },
-                patches,
-                state
-            );
+            if (fieldSchema.$item.$pk) {
+                // 有主键
+                handleNestedArrayWithPk(
+                    fieldPath,
+                    sourceValue as Array<Record<string, unknown>>,
+                    targetValue as Array<Record<string, unknown>>,
+                    fieldSchema as Schema & {
+                        $type: 'array';
+                        $item: { $type: 'object'; $pk: string };
+                    },
+                    patches,
+                    state
+                );
+            } else {
+                // 无主键，按索引匹配
+                handleNestedArrayByIndex(
+                    fieldPath,
+                    sourceValue as Array<Record<string, unknown>>,
+                    targetValue as Array<Record<string, unknown>>,
+                    fieldSchema as Schema & { $type: 'array'; $item: { $type: 'object' } },
+                    patches,
+                    state
+                );
+            }
         } else {
             // 常规对象或没有主键的数组
             generateObjectFieldPatches(

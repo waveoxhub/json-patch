@@ -15,12 +15,21 @@ export type ObjectSchema = {
 };
 
 /**
- * 数组对象成员模式
- * 用于定义数组中对象元素的结构
+ * 数组对象成员模式（带主键）
+ * 用于定义数组中带主键的对象元素的结构
  */
-export type ArrayItemObjectSchema = ObjectSchema & {
+export type ArrayItemObjectSchemaWithPk = ObjectSchema & {
     /** 主键字段名，用于唯一标识数组中的对象 */
     readonly $pk: string;
+};
+
+/**
+ * 数组对象成员模式
+ * 用于定义数组中对象元素的结构，$pk 可选
+ */
+export type ArrayItemObjectSchema = ObjectSchema & {
+    /** 主键字段名，用于唯一标识数组中的对象（可选，不设置时使用索引） */
+    readonly $pk?: string;
 };
 
 /**

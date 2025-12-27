@@ -1027,4 +1027,148 @@ describe('patchGenerator', () => {
             });
         });
     });
+
+    describe('Object Arrays Without $pk (Index-based)', () => {
+        it('should generate patches for top-level object array without $pk using index', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $fields: {
+                        name: { $type: 'string' },
+                        value: { $type: 'number' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([
+                { name: 'item1', value: 1 },
+                { name: 'item2', value: 2 },
+            ]);
+            const target = JSON.stringify([
+                { name: 'item1', value: 10 }, // 修改
+                { name: 'item2', value: 2 }, // 不变
+            ]);
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toEqual({
+                op: 'replace',
+                path: '/0/value',
+                value: 10,
+                hash: generatePatchOptionHash('replace', '/0/value', 10),
+            });
+        });
+
+        it('should detect order changes as modifications for array without $pk', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([
+                { id: '1', name: 'A' },
+                { id: '2', name: 'B' },
+            ]);
+            const target = JSON.stringify([
+                { id: '2', name: 'B' }, // 顺序变化
+                { id: '1', name: 'A' },
+            ]);
+
+            const patches = generatePatches(schema, source, target);
+            // 无主键时，顺序变化会被视为内容变化
+            expect(patches.length).toBeGreaterThan(0);
+        });
+
+        it('should handle add and remove for array without $pk', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $fields: {
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([{ name: 'A' }, { name: 'B' }]);
+            const target = JSON.stringify([{ name: 'A' }, { name: 'B' }, { name: 'C' }]);
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/2',
+                value: { name: 'C' },
+                hash: generatePatchOptionHash('add', '/2', { name: 'C' }),
+            });
+        });
+
+        it('should handle remove for array without $pk when target is shorter', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $fields: {
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([{ name: 'A' }, { name: 'B' }, { name: 'C' }]);
+            const target = JSON.stringify([{ name: 'A' }, { name: 'B' }]);
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches).toContainEqual({
+                op: 'remove',
+                path: '/2',
+                hash: generatePatchOptionHash('remove', '/2'),
+            });
+        });
+
+        it('should handle nested object array without $pk', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    items: {
+                        $type: 'array',
+                        $item: {
+                            $type: 'object',
+                            $fields: {
+                                name: { $type: 'string' },
+                                count: { $type: 'number' },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({
+                items: [
+                    { name: 'foo', count: 1 },
+                    { name: 'bar', count: 2 },
+                ],
+            });
+            const target = JSON.stringify({
+                items: [
+                    { name: 'foo', count: 100 }, // 修改
+                    { name: 'bar', count: 2 },
+                ],
+            });
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toEqual({
+                op: 'replace',
+                path: '/items/0/count',
+                value: 100,
+                hash: generatePatchOptionHash('replace', '/items/0/count', 100),
+            });
+        });
+    });
 });
