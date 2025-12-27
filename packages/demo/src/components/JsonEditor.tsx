@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Maximize2, Minimize2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 
 interface JsonEditorProps {
@@ -12,6 +12,7 @@ interface JsonEditorProps {
 
 /**
  * JSON 编辑器组件（基于 Monaco Editor）
+ * 支持点击展开/收起
  */
 const JsonEditor: React.FC<JsonEditorProps> = ({
     value,
@@ -23,27 +24,25 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [theme, setTheme] = useState<'vs' | 'vs-dark'>('vs');
+    const [expanded, setExpanded] = useState(false);
+
+    // 计算实际高度
+    const actualHeight = expanded ? '400px' : height;
 
     useEffect(() => {
-        // 监听主题变化
         const updateTheme = () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             setTheme(isDark ? 'vs-dark' : 'vs');
         };
-
         updateTheme();
-
-        // 监听 data-theme 属性变化
         const observer = new MutationObserver(updateTheme);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
         return () => observer.disconnect();
     }, []);
 
     const handleEditorChange = useCallback((val: string | undefined) => {
         const newValue = val || '';
         onChange(newValue);
-
         if (newValue.trim()) {
             try {
                 JSON.parse(newValue);
@@ -61,19 +60,26 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
             await navigator.clipboard.writeText(value);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
-        } catch {
-            // ignore
-        }
+        } catch {}
     };
 
     return (
-        <div className={`editor-wrapper ${error ? 'error' : ''}`}>
-            <div style={{ position: 'relative', height }}>
+        <div className={`editor-wrapper ${error ? 'error' : ''}`} style={{ position: 'relative' }}>
+            {/* 展开/收起按钮 */}
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="editor-expand-btn"
+                title={expanded ? '收起' : '展开'}
+            >
+                {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+            </button>
+
+            <div style={{ height: actualHeight, transition: 'height 0.2s ease' }}>
                 <Editor
                     language="json"
                     value={value}
                     onChange={handleEditorChange}
-                    height={height}
+                    height="100%"
                     theme={theme}
                     options={{
                         readOnly,
@@ -90,54 +96,55 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
                         renderLineHighlight: 'none',
                         overviewRulerBorder: false,
                         hideCursorInOverviewRuler: true,
+                        padding: { top: 8, bottom: 8 },
                         scrollbar: {
                             verticalScrollbarSize: 8,
                             horizontalScrollbarSize: 8,
                         },
                     }}
                 />
-
-                {/* 占位符 */}
-                {!value && !readOnly && placeholder && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 10,
-                            left: 14,
-                            color: 'var(--color-text-muted)',
-                            pointerEvents: 'none',
-                            fontSize: 13,
-                        }}
-                    >
-                        {placeholder}
-                    </div>
-                )}
-
-                {/* 复制按钮 (只读模式) */}
-                {readOnly && value && (
-                    <button
-                        onClick={handleCopy}
-                        style={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            background: 'var(--color-bg-elevated)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 4,
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            color: 'var(--color-text-muted)',
-                            fontSize: 11,
-                        }}
-                    >
-                        {copied ? <Check size={12} /> : <Copy size={12} />}
-                        {copied ? '已复制' : '复制'}
-                    </button>
-                )}
             </div>
+
+            {/* 占位符 */}
+            {!value && !readOnly && placeholder && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 16,
+                        left: 14,
+                        color: 'var(--color-text-muted)',
+                        pointerEvents: 'none',
+                        fontSize: 13,
+                    }}
+                >
+                    {placeholder}
+                </div>
+            )}
+
+            {/* 复制按钮 (只读模式) */}
+            {readOnly && value && (
+                <button
+                    onClick={handleCopy}
+                    style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 32,
+                        background: 'var(--color-bg-elevated)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 4,
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        color: 'var(--color-text-muted)',
+                        fontSize: 11,
+                    }}
+                >
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                    {copied ? '已复制' : '复制'}
+                </button>
+            )}
         </div>
     );
 };
