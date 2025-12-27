@@ -20,7 +20,7 @@
         "watch": "tsc -w",
         "watch:cjs": "tsc -w -p tsconfig.cjs.json",
         "dev": "concurrently \"pnpm run watch\" \"pnpm run watch:cjs\"",
-        "lint": "eslint src",
+        "lint": "oxlint src --tsconfig tsconfig.json",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
         "test": "vitest run",
@@ -55,10 +55,9 @@
     "devDependencies": {
         "@vitest/ui": "^3.0.9",
         "concurrently": "^8.2.2",
-        "eslint": "^9.23.0",
+        "oxlint": "^0.16.0",
         "prettier": "^3.5.3",
         "typescript": "~5.8.2",
-        "typescript-eslint": "^8.27.0",
         "vitest": "^3.0.9"
     }
 }
