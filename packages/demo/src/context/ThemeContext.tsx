@@ -17,14 +17,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const saved = localStorage.getItem('theme') as Theme | null;
         if (saved) {
             setTheme(saved);
-            document.documentElement.setAttribute('data-theme', saved);
+            document.documentElement.classList.toggle('dark', saved === 'dark');
         }
     }, []);
 
     const toggleTheme = () => {
         const next = theme === 'light' ? 'dark' : 'light';
         setTheme(next);
-        document.documentElement.setAttribute('data-theme', next);
+        document.documentElement.classList.toggle('dark', next === 'dark');
         localStorage.setItem('theme', next);
     };
 

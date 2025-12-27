@@ -31,12 +31,12 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
 
     useEffect(() => {
         const updateTheme = () => {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const isDark = document.documentElement.classList.contains('dark');
             setTheme(isDark ? 'vs-dark' : 'vs');
         };
         updateTheme();
         const observer = new MutationObserver(updateTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         return () => observer.disconnect();
     }, []);
 
@@ -64,11 +64,11 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     };
 
     return (
-        <div className={`editor-wrapper ${error ? 'error' : ''}`} style={{ position: 'relative' }}>
+        <div className={`relative rounded-md overflow-hidden border ${error ? 'border-red-500 shadow-[0_0_0_2px_rgba(220,38,38,0.1)]' : 'border-neutral-200 dark:border-neutral-700'}`}>
             {/* 展开/收起按钮 */}
             <button
                 onClick={() => setExpanded(!expanded)}
-                className="editor-expand-btn"
+                className="absolute top-1.5 right-1.5 z-10 p-1 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 opacity-0 hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center"
                 title={expanded ? '收起' : '展开'}
             >
                 {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
@@ -107,16 +107,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
 
             {/* 占位符 */}
             {!value && !readOnly && placeholder && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: 16,
-                        left: 14,
-                        color: 'var(--color-text-muted)',
-                        pointerEvents: 'none',
-                        fontSize: 13,
-                    }}
-                >
+                <div className="absolute top-4 left-3.5 text-neutral-500 dark:text-neutral-400 pointer-events-none text-sm">
                     {placeholder}
                 </div>
             )}
@@ -125,21 +116,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
             {readOnly && value && (
                 <button
                     onClick={handleCopy}
-                    style={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 32,
-                        background: 'var(--color-bg-elevated)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 4,
-                        padding: '4px 8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        color: 'var(--color-text-muted)',
-                        fontSize: 11,
-                    }}
+                    className="absolute top-2 right-8 px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
                 >
                     {copied ? <Check size={12} /> : <Copy size={12} />}
                     {copied ? '已复制' : '复制'}

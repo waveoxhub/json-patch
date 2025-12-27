@@ -7,13 +7,13 @@ interface PatchCardProps {
     index: number;
 }
 
-const opConfig: Record<string, { icon: React.ComponentType<{ size: number; className?: string }>; label: string; color: string }> = {
-    add: { icon: Plus, label: 'add', color: 'var(--color-success)' },
-    remove: { icon: Minus, label: 'remove', color: 'var(--color-error)' },
-    replace: { icon: RefreshCw, label: 'replace', color: 'var(--color-text-muted)' },
-    move: { icon: ArrowRight, label: 'move', color: 'var(--color-warning)' },
-    copy: { icon: Plus, label: 'copy', color: 'var(--color-success)' },
-    test: { icon: RefreshCw, label: 'test', color: 'var(--color-text-muted)' },
+const opConfig: Record<string, { icon: React.ComponentType<{ size: number; className?: string }>; label: string; colorClass: string }> = {
+    add: { icon: Plus, label: 'add', colorClass: 'text-green-600 dark:text-green-400' },
+    remove: { icon: Minus, label: 'remove', colorClass: 'text-red-600 dark:text-red-400' },
+    replace: { icon: RefreshCw, label: 'replace', colorClass: 'text-neutral-500 dark:text-neutral-400' },
+    move: { icon: ArrowRight, label: 'move', colorClass: 'text-amber-600 dark:text-amber-400' },
+    copy: { icon: Plus, label: 'copy', colorClass: 'text-green-600 dark:text-green-400' },
+    test: { icon: RefreshCw, label: 'test', colorClass: 'text-neutral-500 dark:text-neutral-400' },
 };
 
 /**
@@ -31,48 +31,30 @@ const PatchCard: React.FC<PatchCardProps> = ({ patch }) => {
     };
 
     return (
-        <div className="patch-card">
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md mb-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
             {/* 操作图标 */}
-            <Icon size={14} style={{ color: config.color, flexShrink: 0 }} />
+            <Icon size={14} className={`flex-shrink-0 ${config.colorClass}`} />
             
             {/* 操作类型 */}
-            <span style={{ 
-                color: config.color,
-                fontFamily: 'var(--font-mono)',
-                fontSize: 12,
-                fontWeight: 500,
-                width: 52,
-                flexShrink: 0
-            }}>
+            <span className={`font-mono text-xs font-medium w-13 flex-shrink-0 ${config.colorClass}`}>
                 {config.label}
             </span>
             
             {/* 路径 */}
-            <code className="code" style={{ flexShrink: 0 }}>{patch.path}</code>
+            <code className="flex-shrink-0 font-mono text-xs bg-white dark:bg-neutral-950 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
+                {patch.path}
+            </code>
             
             {/* 值 */}
             {patch.value !== undefined && (
-                <span style={{ 
-                    color: 'var(--color-text-muted)', 
-                    fontSize: 12,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
-                    minWidth: 0
-                }}>
+                <span className="text-xs text-neutral-500 dark:text-neutral-400 overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0">
                     = {formatValue(patch.value)}
                 </span>
             )}
             
             {/* Hash */}
             {patch.hash && (
-                <span style={{ 
-                    color: 'var(--color-text-muted)', 
-                    fontSize: 10, 
-                    fontFamily: 'var(--font-mono)',
-                    flexShrink: 0
-                }}>
+                <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 flex-shrink-0">
                     {patch.hash.slice(0, 8)}
                 </span>
             )}

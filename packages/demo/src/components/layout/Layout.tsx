@@ -9,9 +9,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [activeScene, setActiveScene] = useState<SceneKey>('validate');
 
     return (
-        <div className="app-layout">
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
             <Sidebar activeScene={activeScene} onSceneChange={setActiveScene} />
-            <main className="main-content">
+            <main className="flex-1 overflow-auto">
                 {children(activeScene)}
             </main>
         </div>

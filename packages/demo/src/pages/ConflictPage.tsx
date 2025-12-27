@@ -35,7 +35,6 @@ const ConflictPage: React.FC = () => {
         setPatchGroups(newGroups);
     };
 
-    // 检测冲突
     const detect = useCallback(() => {
         setError(null);
         setConflicts([]);
@@ -53,14 +52,12 @@ const ConflictPage: React.FC = () => {
             const detected = detectConflicts(groups);
             setConflicts([...detected]);
 
-            // 初始化选择：每个冲突默认选第一个选项
             const initRes: ConflictResolutions = detected.map(c => ({
                 path: c.path,
                 selectedHash: c.options[0]?.hash || '',
             }));
             setResolutions(initRes);
 
-            // 如果无冲突，直接合并
             if (detected.length === 0) {
                 setResolvedPatches(groups.flat());
             } else {
@@ -71,17 +68,15 @@ const ConflictPage: React.FC = () => {
         }
     }, [patchGroups]);
 
-    // 更新解决后的补丁
-    const updateResolved = (groups: Patch[][], conflicts: ConflictDetail[], res: ConflictResolutions) => {
+    const updateResolved = (groups: Patch[][], conflictList: readonly ConflictDetail[], res: ConflictResolutions) => {
         try {
-            const result = generateResolvedPatch(groups, conflicts, res, []);
+            const result = generateResolvedPatch(groups, [...conflictList], res, []);
             setResolvedPatches([...result.resolvedPatches]);
         } catch (e) {
             console.error(e);
         }
     };
 
-    // 选择冲突解决方案
     const selectOption = (conflictPath: string, hash: string) => {
         const newRes = resolutions.map(r =>
             r.path === conflictPath ? { ...r, selectedHash: hash } : r
@@ -119,46 +114,59 @@ const ConflictPage: React.FC = () => {
     };
 
     return (
-        <div className="page">
-            <div className="page-header">
+        <div className="p-6 md:p-8 max-w-5xl mx-auto">
+            {/* 页面头部 */}
+            <div className="flex justify-between items-start mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-700">
                 <div>
-                    <h1 className="page-title"><GitMerge size={20} /> 冲突检测</h1>
-                    <p className="page-description">检测多组补丁之间的路径冲突，选择解决方案</p>
+                    <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                        <GitMerge size={20} /> 冲突检测
+                    </h1>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">检测多组补丁之间的路径冲突，选择解决方案</p>
                 </div>
-                <button className="btn btn-secondary btn-sm" onClick={loadExample}>加载示例</button>
+                <button
+                    className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                    onClick={loadExample}
+                >
+                    加载示例
+                </button>
             </div>
 
-            <div className="card schema-card">
-                <div className="card-header">Schema</div>
-                <div className="card-body">
+            {/* Schema 卡片 */}
+            <div className="mb-4 rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+                    Schema
+                </div>
+                <div className="p-3">
                     <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." />
                 </div>
             </div>
 
             {/* 补丁组区域 */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 500 }}>补丁组</span>
-                <button className="btn btn-secondary btn-sm" onClick={addPatchGroup}>
+            <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">补丁组</span>
+                <button
+                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                    onClick={addPatchGroup}
+                >
                     <Plus size={12} /> 添加
                 </button>
             </div>
 
-            <div className="grid-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {patchGroups.map((group, index) => (
-                    <div key={index} className="card">
-                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={index} className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                        <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                             <span>组 {index + 1}</span>
                             {patchGroups.length > 2 && (
                                 <button
-                                    className="btn btn-sm"
-                                    style={{ color: 'var(--color-error)', padding: 4 }}
+                                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors cursor-pointer"
                                     onClick={() => removePatchGroup(index)}
                                 >
                                     <Trash2 size={14} />
                                 </button>
                             )}
                         </div>
-                        <div className="card-body">
+                        <div className="p-3">
                             <JsonEditor
                                 value={group}
                                 onChange={(v) => updatePatchGroup(index, v)}
@@ -170,52 +178,70 @@ const ConflictPage: React.FC = () => {
                 ))}
             </div>
 
-            <div className="action-bar">
-                <button className="btn btn-primary btn-lg" onClick={detect} disabled={!canDetect}>
+            {/* 操作栏 */}
+            <div className="flex justify-center my-6">
+                <button
+                    className="px-6 py-3 text-sm font-medium rounded-md bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity cursor-pointer flex items-center gap-2"
+                    onClick={detect}
+                    disabled={!canDetect}
+                >
                     <Zap size={16} /> 检测冲突
                 </button>
             </div>
 
+            {/* 错误结果 */}
             {error && (
-                <div className="card result-card error">
-                    <div className="card-body" style={{ color: 'var(--color-error)' }}>{error}</div>
+                <div className="mt-4 rounded-lg border border-red-500 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                    <div className="p-3 text-red-600 dark:text-red-400">{error}</div>
                 </div>
             )}
 
-            {/* 冲突列表 - 可选择 */}
+            {/* 冲突列表 */}
             {conflicts.length > 0 && (
-                <div className="card result-card warning">
-                    <div className="card-header">
-                        <span className="badge badge-warning"><AlertTriangle size={10} /> 检测到 {conflicts.length} 个冲突</span>
-                        <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--color-text-muted)' }}>点击选择解决方案</span>
+                <div className="mt-4 rounded-lg border border-amber-500 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                    <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[11px] font-medium">
+                            <AlertTriangle size={10} /> 检测到 {conflicts.length} 个冲突
+                        </span>
+                        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">点击选择解决方案</span>
                     </div>
-                    <div className="card-body">
+                    <div className="p-3">
                         {conflicts.map((conflict, cIndex) => (
-                            <div key={cIndex} className="conflict-section">
-                                <div style={{ marginBottom: 8, fontSize: 13 }}>
-                                    <code className="code">{conflict.path}</code>
+                            <div key={cIndex} className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-md mb-2 last:mb-0">
+                                <div className="mb-2 text-sm">
+                                    <code className="font-mono text-xs bg-white dark:bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
+                                        {conflict.path}
+                                    </code>
                                     {conflict.reason && (
-                                        <span style={{ marginLeft: 8, color: 'var(--color-text-muted)', fontSize: 11 }}>
+                                        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
                                             {conflict.reason}
                                         </span>
                                     )}
                                 </div>
-                                <div className="conflict-options">
+                                <div className="flex flex-wrap gap-2">
                                     {conflict.options.map((option, oIndex) => {
                                         const isSelected = getSelectedHash(conflict.path) === option.hash;
                                         return (
                                             <button
                                                 key={oIndex}
-                                                className={`conflict-option ${isSelected ? 'selected' : ''}`}
+                                                className={`flex-1 min-w-[150px] p-2.5 rounded-md border text-left transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                        : 'border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-500'
+                                                }`}
                                                 onClick={() => selectOption(conflict.path, option.hash)}
                                             >
-                                                <div className="option-header">
-                                                    <span className="option-group">组 {option.groupIndex + 1}</span>
-                                                    {isSelected && <CheckCircle size={12} />}
+                                                <div className="flex justify-between items-center mb-1.5">
+                                                    <span className={`text-[11px] font-medium uppercase ${
+                                                        isSelected ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400'
+                                                    }`}>
+                                                        组 {option.groupIndex + 1}
+                                                    </span>
+                                                    {isSelected && <CheckCircle size={12} className="text-green-600 dark:text-green-400" />}
                                                 </div>
-                                                <div className="option-content">
-                                                    <span className="option-op">{option.patch.op}</span>
-                                                    <span className="option-value">
+                                                <div className="text-xs">
+                                                    <span className="font-mono text-neutral-500 dark:text-neutral-400 mr-2">{option.patch.op}</span>
+                                                    <span className="text-neutral-900 dark:text-neutral-100 break-all">
                                                         {option.patch.value !== undefined 
                                                             ? (typeof option.patch.value === 'string' 
                                                                 ? option.patch.value 
@@ -235,21 +261,24 @@ const ConflictPage: React.FC = () => {
 
             {/* 解决后的补丁 */}
             {resolvedPatches.length > 0 && (
-                <div className="card result-card success">
-                    <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span className="badge badge-success">
+                <div className="mt-4 rounded-lg border border-green-500 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                    <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800 flex justify-between items-center">
+                        <span className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[11px] font-medium">
                                 <CheckCircle size={10} /> {conflicts.length === 0 ? '无冲突' : '已解决'}
                             </span>
                             合并后的补丁 ({resolvedPatches.length})
                         </span>
-                        <button className="btn btn-secondary btn-sm" onClick={copyResult}>
+                        <button
+                            className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            onClick={copyResult}
+                        >
                             {copied ? <Check size={12} /> : <Copy size={12} />}
                             {copied ? '已复制' : '复制'}
                         </button>
                     </div>
-                    <div className="card-body">
-                        <div className="patch-list">
+                    <div className="p-3">
+                        <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
                             {resolvedPatches.map((patch, index) => (
                                 <PatchCard key={patch.hash || index} patch={patch} index={index} />
                             ))}
