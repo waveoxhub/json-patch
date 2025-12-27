@@ -244,7 +244,7 @@ export const validateResolvedConflicts = (
         ...(customResolutions?.map(cr => cr.patch) || []),
     ];
 
-    // Check if there are still conflicts after resolution
+    // 检查应用解决方案后是否仍存在冲突
     const remainingConflicts = detectConflicts([resolvedPatches]);
 
     if (remainingConflicts.length > 0) {
@@ -264,11 +264,11 @@ export const validateResolvedConflicts = (
 };
 
 /**
- * Validate if JSON patch operations can be applied to a JSON
- * @param jsonString JSON string
- * @param patches Patch array
- * @param schema Data structure schema
- * @returns Validation result
+ * 验证 JSON 补丁操作是否可以应用到 JSON 数据
+ * @param jsonString - JSON 字符串
+ * @param patches - 补丁数组
+ * @param schema - 数据结构模式
+ * @returns 验证结果
  */
 export const validatePatchApplication = (
     jsonString: string,
@@ -277,7 +277,7 @@ export const validatePatchApplication = (
 ): ValidationResult => {
     const errors: string[] = [];
 
-    // First validate JSON and patches
+    // 首先验证 JSON 和补丁
     const jsonValid = validateJson(jsonString);
     if (!jsonValid.isValid) {
         return jsonValid;
@@ -288,7 +288,7 @@ export const validatePatchApplication = (
         return patchesValid;
     }
 
-    // Validate Schema
+    // 验证 Schema
     if (!schema || !isObject(schema)) {
         errors.push('Schema is not a valid object');
         return { isValid: false, errors };
@@ -302,24 +302,24 @@ export const validatePatchApplication = (
     try {
         const state = JSON.parse(jsonString);
 
-        // Validate each patch operation against the current state
+        // 验证每个补丁操作是否可应用于当前状态
         for (const patch of patches) {
-            // Skip empty paths which target the root
+            // 跳过目标为根路径的空路径
             if (patch.path === '') {
                 continue;
             }
 
-            // Parse the path components
+            // 解析路径组件
             const pathComponents = parseJsonPath(patch.path);
 
-            // Validate operation-specific requirements
+            // 验证特定操作的要求
             if (patch.op === 'remove' || patch.op === 'replace') {
-                // For remove and replace, the path must exist in the current state
+                // 对于 remove 和 replace 操作，路径必须存在于当前状态中
                 if (!pathExists(state, pathComponents, schema)) {
                     errors.push(`Path "${patch.path}" does not exist for ${patch.op} operation`);
                 }
             } else if (patch.op === 'add') {
-                // For add, validate that the parent path exists (except when adding to root)
+                // 对于 add 操作，验证父路径存在（除非添加到根路径）
                 if (pathComponents.length > 1) {
                     const parentComponents = pathComponents.slice(0, -1);
                     if (!pathExists(state, parentComponents, schema)) {
@@ -329,15 +329,15 @@ export const validatePatchApplication = (
                     }
                 }
 
-                // For add, validate that the target path does NOT already exist
-                // This enforces strict "add" semantics - add should only create new entries
+                // 对于 add 操作，验证目标路径尚不存在
+                // 强制执行严格的 "add" 语义 - add 只能创建新条目
                 if (pathExists(state, pathComponents, schema)) {
                     errors.push(
                         `Path "${patch.path}" already exists, cannot perform add operation (use replace instead)`
                     );
                 }
 
-                // Validate value type according to schema
+                // 根据 Schema 验证值类型
                 const valueSchema = getSchemaForPath(schema, pathComponents);
                 if (valueSchema && !validateValueAgainstSchema(patch.value, valueSchema)) {
                     errors.push(
@@ -361,11 +361,11 @@ export const validatePatchApplication = (
 };
 
 /**
- * Check if a path exists in the given state
- * @param state Current state
- * @param pathComponents Path components
- * @param schema Schema
- * @returns Whether path exists
+ * 检查路径是否存在于给定状态中
+ * @param state - 当前状态
+ * @param pathComponents - 路径组件数组
+ * @param schema - Schema
+ * @returns 路径是否存在
  */
 const pathExists = (
     state: unknown,
@@ -380,16 +380,17 @@ const pathExists = (
 
     for (const component of pathComponents) {
         if (Array.isArray(current)) {
-            // Handle array by index or by primary key
+            // 通过索引或主键处理数组
             if (component.match(/^\d+$/)) {
-                // Numeric index
+                // 数字索引
                 const index = parseInt(component, 10);
                 if (index >= current.length) {
                     return false;
                 }
                 current = current[index];
             } else {
-                // Primary key lookup
+                // 主键查找
+
                 if (
                     !schema ||
                     schema.$type !== 'array' ||
@@ -410,13 +411,13 @@ const pathExists = (
                 current = item;
             }
         } else if (isObject(current)) {
-            // Handle object property
+            // 处理对象属性
             if (!(component in current)) {
                 return false;
             }
             current = current[component];
         } else {
-            // Cannot navigate further
+            // 无法继续导航
             return false;
         }
     }
@@ -425,18 +426,18 @@ const pathExists = (
 };
 
 /**
- * Validate a value against a schema
- * @param value Value to validate
- * @param schema Schema to validate against
- * @returns Whether the value is valid according to schema
+ * 根据 Schema 验证值
+ * @param value - 要验证的值
+ * @param schema - 用于验证的 Schema
+ * @returns 值是否符合 Schema
  */
 const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => {
     if (!schema) {
-        return true; // No schema, assume valid
+        return true; // 无 Schema，假定有效
     }
 
     if (!('$type' in schema)) {
-        return true; // Invalid schema, assume valid
+        return true; // 无效 Schema，假定有效
     }
 
     const schemaType = schema.$type;
@@ -446,7 +447,7 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
     } else if (schemaType === 'array') {
         return Array.isArray(value);
     } else {
-        // Handle primitive types
+        // 处理基本类型
         switch (schemaType) {
             case 'string':
                 return typeof value === 'string';
@@ -457,7 +458,7 @@ const validateValueAgainstSchema = (value: unknown, schema: Schema): boolean => 
             case 'null':
                 return value === null;
             default:
-                return true; // Unknown type, assume valid
+                return true; // 未知类型，假定有效
         }
     }
 };

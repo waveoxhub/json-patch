@@ -27,10 +27,13 @@ const createPatch = (op: PatchOperation, path: string, value?: unknown): Patch =
 };
 
 /**
- * 路径处理状态的接口
+ * 路径处理状态
+ * 用于在补丁生成过程中跟踪已处理的路径，避免重复处理
  */
 interface PathProcessingState {
+    /** 已处理的路径集合，防止重复生成补丁 */
     handledPaths: Set<string>;
+    /** 所有需要处理的路径列表 */
     allPaths: string[];
 }
 

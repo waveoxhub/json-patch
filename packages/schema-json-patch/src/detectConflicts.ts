@@ -44,7 +44,10 @@ export const detectConflicts = (
     const pathPrefixMap = buildPathPrefixMap(patchesByPath);
 
     // 存储所有冲突，按路径分组（使用可变数组以便添加选项）
-    const conflictsByPath: Record<string, { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }> = {};
+    const conflictsByPath: Record<
+        string,
+        { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }
+    > = {};
 
     // 检测相同路径上的冲突
     detectDirectPathConflicts(patchesByPath, conflictsByPath);
@@ -118,7 +121,10 @@ const buildPathPrefixMap = (
  */
 const detectDirectPathConflicts = (
     patchesByPath: Map<string, PatchOperationWithIndex[]>,
-    conflictsByPath: Record<string, { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }>
+    conflictsByPath: Record<
+        string,
+        { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }
+    >
 ): void => {
     for (const [path, operations] of patchesByPath.entries()) {
         // 跳过只有一个操作的路径
@@ -189,7 +195,10 @@ const hasConflictingOperations = (operations: PatchOperationWithIndex[]): boolea
 const detectParentChildPathConflicts = (
     patchesByPath: Map<string, PatchOperationWithIndex[]>,
     pathPrefixMap: Map<string, string[]>,
-    conflictsByPath: Record<string, { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }>
+    conflictsByPath: Record<
+        string,
+        { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }
+    >
 ): void => {
     // 遍历每一个路径及其对应的操作
     for (const [path, operations] of patchesByPath.entries()) {
@@ -264,6 +273,13 @@ const detectParentChildPathConflicts = (
     }
 };
 
+/**
+ * 从对象中按路径获取值
+ * 用于检查父路径 replace 操作的值是否与子路径操作兼容
+ * @param obj - 源对象
+ * @param path - JSON Pointer 相对路径
+ * @returns 路径对应的值，如果路径不存在则返回 undefined
+ */
 const getValueAtPath = (obj: unknown, path: string): unknown => {
     if (!obj || typeof obj !== 'object' || !path) {
         return undefined;
@@ -298,7 +314,10 @@ const getValueAtPath = (obj: unknown, path: string): unknown => {
  * 创建包含操作的冲突
  */
 const createConflictWithOperations = (
-    conflictsByPath: Record<string, { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }>,
+    conflictsByPath: Record<
+        string,
+        { path: string; options: Array<{ hash: string; patch: Patch; groupIndex: number }> }
+    >,
     path: string,
     operations: PatchOperationWithIndex[]
 ): void => {
