@@ -239,11 +239,6 @@ const ConflictPage: React.FC = () => {
                                     <code className="font-mono text-xs bg-white dark:bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
                                         {conflict.path}
                                     </code>
-                                    {conflict.reason && (
-                                        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                                            {conflict.reason}
-                                        </span>
-                                    )}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {conflict.options.map((option, oIndex) => {
