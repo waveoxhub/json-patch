@@ -8,6 +8,8 @@ interface JsonEditorProps {
     height?: string;
     placeholder?: string;
     readOnly?: boolean;
+    /** 编辑器的唯一标识路径，用于关联 JSON Schema（例如 'schema.json'）*/
+    modelPath?: string;
 }
 
 /**
@@ -20,6 +22,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     height = '200px',
     placeholder = '',
     readOnly = false,
+    modelPath,
 }) => {
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -81,6 +84,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
                     onChange={handleEditorChange}
                     height="100%"
                     theme={theme}
+                    path={modelPath}
                     options={{
                         readOnly,
                         minimap: { enabled: false },
