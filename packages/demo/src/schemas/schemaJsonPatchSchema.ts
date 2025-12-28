@@ -1,5 +1,16 @@
+// 共享的 description 常量，便于统一维护
+const DESC = {
+    TYPE_ALL: '类型，可选值：string | number | boolean | object | array',
+    TYPE_ROOT: '类型，可选值：object | array（根结构类型）',
+    FIELDS: '对象的字段',
+    SPLIT: '启用后生成细粒度补丁，便于逐一审查，默认 false',
+    PK: '主键字段名（如 "id"），用于唯一标识元素；不设置则按索引匹配',
+    ORDERED: '是否追踪顺序变化，默认 true',
+    ITEM: '数组的成员',
+} as const;
+
 /**
- * JSON Schema 定义，用于验证 @waveox/schema-json-patch 的 Schema 结构
+ * JSON Schema 定义
  * 为 Monaco Editor 提供智能提示和验证
  */
 export const schemaJsonPatchSchema = {
@@ -22,7 +33,7 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     $ref: '#/definitions/primitiveType',
-                    description: '类型，可选值：string | number | boolean | object | array',
+                    description: DESC.TYPE_ALL,
                 },
             },
             required: ['$type'],
@@ -34,16 +45,16 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     const: 'object',
-                    description: '类型，可选值：string | number | boolean | object | array',
+                    description: DESC.TYPE_ALL,
                 },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段',
+                    description: DESC.FIELDS,
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用后生成细粒度补丁，便于逐一审查，默认 false',
+                    description: DESC.SPLIT,
                 },
             },
             required: ['$type', '$fields'],
@@ -55,7 +66,7 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     $ref: '#/definitions/primitiveType',
-                    description: '类型，可选值：string | number | boolean | object | array',
+                    description: DESC.TYPE_ALL,
                 },
             },
             required: ['$type'],
@@ -67,24 +78,24 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     const: 'object',
-                    description: '类型，可选值：string | number | boolean | object | array',
+                    description: DESC.TYPE_ALL,
                 },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段',
+                    description: DESC.FIELDS,
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $pk: {
                     type: 'string',
-                    description: '主键字段名（如 "id"），用于唯一标识元素；不设置则按索引匹配',
+                    description: DESC.PK,
                 },
                 $ordered: {
                     type: 'boolean',
-                    description: '是否追踪顺序变化，默认 true',
+                    description: DESC.ORDERED,
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用后生成细粒度补丁，默认 false',
+                    description: DESC.SPLIT,
                 },
             },
             required: ['$type', '$fields'],
@@ -96,14 +107,14 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     const: 'array',
-                    description: '类型，可选值：string | number | boolean | object | array',
+                    description: DESC.TYPE_ALL,
                 },
                 $item: {
                     oneOf: [
                         { $ref: '#/definitions/arrayItemObjectSchema' },
                         { $ref: '#/definitions/arrayItemPrimitiveSchema' },
                     ],
-                    description: '数组的成员',
+                    description: DESC.ITEM,
                 },
             },
             required: ['$type', '$item'],
@@ -124,16 +135,16 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     const: 'object',
-                    description: '类型，可选值：object | array（根结构类型）',
+                    description: DESC.TYPE_ROOT,
                 },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段',
+                    description: DESC.FIELDS,
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用后生成细粒度补丁，默认 false',
+                    description: DESC.SPLIT,
                 },
             },
             required: ['$type', '$fields'],
@@ -145,14 +156,14 @@ export const schemaJsonPatchSchema = {
             properties: {
                 $type: {
                     const: 'array',
-                    description: '类型，可选值：object | array（根结构类型）',
+                    description: DESC.TYPE_ROOT,
                 },
                 $item: {
                     oneOf: [
                         { $ref: '#/definitions/arrayItemObjectSchema' },
                         { $ref: '#/definitions/arrayItemPrimitiveSchema' },
                     ],
-                    description: '数组的成员',
+                    description: DESC.ITEM,
                 },
             },
             required: ['$type', '$item'],
