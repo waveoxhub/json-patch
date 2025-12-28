@@ -10,6 +10,8 @@ interface JsonEditorProps {
     readOnly?: boolean;
     /** 编辑器的唯一标识路径，用于关联 JSON Schema（例如 'schema.json'）*/
     modelPath?: string;
+    /** 是否默认展开 */
+    defaultExpanded?: boolean;
 }
 
 /**
@@ -23,11 +25,12 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     placeholder = '',
     readOnly = false,
     modelPath,
+    defaultExpanded = false,
 }) => {
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [theme, setTheme] = useState<'vs' | 'vs-dark'>('vs');
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(defaultExpanded);
 
     // 计算实际高度
     const actualHeight = expanded ? '400px' : height;

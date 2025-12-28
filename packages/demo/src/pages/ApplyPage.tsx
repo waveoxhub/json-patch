@@ -65,7 +65,7 @@ const ApplyPage: React.FC = () => {
                     Schema
                 </div>
                 <div className="p-3">
-                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" />
+                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" defaultExpanded />
                 </div>
             </div>
 
