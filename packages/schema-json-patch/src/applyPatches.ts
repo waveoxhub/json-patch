@@ -150,6 +150,87 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             });
             break;
 
+        case 'move': {
+            // RFC 6902 move 操作：从 from 路径移除值，然后添加到 path 路径
+            const { from } = patch;
+            if (!from) {
+                throw new Error('Move operation requires a "from" field');
+            }
+
+            const fromComponents = parseJsonPath(from);
+            let movedValue: unknown;
+
+            // 1. 从源路径提取并移除值
+            modifyAtPath(result, fromComponents, schema, (parent, key) => {
+                if (Array.isArray(parent)) {
+                    const arraySchema = getSchemaForPath(schema, fromComponents.slice(0, -1));
+                    if (!arraySchema || arraySchema.$type !== 'array') {
+                        throw new Error(
+                            `Schema mismatch: expected array schema for from path '${from}'`
+                        );
+                    }
+                    const index = findArrayIndex(parent, key, arraySchema);
+                    if (index === -1) {
+                        throw new Error(`Source path '${from}' does not exist for move operation`);
+                    }
+                    movedValue = parent[index];
+                    parent.splice(index, 1);
+                } else if (isObject(parent)) {
+                    if (!(key in parent)) {
+                        throw new Error(`Source path '${from}' does not exist for move operation`);
+                    }
+                    movedValue = parent[key];
+                    delete parent[key];
+                }
+            });
+
+            // 2. 将值添加到目标路径
+            // 语义说明：
+            //   - /0 或 /fieldPath/0：移动到数组第一位
+            //   - /{prevId} 或 /fieldPath/{prevId}：移动到 prevId 元素之后
+            //   - /- 或 /fieldPath/-：移动到数组末尾
+            if (path.endsWith('/-')) {
+                // 添加到数组末尾
+                const parentPath = path.slice(0, -2);
+                const parentComponents = parentPath ? parseJsonPath(parentPath) : [];
+                modifyAtPath(result, [...parentComponents, '-'], schema, parent => {
+                    if (Array.isArray(parent)) {
+                        parent.push(movedValue);
+                    }
+                });
+            } else {
+                modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                    if (Array.isArray(parent)) {
+                        const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
+                        if (!arraySchema || arraySchema.$type !== 'array') {
+                            throw new Error(
+                                `Schema mismatch: expected array schema for path '${path}'`
+                            );
+                        }
+
+                        // 检查是否是数字索引 (如 "0" 表示第一位)
+                        const numericIndex = parseInt(key, 10);
+                        if (!isNaN(numericIndex) && numericIndex === 0) {
+                            // 移动到第一位
+                            parent.unshift(movedValue);
+                        } else {
+                            // 在目标元素之后插入
+                            const targetIndex = findArrayIndex(parent, key, arraySchema);
+                            if (targetIndex !== -1) {
+                                parent.splice(targetIndex + 1, 0, movedValue);
+                            } else {
+                                // 如果目标不存在，添加到末尾
+                                parent.push(movedValue);
+                            }
+                        }
+                    } else if (isObject(parent)) {
+                        parent[key] = movedValue;
+                    }
+                });
+            }
+            break;
+        }
+
         default:
             throw new Error(`Unsupported operation: ${op}`);
     }

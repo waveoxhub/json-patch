@@ -129,10 +129,12 @@ export const generatePatches = (
                 const movedIds = detectOrderChanges(sourceOrder, targetOrder);
 
                 for (const id of movedIds) {
-                    // from: 元素的主键路径，path: 目标位置（前一个元素的后面）
+                    // from: 源元素的主键路径
+                    // path: 目标位置 - 使用目标索引位置
+                    //   - 如果移动到第一位，使用 /0
+                    //   - 否则使用前一个元素的主键路径（表示插入到该元素之后）
                     const targetIndex = targetOrder.indexOf(id);
-                    const prevId = targetIndex > 0 ? targetOrder[targetIndex - 1] : null;
-                    const toPath = prevId ? `/${prevId}` : '/-';
+                    const toPath = targetIndex === 0 ? '/0' : `/${targetOrder[targetIndex - 1]}`;
                     patches.push(createPatch('move', toPath, undefined, `/${id}`));
                 }
             }
@@ -450,9 +452,15 @@ const handleNestedArrayWithPk = (
         const movedIds = detectOrderChanges(sourceOrder, targetOrder);
 
         for (const id of movedIds) {
+            // from: 源元素的主键路径
+            // path: 目标位置 - 使用目标索引位置
+            //   - 如果移动到第一位，使用 /0
+            //   - 否则使用前一个元素的主键路径（表示插入到该元素之后）
             const targetIndex = targetOrder.indexOf(id);
-            const prevId = targetIndex > 0 ? targetOrder[targetIndex - 1] : null;
-            const toPath = prevId ? buildPath(fieldPath, prevId) : `${fieldPath}/-`;
+            const toPath =
+                targetIndex === 0
+                    ? buildPath(fieldPath, '0')
+                    : buildPath(fieldPath, targetOrder[targetIndex - 1]);
             const fromPath = buildPath(fieldPath, id);
             patches.push(createPatch('move', toPath, undefined, fromPath));
         }
