@@ -89,12 +89,39 @@ const ConflictPage: React.FC = () => {
         setSchemaInput(JSON.stringify(defaultSchemaData, null, 2));
         setPatchGroups([
             JSON.stringify([
+                // 冲突1: replace vs replace vs replace (版本号)
                 { op: "replace", path: "/version", value: "2.0.0", hash: "g1h1" },
-                { op: "replace", path: "/name", value: "项目A", hash: "g1h2" },
+                // 冲突2: replace vs remove (一组修改，另一组删除)
+                { op: "replace", path: "/config/theme", value: "dark", hash: "g1h2" },
+                // 冲突3: add vs add (同路径添加不同值)
+                { op: "add", path: "/features/newFeature", value: { name: "特性A", enabled: true }, hash: "g1h3" },
+                // 冲突4: move vs move (移动到不同位置)
+                { op: "move", path: "/contacts/contact-2", from: "/contacts/contact-1", hash: "g1h4" },
+                // 无冲突补丁
+                { op: "add", path: "/metadata/createdBy", value: "开发组", hash: "g1h5" },
             ], null, 2),
             JSON.stringify([
+                // 冲突1: replace vs replace vs replace
                 { op: "replace", path: "/version", value: "3.0.0", hash: "g2h1" },
-                { op: "add", path: "/description", value: "描述", hash: "g2h2" },
+                // 冲突2: replace vs remove
+                { op: "remove", path: "/config/theme", hash: "g2h2" },
+                // 冲突3: add vs add
+                { op: "add", path: "/features/newFeature", value: { name: "特性B", enabled: false }, hash: "g2h3" },
+                // 冲突4: move vs move
+                { op: "move", path: "/contacts/contact-3", from: "/contacts/contact-1", hash: "g2h4" },
+                // 无冲突补丁
+                { op: "replace", path: "/settings/maxItems", value: 100, hash: "g2h5" },
+            ], null, 2),
+            JSON.stringify([
+                // 冲突1: replace vs replace vs replace
+                { op: "replace", path: "/version", value: "2.5.0-beta", hash: "g3h1" },
+                // 冲突2: (不参与)
+                // 冲突3: add vs add
+                { op: "add", path: "/features/newFeature", value: { name: "特性C", priority: "high" }, hash: "g3h2" },
+                // 冲突4: move vs move
+                { op: "move", path: "/contacts/-", from: "/contacts/contact-1", hash: "g3h3" },
+                // 无冲突补丁
+                { op: "add", path: "/tags", value: ["生产", "稳定"], hash: "g3h4" },
             ], null, 2),
         ]);
     };
