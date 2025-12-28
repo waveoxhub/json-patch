@@ -4,7 +4,6 @@ import { Schema, ArraySchema } from './types/schema.js';
 import {
     getSchemaForPath,
     isObject,
-    hasObjectItems,
     hasObjectItemsWithPk,
     getPrimaryKeyField,
 } from './utils/schemaUtils.js';
