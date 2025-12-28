@@ -4,123 +4,163 @@
  */
 export const schemaJsonPatchSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    title: 'Schema JSON Patch Schema',
-    description: '用于定义 JSON 数据结构的 Schema，支持对象和数组类型',
+    title: 'Schema JSON Patch 配置',
     definitions: {
+        // 所有可用的类型
+        allTypes: {
+            type: 'string',
+            enum: ['string', 'number', 'boolean', 'null', 'object', 'array'],
+        },
+
         primitiveType: {
             type: 'string',
-            enum: ['string', 'number', 'boolean', 'null'],
-            description: '基本数据类型',
+            enum: ['string', 'number', 'boolean'],
         },
-        primitiveField: {
+
+        primitiveFieldSchema: {
             type: 'object',
-            description: '基本类型字段',
             properties: {
-                $type: { $ref: '#/definitions/primitiveType' },
+                $type: {
+                    $ref: '#/definitions/primitiveType',
+                    description: '类型，可选值：string | number | boolean | object | array',
+                },
             },
             required: ['$type'],
             additionalProperties: false,
         },
-        objectField: {
+
+        nestedObjectFieldSchema: {
             type: 'object',
-            description: '嵌套对象字段',
             properties: {
-                $type: { const: 'object', description: '类型标识' },
+                $type: {
+                    const: 'object',
+                    description: '类型，可选值：string | number | boolean | object | array',
+                },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段定义',
+                    description: '对象的字段',
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用时，add/replace 操作会拆分为细粒度操作',
+                    description: '启用后生成细粒度补丁，便于逐一审查，默认 false',
                 },
             },
             required: ['$type', '$fields'],
             additionalProperties: false,
         },
+
         arrayItemPrimitiveSchema: {
             type: 'object',
-            description: '数组元素的基本类型定义',
             properties: {
-                $type: { $ref: '#/definitions/primitiveType' },
+                $type: {
+                    $ref: '#/definitions/primitiveType',
+                    description: '类型，可选值：string | number | boolean | object | array',
+                },
             },
             required: ['$type'],
             additionalProperties: false,
         },
+
         arrayItemObjectSchema: {
             type: 'object',
-            description: '数组元素的对象类型定义',
             properties: {
-                $type: { const: 'object', description: '类型标识' },
+                $type: {
+                    const: 'object',
+                    description: '类型，可选值：string | number | boolean | object | array',
+                },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段定义',
+                    description: '对象的字段',
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $pk: {
                     type: 'string',
-                    description: '主键字段名，用于唯一标识数组中的对象（不设置时使用索引）',
+                    description: '主键字段名（如 "id"），用于唯一标识元素；不设置则按索引匹配',
                 },
                 $ordered: {
                     type: 'boolean',
-                    description: '是否追踪数组元素顺序，默认 true',
+                    description: '是否追踪顺序变化，默认 true',
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用时，add/replace 操作会拆分为细粒度操作',
+                    description: '启用后生成细粒度补丁，默认 false',
                 },
             },
             required: ['$type', '$fields'],
             additionalProperties: false,
         },
+
         arraySchema: {
             type: 'object',
-            description: '数组类型定义',
             properties: {
-                $type: { const: 'array', description: '类型标识' },
+                $type: {
+                    const: 'array',
+                    description: '类型，可选值：string | number | boolean | object | array',
+                },
                 $item: {
                     oneOf: [
                         { $ref: '#/definitions/arrayItemObjectSchema' },
                         { $ref: '#/definitions/arrayItemPrimitiveSchema' },
                     ],
-                    description: '数组元素的类型定义',
+                    description: '数组的成员',
                 },
             },
             required: ['$type', '$item'],
             additionalProperties: false,
         },
+
         fieldSchema: {
+            description: '字段定义',
             oneOf: [
-                { $ref: '#/definitions/primitiveField' },
-                { $ref: '#/definitions/objectField' },
+                { $ref: '#/definitions/primitiveFieldSchema' },
+                { $ref: '#/definitions/nestedObjectFieldSchema' },
                 { $ref: '#/definitions/arraySchema' },
             ],
-            description: '字段的类型定义',
         },
-        objectSchema: {
+
+        rootObjectSchema: {
             type: 'object',
-            description: '根对象类型定义',
             properties: {
-                $type: { const: 'object', description: '类型标识' },
+                $type: {
+                    const: 'object',
+                    description: '类型，可选值：object | array（根结构类型）',
+                },
                 $fields: {
                     type: 'object',
-                    description: '对象的字段定义',
+                    description: '对象的字段',
                     additionalProperties: { $ref: '#/definitions/fieldSchema' },
                 },
                 $split: {
                     type: 'boolean',
-                    description: '启用时，add/replace 操作会拆分为细粒度操作',
+                    description: '启用后生成细粒度补丁，默认 false',
                 },
             },
             required: ['$type', '$fields'],
             additionalProperties: false,
         },
+
+        rootArraySchema: {
+            type: 'object',
+            properties: {
+                $type: {
+                    const: 'array',
+                    description: '类型，可选值：object | array（根结构类型）',
+                },
+                $item: {
+                    oneOf: [
+                        { $ref: '#/definitions/arrayItemObjectSchema' },
+                        { $ref: '#/definitions/arrayItemPrimitiveSchema' },
+                    ],
+                    description: '数组的成员',
+                },
+            },
+            required: ['$type', '$item'],
+            additionalProperties: false,
+        },
     },
-    oneOf: [{ $ref: '#/definitions/objectSchema' }, { $ref: '#/definitions/arraySchema' }],
+
+    oneOf: [{ $ref: '#/definitions/rootObjectSchema' }, { $ref: '#/definitions/rootArraySchema' }],
 };
 
-/**
- * Schema JSON Schema 的 URI 标识
- */
 export const SCHEMA_JSON_PATCH_SCHEMA_URI = 'http://waveox/schema-json-patch-schema.json';
