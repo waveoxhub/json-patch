@@ -1,21 +1,32 @@
-import { ConfigProvider, App as AntApp } from 'antd';
-import '@ant-design/v5-patch-for-react-19';
-import zhCN from 'antd/locale/zh_CN';
-import JsonPatchDemo from '@src/view/JsonPatchDemo';
-import React from 'react';
+import React, { useState } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
+import { Layout, SceneKey } from './components/layout';
+import ValidatePage from './pages/ValidatePage';
+import GeneratePage from './pages/GeneratePage';
+import ConflictPage from './pages/ConflictPage';
+import ApplyPage from './pages/ApplyPage';
 
-/**
- * 应用程序根组件
- */
 function App(): React.ReactElement {
+    const [activeScene, setActiveScene] = useState<SceneKey>('validate');
+
     return (
-        <ConfigProvider locale={zhCN}>
-            <AntApp>
-                <div className="container">
-                    <JsonPatchDemo />
+        <ThemeProvider>
+            <Layout activeScene={activeScene} onSceneChange={setActiveScene}>
+                {/* 使用 CSS display 控制显隐，保持组件状态不丢失 */}
+                <div style={{ display: activeScene === 'validate' ? 'block' : 'none' }}>
+                    <ValidatePage />
                 </div>
-            </AntApp>
-        </ConfigProvider>
+                <div style={{ display: activeScene === 'generate' ? 'block' : 'none' }}>
+                    <GeneratePage />
+                </div>
+                <div style={{ display: activeScene === 'conflict' ? 'block' : 'none' }}>
+                    <ConflictPage />
+                </div>
+                <div style={{ display: activeScene === 'apply' ? 'block' : 'none' }}>
+                    <ApplyPage />
+                </div>
+            </Layout>
+        </ThemeProvider>
     );
 }
 

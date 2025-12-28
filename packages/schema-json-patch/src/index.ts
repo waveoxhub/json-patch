@@ -5,3 +5,4 @@ export * from './detectConflicts.js';
 export * from './resolveConflicts.js';
 export * from './validatePatches.js';
 export * from './utils/pathUtils.js';
+export * from './errors.js';

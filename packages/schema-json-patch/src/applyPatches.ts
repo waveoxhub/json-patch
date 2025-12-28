@@ -1,6 +1,13 @@
 import { Patch } from './types/patch.js';
 import { parseJsonPath } from './utils/pathUtils.js';
 import { Schema, ArraySchema } from './types/schema.js';
+import {
+    getSchemaForPath,
+    isObject,
+    hasObjectItemsWithPk,
+    getPrimaryKeyField,
+} from './utils/schemaUtils.js';
+import { deepClone } from './utils/deepClone.js';
 
 /**
  * 将补丁应用到JSON状态
@@ -46,7 +53,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
         return op === 'remove' ? null : value;
     }
 
-    const result = clone(state);
+    const result = deepClone(state);
 
     switch (op) {
         case 'add':
@@ -59,11 +66,9 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                         );
                     }
 
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
-
-                    if (isObject(value) && hasObjectItems(arraySchema)) {
+                    if (isObject(value) && hasObjectItemsWithPk(arraySchema)) {
                         const pkField = getPrimaryKeyField(arraySchema);
-                        if (pkField in value) {
+                        if (pkField && pkField in value) {
                             const index = getOrCreateArrayIndex(
                                 parent,
                                 String(value[pkField]),
@@ -80,16 +85,15 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                     const fieldSchema = getSchemaForPath(schema, pathComponents);
 
                     if (fieldSchema && fieldSchema.$type === 'array') {
-                        assertArrayObjectHasPkIfObjectArray(fieldSchema);
                         if (!parent[key] || !Array.isArray(parent[key])) {
                             parent[key] = [];
                         }
 
-                        if (isObject(value) && hasObjectItems(fieldSchema)) {
+                        if (isObject(value) && hasObjectItemsWithPk(fieldSchema)) {
                             const array = parent[key] as unknown[];
                             const pkField = getPrimaryKeyField(fieldSchema);
                             let index;
-                            if (pkField in value) {
+                            if (pkField && pkField in value) {
                                 index = getOrCreateArrayIndex(
                                     array,
                                     String(value[pkField]),
@@ -119,7 +123,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
                     const index = findArrayIndex(parent, key, arraySchema);
                     if (index !== -1) {
                         parent.splice(index, 1);
@@ -139,7 +142,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    assertArrayObjectHasPkIfObjectArray(arraySchema);
                     const index = getOrCreateArrayIndex(parent, key, arraySchema);
                     parent[index] = value;
                 } else if (isObject(parent)) {
@@ -148,35 +150,92 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             });
             break;
 
+        case 'move': {
+            // move 操作：从 from 路径移除值，然后添加到 path 路径
+            const { from } = patch;
+            if (!from) {
+                throw new Error('Move operation requires a "from" field');
+            }
+
+            const fromComponents = parseJsonPath(from);
+            let movedValue: unknown;
+
+            // 1. 从源路径提取并移除值
+            modifyAtPath(result, fromComponents, schema, (parent, key) => {
+                if (Array.isArray(parent)) {
+                    const arraySchema = getSchemaForPath(schema, fromComponents.slice(0, -1));
+                    if (!arraySchema || arraySchema.$type !== 'array') {
+                        throw new Error(
+                            `Schema mismatch: expected array schema for from path '${from}'`
+                        );
+                    }
+                    const index = findArrayIndex(parent, key, arraySchema);
+                    if (index === -1) {
+                        throw new Error(`Source path '${from}' does not exist for move operation`);
+                    }
+                    movedValue = parent[index];
+                    parent.splice(index, 1);
+                } else if (isObject(parent)) {
+                    if (!(key in parent)) {
+                        throw new Error(`Source path '${from}' does not exist for move operation`);
+                    }
+                    movedValue = parent[key];
+                    delete parent[key];
+                }
+            });
+
+            // 2. 将值添加到目标路径
+            // 语义说明：
+            //   - /0 或 /fieldPath/0：移动到数组第一位
+            //   - /{prevId} 或 /fieldPath/{prevId}：移动到 prevId 元素之后
+            //   - /- 或 /fieldPath/-：移动到数组末尾
+            if (path.endsWith('/-')) {
+                // 添加到数组末尾
+                const parentPath = path.slice(0, -2);
+                const parentComponents = parentPath ? parseJsonPath(parentPath) : [];
+                modifyAtPath(result, [...parentComponents, '-'], schema, parent => {
+                    if (Array.isArray(parent)) {
+                        parent.push(movedValue);
+                    }
+                });
+            } else {
+                modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                    if (Array.isArray(parent)) {
+                        const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
+                        if (!arraySchema || arraySchema.$type !== 'array') {
+                            throw new Error(
+                                `Schema mismatch: expected array schema for path '${path}'`
+                            );
+                        }
+
+                        // 检查是否是数字索引 (如 "0" 表示第一位)
+                        const numericIndex = parseInt(key, 10);
+                        if (!isNaN(numericIndex) && numericIndex === 0) {
+                            // 移动到第一位
+                            parent.unshift(movedValue);
+                        } else {
+                            // 在目标元素之后插入
+                            const targetIndex = findArrayIndex(parent, key, arraySchema);
+                            if (targetIndex !== -1) {
+                                parent.splice(targetIndex + 1, 0, movedValue);
+                            } else {
+                                // 如果目标不存在，添加到末尾
+                                parent.push(movedValue);
+                            }
+                        }
+                    } else if (isObject(parent)) {
+                        parent[key] = movedValue;
+                    }
+                });
+            }
+            break;
+        }
+
         default:
             throw new Error(`Unsupported operation: ${op}`);
     }
 
     return result;
-};
-
-/**
- * 获取指定路径的模式
- */
-const getSchemaForPath = (
-    schema: Schema,
-    pathComponents: ReadonlyArray<string>
-): Schema | undefined => {
-    let currentSchema: Schema | undefined = schema;
-
-    for (const component of pathComponents) {
-        if (!currentSchema) return undefined;
-
-        if (currentSchema.$type === 'object') {
-            currentSchema = currentSchema.$fields[component] as Schema | undefined;
-        } else if (currentSchema.$type === 'array') {
-            currentSchema = currentSchema.$item as Schema;
-        } else {
-            return undefined;
-        }
-    }
-
-    return currentSchema;
 };
 
 /**
@@ -188,62 +247,21 @@ const findInsertionIndex = (array: unknown[], key: string, schema: ArraySchema):
 };
 
 /**
- * 检查值是否为非空对象
- */
-const isObject = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-};
-
-/**
- * 检查数组模式是否包含对象项
- */
-const hasObjectItems = (schema: ArraySchema): boolean => {
-    return isObject(schema.$item) && schema.$item.$type === 'object' && '$pk' in schema.$item;
-};
-
-/**
- * 获取数组子模式中的主键字段名
- */
-const getPrimaryKeyField = (schema: ArraySchema): string => {
-    if (schema.$type !== 'array') {
-        throw new Error('Invalid schema: not an array type');
-    }
-
-    const item = schema.$item;
-    if (!isObject(item) || item.$type !== 'object' || !('$pk' in item)) {
-        throw new Error('Invalid schema: array item must be an object with $pk field');
-    }
-
-    return item.$pk;
-};
-
-/**
- * 如果是对象数组但缺少 $pk，抛出错误
- */
-const assertArrayObjectHasPkIfObjectArray = (schema: ArraySchema): void => {
-    const item = schema.$item as unknown;
-    if (isObject(item) && (item as Record<string, unknown>).$type === 'object') {
-        if (!('$pk' in (item as Record<string, unknown>))) {
-            throw new Error('Invalid schema: object arrays must define $pk');
-        }
-    }
-};
-
-/**
  * 在数组中查找项目的索引
  */
 const findArrayIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
-    if (!hasObjectItems(schema)) {
-        // 如果不是对象数组，尝试直接使用索引
-        const index = parseInt(key, 10);
-        return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
+    const pkField = getPrimaryKeyField(schema);
+
+    // 如果有主键，使用主键查找
+    if (pkField) {
+        return array.findIndex(
+            item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
+        );
     }
 
-    // 使用主键查找
-    const pkField = getPrimaryKeyField(schema);
-    return array.findIndex(
-        item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
-    );
+    // 无主键，尝试直接使用索引
+    const index = parseInt(key, 10);
+    return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
 };
 
 /**
@@ -255,9 +273,9 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
         return index;
     }
 
-    // 如果是主键查找，需要创建一个新对象
-    if (hasObjectItems(schema)) {
-        const pkField = getPrimaryKeyField(schema);
+    // 如果有主键，需要创建一个新对象
+    const pkField = getPrimaryKeyField(schema);
+    if (pkField) {
         const newItem = { [pkField]: key };
         array.push(newItem);
         return array.length - 1;
@@ -279,27 +297,6 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
     // 如果无法使用键作为索引，添加到数组末尾
     array.push(null);
     return array.length - 1;
-};
-
-/**
- * 智能克隆对象（仅复制必要的层级）
- */
-const clone = (value: unknown): unknown => {
-    if (value === null || typeof value !== 'object') {
-        return value;
-    }
-
-    if (Array.isArray(value)) {
-        return value.map(clone);
-    }
-
-    const result = {} as Record<string, unknown>;
-    for (const key in value) {
-        if (Object.prototype.hasOwnProperty.call(value, key)) {
-            result[key] = clone((value as Record<string, unknown>)[key]);
-        }
-    }
-    return result;
 };
 
 /**

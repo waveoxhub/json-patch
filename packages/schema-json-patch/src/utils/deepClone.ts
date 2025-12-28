@@ -14,9 +14,9 @@ export const deepClone = <T>(obj: T): T => {
     }
 
     const result = {} as Record<string, unknown>;
-    Object.entries(obj as Record<string, unknown>).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
         result[key] = deepClone(value);
-    });
+    }
 
     return result as T;
 };

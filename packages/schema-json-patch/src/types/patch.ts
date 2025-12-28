@@ -1,66 +1,59 @@
 /**
- * JSON补丁操作类型
+ * JSON 补丁操作类型
+ * - add: 添加新值
+ * - remove: 删除值
+ * - replace: 替换现有值
+ * - move: 移动值到新位置
  */
-export type PatchOperation = 'add' | 'remove' | 'replace';
+export type PatchOperation = 'add' | 'remove' | 'replace' | 'move';
 
 /**
- * JSON补丁对象
+ * JSON 补丁对象
  */
 export type Patch = {
+    /** 操作类型 */
     readonly op: PatchOperation;
+    /** JSON Pointer 路径 */
     readonly path: string;
+    /** 操作值（add 和 replace 操作必需） */
     readonly value?: unknown;
+    /** move 操作的源路径 */
+    readonly from?: string;
+    /** 补丁唯一标识符，用于冲突检测和解决 */
     readonly hash: string;
 };
 
 /**
- * 冲突原因分类（可选，用于UI与自动化处理提示）
- */
-export type ConflictReason =
-    | 'REPLACE_REPLACE_DIFFERENT'
-    | 'ADD_ADD_DIFFERENT'
-    | 'REMOVE_REMOVE_DUPLICATE'
-    | 'ADD_REPLACE_COLLISION'
-    | 'ANCESTOR_REMOVED'
-    | 'ANCESTOR_REPLACED_INCOMPATIBLE'
-    | 'ARRAY_INDEX_COLLISION'
-    | 'MIXED_OPERATION_TYPES'
-    | 'UNKNOWN';
-
-/**
- * 冲突中涉及的操作（用于可视化与二次处理，可选）
- */
-export type ConflictOperation = {
-    readonly groupIndex: number;
-    readonly patch: Patch;
-};
-
-/**
- * 冲突选项详情（用于可视化，包含完整补丁信息）
+ * 冲突选项详情
+ * 用于可视化展示，包含完整的补丁信息
  */
 export type ConflictOptionDetail = {
-    readonly hash: string; // 补丁哈希（用于选择）
-    readonly patch: Patch; // 完整补丁信息
-    readonly groupIndex: number; // 所属补丁组索引
+    /** 补丁哈希，用于选择 */
+    readonly hash: string;
+    /** 完整补丁信息 */
+    readonly patch: Patch;
+    /** 所属补丁组索引 */
+    readonly groupIndex: number;
 };
 
 /**
  * 补丁冲突详情
  */
 export type ConflictDetail = {
-    readonly path: string; // 冲突的路径
-    readonly options: ReadonlyArray<ConflictOptionDetail>; // 冲突选项详情（包含完整补丁信息）
-    readonly reason?: ConflictReason; // 可选：冲突原因
-    readonly leftOps?: ReadonlyArray<ConflictOperation>; // 可选：左侧(或第一个)补丁组相关操作
-    readonly rightOps?: ReadonlyArray<ConflictOperation>; // 可选：右侧(或第二个)补丁组相关操作
+    /** 冲突发生的路径 */
+    readonly path: string;
+    /** 该路径上的冲突选项 */
+    readonly options: ReadonlyArray<ConflictOptionDetail>;
 };
 
 /**
  * 单个冲突解决方案
  */
 export type ConflictResolution = {
-    readonly path: string; // 冲突路径
-    readonly selectedHash: string; // 选中的补丁哈希值
+    /** 冲突路径 */
+    readonly path: string;
+    /** 选中的补丁哈希值 */
+    readonly selectedHash: string;
 };
 
 /**
@@ -69,16 +62,18 @@ export type ConflictResolution = {
 export type ConflictResolutions = Array<ConflictResolution>;
 
 /**
- * 未解决的冲突hash数组
+ * 未解决的冲突哈希数组
  */
 export type UnresolvedConflicts = Array<string>;
 
 /**
- * 自定义解决方案类型
- * 用于处理特殊冲突情况
+ * 自定义解决方案
+ * 用于处理特殊冲突情况，允许用户提供自定义补丁
  */
 export type CustomConflictResolution = {
+    /** 冲突路径 */
     readonly path: string;
+    /** 自定义补丁 */
     readonly patch: Patch;
 };
 

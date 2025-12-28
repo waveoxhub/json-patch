@@ -273,6 +273,13 @@ const detectParentChildPathConflicts = (
     }
 };
 
+/**
+ * 从对象中按路径获取值
+ * 用于检查父路径 replace 操作的值是否与子路径操作兼容
+ * @param obj - 源对象
+ * @param path - JSON Pointer 相对路径
+ * @returns 路径对应的值，如果路径不存在则返回 undefined
+ */
 const getValueAtPath = (obj: unknown, path: string): unknown => {
     if (!obj || typeof obj !== 'object' || !path) {
         return undefined;

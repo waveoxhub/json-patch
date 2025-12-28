@@ -1,223 +1,31 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-/* 布局容器 */
-.container {
-    max-width: 1200px;
-    margin: 24px auto;
-    padding: 0 16px;
+/* Tailwind v4: 使用 class 策略代替 prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== Monaco 编辑器主题变量 ===== */
+:root {
+    --monaco-theme: vs;
 }
 
-@media (max-width: 768px) {
-    .container {
-        margin: 16px auto;
-    }
+.dark {
+    --monaco-theme: vs-dark;
 }
 
-/* 通用样式 */
-.json-patch-demo {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+/* ===== 滚动条 ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-.demo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    gap: 16px;
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
+::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 dark:bg-neutral-600 rounded;
 }
 
-.error-message {
-    margin: 16px 0;
-    padding: 10px 16px;
-    background-color: #fff2f0;
-    border: 1px solid #ffccc7;
-    border-radius: 4px;
-}
-
-/* Schema编辑部分 */
-.schema-edit-section {
-    padding: 16px 0;
-}
-
-.schema-card {
-    margin-bottom: 16px;
-}
-
-.schema-content {
-    width: 100%;
-}
-
-/* JSON补丁编辑器 */
-.json-patch-editor {
-    padding: 16px 0;
-}
-
-.editor-card {
-    margin-bottom: 16px;
-}
-
-.source-editor,
-.target-editor {
-    margin-bottom: 16px;
-}
-
-.target-actions {
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-/* 补丁预览部分 */
-.patch-preview-section {
-    padding: 16px 0;
-}
-
-.preview-card {
-    margin-bottom: 16px;
-}
-
-.patch-content {
-    margin: 16px 0;
-}
-
-.actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-}
-
-/* 吸底操作区，长页面时保持操作按钮可见 */
-.actions--sticky {
-    position: sticky;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: saturate(180%) blur(6px);
-    padding: 12px 0 0;
-}
-
-/* 冲突解决部分 */
-.conflict-resolution-section {
-    padding: 16px 0;
-}
-
-.conflict-card {
-    margin-bottom: 16px;
-}
-
-.conflict-item {
-    margin-bottom: 16px;
-    padding: 16px !important;
-    background: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #d9d9d9;
-}
-
-.resolution-options {
-    margin-top: 16px;
-}
-
-.conflict-source {
-    margin-top: 8px;
-}
-
-.resolution-option,
-.custom-resolution {
-    margin-top: 8px;
-}
-
-/* 现代化卡片选择样式 */
-.option-group {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-}
-
-.option-card {
-    width: 100%;
-    text-align: left;
-    border: 1px solid #e5e7eb;
-    background: #f9fafb;
-    border-radius: 8px;
-    padding: 12px;
-    transition: all 0.15s ease;
-}
-
-.option-card:hover {
-    background: #f3f4f6;
-}
-
-.option-card--active {
-    border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
-    background: #fff;
-}
-
-.option-card__title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.value-display {
-    margin-top: 8px;
-    padding: 8px;
-    background: #f5f5f5;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow: auto;
-}
-
-.value-display pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-all;
-    font-family: monospace;
-}
-
-.custom-resolution textarea {
-    margin: 8px 0;
-}
-
-.conflict-badge {
-    margin-left: 8px;
-    color: #ff4d4f;
-    font-weight: bold;
-}
-
-/* 结果部分 */
-.result-section {
-    padding: 16px 0;
-}
-
-.result-card {
-    margin-bottom: 16px;
-}
-
-.result-empty {
-    text-align: center;
-    padding: 40px;
-    background: #f9f9f9;
-    border-radius: 8px;
-}
-
-/* JSON编辑器样式 */
-.editor-header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-}
-
-.json-editor textarea {
-    font-family: 'Courier New', Courier, monospace;
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400 dark:bg-neutral-500;
 }

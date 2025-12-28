@@ -394,13 +394,18 @@ export const PatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setActiveTargetIndex(0);
         setActiveTab('editor');
 
+        // 重置 Schema 到默认值
+        setSchema(defaultSchema);
+        setSchemaString(JSON.stringify(defaultSchema, null, 2));
+
         // 立即保存示例数据到localStorage
         saveToStorageImmediate({
             sourceJson: original,
             targetJsons: [version1, version2, version3],
             activeTab: 'editor',
+            schemaString: JSON.stringify(defaultSchema, null, 2),
         });
-    }, []);
+    }, [defaultSchema]);
 
     // 清除存储的数据
     const clearStoredData = useCallback(() => {

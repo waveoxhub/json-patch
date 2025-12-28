@@ -29,6 +29,14 @@ export const original = `[
 
 export const version1 = `[
   {
+    "id": "contact-3",
+    "name": "王五",
+    "phone": "13700137000",
+    "email": "wangwu@example.com",
+    "tags": ["朋友", "同学"],
+    "address": "广州市天河区珠江新城"
+  },
+  {
     "id": "contact-1",
     "name": "张三",
     "phone": "13888888888",
@@ -39,7 +47,7 @@ export const version1 = `[
   {
     "id": "contact-2",
     "name": "李四",
-    "phone": "13900139001",
+    "phone": "13900139000",
     "email": "lisi@example.com",
     "tags": ["客户"],
     "address": "上海市浦东新区"
@@ -113,6 +121,7 @@ export const defaultSchemaData: Schema = {
     $item: {
         $type: 'object',
         $pk: 'id',
+        $split: true,
         $fields: {
             id: { $type: 'string' },
             name: { $type: 'string' },

@@ -1,127 +1,93 @@
-import React, { useState, useCallback } from 'react';
-import { Typography, Tag, Button, message } from 'antd';
-import { SaveOutlined, CopyOutlined } from '@ant-design/icons';
-import { JsonEditorProps } from '../types/types';
-import { escapeJsonString } from '../utils/jsonUtils';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Copy, Check, Maximize2, Minimize2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 
-const { Text } = Typography;
+interface JsonEditorProps {
+    value: string;
+    onChange: (value: string) => void;
+    height?: string;
+    placeholder?: string;
+    readOnly?: boolean;
+    /** 编辑器的唯一标识路径，用于关联 JSON Schema（例如 'schema.json'）*/
+    modelPath?: string;
+    /** 是否默认展开 */
+    defaultExpanded?: boolean;
+}
 
 /**
- * JSON编辑器组件，支持JSON格式化和错误检测
+ * JSON 编辑器组件（基于 Monaco Editor）
+ * 支持点击展开/收起
  */
-const JsonEditor: React.FC<
-    JsonEditorProps & {
-        title?: string;
-        style?: React.CSSProperties;
-        showSaveIndicator?: boolean;
-    }
-> = ({
+const JsonEditor: React.FC<JsonEditorProps> = ({
     value,
     onChange,
-    height = '150px',
-    placeholder,
+    height = '200px',
+    placeholder = '',
     readOnly = false,
-    title,
-    style = {},
-    showSaveIndicator = false,
+    modelPath,
+    defaultExpanded = false,
 }) => {
     const [error, setError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+    const [theme, setTheme] = useState<'vs' | 'vs-dark'>('vs');
+    const [expanded, setExpanded] = useState(defaultExpanded);
 
-    const handleEditorChange = useCallback(
-        (newValue?: string) => {
-            const newText = newValue ?? '';
-            onChange(newText);
-            if (newText.trim()) {
-                try {
-                    JSON.parse(newText);
-                    setError(null);
-                } catch {
-                    setError('JSON格式错误');
-                }
-            } else {
+    // 计算实际高度
+    const actualHeight = expanded ? '400px' : height;
+
+    useEffect(() => {
+        const updateTheme = () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            setTheme(isDark ? 'vs-dark' : 'vs');
+        };
+        updateTheme();
+        const observer = new MutationObserver(updateTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
+
+    const handleEditorChange = useCallback((val: string | undefined) => {
+        const newValue = val || '';
+        onChange(newValue);
+        if (newValue.trim()) {
+            try {
+                JSON.parse(newValue);
                 setError(null);
+            } catch (e) {
+                setError(e instanceof Error ? e.message : '无效 JSON');
             }
-        },
-        [onChange]
-    );
+        } else {
+            setError(null);
+        }
+    }, [onChange]);
 
-    // 复制内容到剪贴板
     const handleCopy = async () => {
         try {
-            if (!value.trim()) {
-                message.warning('没有内容可复制');
-                return;
-            }
-
-            // 使用工具函数进行JSON字符串转义
-            const escapedValue = escapeJsonString(value);
-
-            await navigator.clipboard.writeText(escapedValue);
-            message.success('内容已复制到剪贴板（已转义）');
-        } catch (error) {
-            message.error('复制失败：JSON格式错误');
-        }
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {}
     };
 
-    // 使用 Monaco 内置格式化能力，无需额外按钮
-
     return (
-        <div
-            style={{
-                ...style,
-                borderRadius: '6px',
-                overflow: 'hidden',
-                border: '1px solid #d9d9d9',
-            }}
-        >
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 12px',
-                    borderBottom: '1px solid #d9d9d9',
-                    backgroundColor: '#fafafa',
-                }}
+        <div className={`relative rounded-md overflow-hidden border ${error ? 'border-red-500 shadow-[0_0_0_2px_rgba(220,38,38,0.1)]' : 'border-neutral-200 dark:border-neutral-700'}`}>
+            {/* 展开/收起按钮 */}
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="absolute top-1.5 right-1.5 z-10 p-1 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 opacity-0 hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center"
+                title={expanded ? '收起' : '展开'}
             >
-                <div className="editor-header-left">
-                    {title && (
-                        <Text strong style={{ fontSize: '14px' }}>
-                            {title}
-                        </Text>
-                    )}
-                    {showSaveIndicator && value.trim() && (
-                        <Tag color="green" icon={<SaveOutlined />}>
-                            自动保存
-                        </Tag>
-                    )}
-                </div>
-                {readOnly && value.trim() && (
-                    <Button
-                        type="text"
-                        icon={<CopyOutlined />}
-                        onClick={handleCopy}
-                        size="small"
-                        title="复制内容"
-                    >
-                        复制
-                    </Button>
-                )}
-            </div>
+                {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+            </button>
 
-            {error && (
-                <div style={{ padding: '8px 12px', backgroundColor: '#fff2f0' }}>
-                    <Text type="danger">{error}</Text>
-                </div>
-            )}
-
-            <div style={{ width: '100%', height, position: 'relative' }}>
+            <div style={{ height: actualHeight, transition: 'height 0.2s ease' }}>
                 <Editor
                     language="json"
                     value={value}
-                    onChange={value => handleEditorChange(value)}
-                    height={height}
+                    onChange={handleEditorChange}
+                    height="100%"
+                    theme={theme}
+                    path={modelPath}
                     options={{
                         readOnly,
                         minimap: { enabled: false },
@@ -131,24 +97,38 @@ const JsonEditor: React.FC<
                         formatOnPaste: true,
                         formatOnType: true,
                         tabSize: 2,
+                        fontSize: 13,
+                        lineNumbers: 'off',
+                        folding: false,
+                        renderLineHighlight: 'none',
+                        overviewRulerBorder: false,
+                        hideCursorInOverviewRuler: true,
+                        padding: { top: 8, bottom: 8 },
+                        scrollbar: {
+                            verticalScrollbarSize: 8,
+                            horizontalScrollbarSize: 8,
+                        },
                     }}
                 />
-                {/* 占位符逻辑：只在为空且非只读时显示 */}
-                {!value && !readOnly && placeholder && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 12,
-                            right: 12,
-                            color: '#999',
-                            pointerEvents: 'none',
-                        }}
-                    >
-                        {placeholder}
-                    </div>
-                )}
             </div>
+
+            {/* 占位符 */}
+            {!value && !readOnly && placeholder && (
+                <div className="absolute top-4 left-3.5 text-neutral-500 dark:text-neutral-400 pointer-events-none text-sm">
+                    {placeholder}
+                </div>
+            )}
+
+            {/* 复制按钮 (只读模式) */}
+            {readOnly && value && (
+                <button
+                    onClick={handleCopy}
+                    className="absolute top-2 right-8 px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
+                >
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                    {copied ? '已复制' : '复制'}
+                </button>
+            )}
         </div>
     );
 };
