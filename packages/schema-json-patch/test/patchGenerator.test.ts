@@ -613,8 +613,9 @@ describe('patchGenerator', () => {
 
             const patches = generatePatches(schema, source, target);
 
-            // 数组元素位置变化不应产生补丁
-            expect(patches).toHaveLength(0);
+            // 数组元素位置变化应产生 move 补丁（$ordered 默认为 true）
+            expect(patches.length).toBeGreaterThan(0);
+            expect(patches.some(p => p.op === 'move')).toBe(true);
         });
 
         it('should handle array element add and remove', () => {
@@ -719,6 +720,93 @@ describe('patchGenerator', () => {
                 value: result_value2,
                 hash: generatePatchOptionHash(result_op2, result_path2, result_value2),
             });
+        });
+    });
+
+    describe('$ordered Configuration', () => {
+        it('should generate move patches when $ordered is true (default)', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([
+                { id: 'a', name: 'A' },
+                { id: 'b', name: 'B' },
+            ]);
+
+            const target = JSON.stringify([
+                { id: 'b', name: 'B' },
+                { id: 'a', name: 'A' },
+            ]);
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches.some(p => p.op === 'move')).toBe(true);
+        });
+
+        it('should not generate move patches when $ordered is false', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $ordered: false,
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([
+                { id: 'a', name: 'A' },
+                { id: 'b', name: 'B' },
+            ]);
+
+            const target = JSON.stringify([
+                { id: 'b', name: 'B' },
+                { id: 'a', name: 'A' },
+            ]);
+
+            const patches = generatePatches(schema, source, target);
+            // 当 $ordered: false 时，顺序变化不应产生补丁
+            expect(patches).toHaveLength(0);
+        });
+
+        it('should generate move patches for nested arrays with $pk', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    items: {
+                        $type: 'array',
+                        $item: {
+                            $type: 'object',
+                            $pk: 'id',
+                            $fields: {
+                                id: { $type: 'string' },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({
+                items: [{ id: '1' }, { id: '2' }, { id: '3' }],
+            });
+
+            const target = JSON.stringify({
+                items: [{ id: '3' }, { id: '1' }, { id: '2' }],
+            });
+
+            const patches = generatePatches(schema, source, target);
+            expect(patches.some(p => p.op === 'move')).toBe(true);
         });
     });
 

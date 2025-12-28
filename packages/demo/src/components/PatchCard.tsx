@@ -40,10 +40,22 @@ const PatchCard: React.FC<PatchCardProps> = ({ patch }) => {
                 {config.label}
             </span>
             
-            {/* 路径 */}
-            <code className="flex-shrink-0 font-mono text-xs bg-white dark:bg-neutral-950 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
-                {patch.path}
-            </code>
+            {/* 路径 - move 操作显示 from → path */}
+            {patch.op === 'move' && patch.from ? (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <code className="font-mono text-xs bg-white dark:bg-neutral-950 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
+                        {patch.from}
+                    </code>
+                    <ArrowRight size={12} className="text-amber-500" />
+                    <code className="font-mono text-xs bg-white dark:bg-neutral-950 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
+                        {patch.path}
+                    </code>
+                </div>
+            ) : (
+                <code className="flex-shrink-0 font-mono text-xs bg-white dark:bg-neutral-950 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
+                    {patch.path}
+                </code>
+            )}
             
             {/* 值 */}
             {patch.value !== undefined && (

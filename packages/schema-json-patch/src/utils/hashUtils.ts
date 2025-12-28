@@ -7,16 +7,19 @@ import { HASH_CONFIG } from '../constants.js';
  * @param op 补丁操作类型
  * @param path 补丁路径
  * @param value 补丁值
+ * @param from move 操作的源路径（可选）
  * @returns 哈希字符串（8位十六进制）
  */
 export const generatePatchOptionHash = (
     op: PatchOperation,
     path: string,
-    value?: unknown
+    value?: unknown,
+    from?: string
 ): string => {
     try {
         const serializedValue = value !== undefined ? JSON.stringify(value) : 'undefined';
-        const hashInput = `${op}_${path}_${serializedValue}`;
+        const fromPart = from !== undefined ? `_from:${from}` : '';
+        const hashInput = `${op}_${path}_${serializedValue}${fromPart}`;
 
         let hash: number = HASH_CONFIG.FNV_OFFSET_BASIS;
         for (let i = 0; i < hashInput.length; i++) {

@@ -3,27 +3,24 @@ import { PatchOperation, Patch } from './types/patch.js';
 import { extractPathMap } from './utils/pathUtils.js';
 import { deepEqual } from './utils/deepEqual.js';
 import { generatePatchOptionHash } from './utils/hashUtils.js';
+import { detectOrderChanges } from './utils/orderUtils.js';
 
 /**
  * 创建补丁对象
  * @param op 操作类型
  * @param path 路径
  * @param value 值(可选)
+ * @param from move操作的源路径(可选)
  * @returns 补丁
  */
-const createPatch = (op: PatchOperation, path: string, value?: unknown): Patch => {
-    return value !== undefined
-        ? {
-              op,
-              path,
-              value,
-              hash: generatePatchOptionHash(op, path, value),
-          }
-        : {
-              op,
-              path,
-              hash: generatePatchOptionHash(op, path, value),
-          };
+const createPatch = (op: PatchOperation, path: string, value?: unknown, from?: string): Patch => {
+    const hash = generatePatchOptionHash(op, path, value, from);
+
+    if (op === 'move' && from !== undefined) {
+        return { op, path, from, hash };
+    }
+
+    return value !== undefined ? { op, path, value, hash } : { op, path, hash };
 };
 
 /**
@@ -123,9 +120,24 @@ export const generatePatches = (
                     }
                 }
             }
+
+            // 处理顺序变化（仅当 $ordered !== false 时）
+            const isOrdered = schema.$item.$ordered !== false;
+            if (isOrdered) {
+                const sourceOrder = sourceData.map(item => String(item[pkField]));
+                const targetOrder = targetData.map(item => String(item[pkField]));
+                const movedIds = detectOrderChanges(sourceOrder, targetOrder);
+
+                for (const id of movedIds) {
+                    // from: 元素的主键路径，path: 目标位置（前一个元素的后面）
+                    const targetIndex = targetOrder.indexOf(id);
+                    const prevId = targetIndex > 0 ? targetOrder[targetIndex - 1] : null;
+                    const toPath = prevId ? `/${prevId}` : '/-';
+                    patches.push(createPatch('move', toPath, undefined, `/${id}`));
+                }
+            }
         } else {
             // 无主键，使用索引匹配
-            const maxLength = Math.max(sourceData.length, targetData.length);
 
             // 处理删除的项目（目标数组比源数组短）
             for (let i = targetData.length; i < sourceData.length; i++) {
@@ -427,6 +439,22 @@ const handleNestedArrayWithPk = (
                     fieldSchema.$item
                 );
             }
+        }
+    }
+
+    // 处理顺序变化（仅当 $ordered !== false 时）
+    const isOrdered = (fieldSchema.$item as { $ordered?: boolean }).$ordered !== false;
+    if (isOrdered) {
+        const sourceOrder = sourceValue.map(item => String(item[pkField]));
+        const targetOrder = targetValue.map(item => String(item[pkField]));
+        const movedIds = detectOrderChanges(sourceOrder, targetOrder);
+
+        for (const id of movedIds) {
+            const targetIndex = targetOrder.indexOf(id);
+            const prevId = targetIndex > 0 ? targetOrder[targetIndex - 1] : null;
+            const toPath = prevId ? buildPath(fieldPath, prevId) : `${fieldPath}/-`;
+            const fromPath = buildPath(fieldPath, id);
+            patches.push(createPatch('move', toPath, undefined, fromPath));
         }
     }
 };

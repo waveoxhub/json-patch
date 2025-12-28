@@ -3,8 +3,9 @@
  * - add: 添加新值
  * - remove: 删除值
  * - replace: 替换现有值
+ * - move: 移动值到新位置
  */
-export type PatchOperation = 'add' | 'remove' | 'replace';
+export type PatchOperation = 'add' | 'remove' | 'replace' | 'move';
 
 /**
  * JSON 补丁对象
@@ -16,6 +17,8 @@ export type Patch = {
     readonly path: string;
     /** 操作值（add 和 replace 操作必需） */
     readonly value?: unknown;
+    /** move 操作的源路径 */
+    readonly from?: string;
     /** 补丁唯一标识符，用于冲突检测和解决 */
     readonly hash: string;
 };

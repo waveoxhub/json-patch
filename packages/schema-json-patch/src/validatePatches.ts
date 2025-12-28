@@ -62,7 +62,7 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
         }
 
         // 验证补丁操作类型
-        if (!patch.op || !['add', 'remove', 'replace'].includes(patch.op)) {
+        if (!patch.op || !['add', 'remove', 'replace', 'move'].includes(patch.op)) {
             errors.push(`Patch #${index} has invalid operation type: ${patch.op}`);
         }
 
@@ -76,6 +76,11 @@ export const validatePatches = (patches: ReadonlyArray<Patch>): ValidationResult
         // 验证补丁值
         if ((patch.op === 'add' || patch.op === 'replace') && patch.value === undefined) {
             errors.push(`Patch #${index} ${patch.op} operation must include a value`);
+        }
+
+        // 验证 move 操作的 from 字段
+        if (patch.op === 'move' && (!patch.from || typeof patch.from !== 'string')) {
+            errors.push(`Patch #${index} move operation must include a valid "from" field`);
         }
 
         // 验证哈希值

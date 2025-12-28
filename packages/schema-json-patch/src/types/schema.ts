@@ -21,6 +21,8 @@ export type ObjectSchema = {
 export type ArrayItemObjectSchemaWithPk = ObjectSchema & {
     /** 主键字段名，用于唯一标识数组中的对象 */
     readonly $pk: string;
+    /** 是否追踪数组元素顺序，默认 true */
+    readonly $ordered?: boolean;
 };
 
 /**
@@ -30,6 +32,8 @@ export type ArrayItemObjectSchemaWithPk = ObjectSchema & {
 export type ArrayItemObjectSchema = ObjectSchema & {
     /** 主键字段名，用于唯一标识数组中的对象（可选，不设置时使用索引） */
     readonly $pk?: string;
+    /** 是否追踪数组元素顺序，默认 true */
+    readonly $ordered?: boolean;
 };
 
 /**

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { GitCompare, Zap, Copy, Check } from 'lucide-react';
+import { GitCompare, Zap, Copy, Check, Code, List } from 'lucide-react';
 import { generatePatches, Schema, Patch } from '@waveox/schema-json-patch';
 import JsonEditor from '../components/JsonEditor';
 import PatchCard from '../components/PatchCard';
@@ -12,6 +12,7 @@ const GeneratePage: React.FC = () => {
     const [generatedPatches, setGeneratedPatches] = useState<Patch[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
 
     const generate = useCallback(() => {
         setError(null);
@@ -112,20 +113,54 @@ const GeneratePage: React.FC = () => {
                 <div className="mt-4 rounded-lg border border-green-500 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
                     <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800 flex justify-between items-center">
                         <span>生成了 {generatedPatches.length} 个补丁</span>
-                        <button
-                            className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-1"
-                            onClick={copyPatches}
-                        >
-                            {copied ? <Check size={12} /> : <Copy size={12} />}
-                            {copied ? '已复制' : '复制'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {/* 视图切换按钮 */}
+                            <div className="flex rounded border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                                <button
+                                    className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
+                                        viewMode === 'visual'
+                                            ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
+                                            : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                    }`}
+                                    onClick={() => setViewMode('visual')}
+                                >
+                                    <List size={12} />
+                                    可视化
+                                </button>
+                                <button
+                                    className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
+                                        viewMode === 'json'
+                                            ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
+                                            : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                    }`}
+                                    onClick={() => setViewMode('json')}
+                                >
+                                    <Code size={12} />
+                                    JSON
+                                </button>
+                            </div>
+                            {/* 复制按钮 */}
+                            <button
+                                className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                                onClick={copyPatches}
+                            >
+                                {copied ? <Check size={12} /> : <Copy size={12} />}
+                                {copied ? '已复制' : '复制'}
+                            </button>
+                        </div>
                     </div>
                     <div className="p-3">
-                        <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
-                            {generatedPatches.map((patch, index) => (
-                                <PatchCard key={patch.hash || index} patch={patch} index={index} />
-                            ))}
-                        </div>
+                        {viewMode === 'visual' ? (
+                            <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
+                                {generatedPatches.map((patch, index) => (
+                                    <PatchCard key={patch.hash || index} patch={patch} index={index} />
+                                ))}
+                            </div>
+                        ) : (
+                            <pre className="font-mono text-xs bg-white dark:bg-neutral-950 p-3 rounded border border-neutral-200 dark:border-neutral-700 max-h-[300px] overflow-auto text-neutral-900 dark:text-neutral-100">
+                                {JSON.stringify(generatedPatches, null, 2)}
+                            </pre>
+                        )}
                     </div>
                 </div>
             )}
