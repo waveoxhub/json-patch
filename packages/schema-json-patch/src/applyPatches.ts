@@ -151,7 +151,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             break;
 
         case 'move': {
-            // RFC 6902 move 操作：从 from 路径移除值，然后添加到 path 路径
+            // move 操作：从 from 路径移除值，然后添加到 path 路径
             const { from } = patch;
             if (!from) {
                 throw new Error('Move operation requires a "from" field');
