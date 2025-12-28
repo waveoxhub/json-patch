@@ -42,24 +42,30 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
         };
         updateTheme();
         const observer = new MutationObserver(updateTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
         return () => observer.disconnect();
     }, []);
 
-    const handleEditorChange = useCallback((val: string | undefined) => {
-        const newValue = val || '';
-        onChange(newValue);
-        if (newValue.trim()) {
-            try {
-                JSON.parse(newValue);
+    const handleEditorChange = useCallback(
+        (val: string | undefined) => {
+            const newValue = val || '';
+            onChange(newValue);
+            if (newValue.trim()) {
+                try {
+                    JSON.parse(newValue);
+                    setError(null);
+                } catch (e) {
+                    setError(e instanceof Error ? e.message : '无效 JSON');
+                }
+            } else {
                 setError(null);
-            } catch (e) {
-                setError(e instanceof Error ? e.message : '无效 JSON');
             }
-        } else {
-            setError(null);
-        }
-    }, [onChange]);
+        },
+        [onChange]
+    );
 
     const handleCopy = async () => {
         try {
@@ -70,7 +76,9 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     };
 
     return (
-        <div className={`relative rounded-md overflow-hidden border ${error ? 'border-red-500 shadow-[0_0_0_2px_rgba(220,38,38,0.1)]' : 'border-neutral-200 dark:border-neutral-700'}`}>
+        <div
+            className={`relative rounded-md overflow-hidden border ${error ? 'border-red-500 shadow-[0_0_0_2px_rgba(220,38,38,0.1)]' : 'border-neutral-200 dark:border-neutral-700'}`}
+        >
             {/* 展开/收起按钮 */}
             <button
                 onClick={() => setExpanded(!expanded)}

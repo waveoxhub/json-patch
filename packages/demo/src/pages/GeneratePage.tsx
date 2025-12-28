@@ -50,7 +50,9 @@ const GeneratePage: React.FC = () => {
                     <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <GitCompare size={20} /> 补丁生成
                     </h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">对比源 JSON 和目标 JSON，根据 Schema 生成基于 Schema 的补丁数组</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                        对比源 JSON 和目标 JSON，根据 Schema 生成基于 Schema 的补丁数组
+                    </p>
                 </div>
                 <button
                     className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -66,7 +68,14 @@ const GeneratePage: React.FC = () => {
                     Schema
                 </div>
                 <div className="p-3">
-                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" defaultExpanded />
+                    <JsonEditor
+                        value={schemaInput}
+                        onChange={setSchemaInput}
+                        height="120px"
+                        placeholder="输入 Schema..."
+                        modelPath="schema.json"
+                        defaultExpanded
+                    />
                 </div>
             </div>
 
@@ -77,7 +86,12 @@ const GeneratePage: React.FC = () => {
                         源 JSON
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={sourceJson} onChange={setSourceJson} height="180px" placeholder="输入原始 JSON..." />
+                        <JsonEditor
+                            value={sourceJson}
+                            onChange={setSourceJson}
+                            height="180px"
+                            placeholder="输入原始 JSON..."
+                        />
                     </div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
@@ -85,7 +99,12 @@ const GeneratePage: React.FC = () => {
                         目标 JSON
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={targetJson} onChange={setTargetJson} height="180px" placeholder="输入修改后的 JSON..." />
+                        <JsonEditor
+                            value={targetJson}
+                            onChange={setTargetJson}
+                            height="180px"
+                            placeholder="输入修改后的 JSON..."
+                        />
                     </div>
                 </div>
             </div>
@@ -153,7 +172,11 @@ const GeneratePage: React.FC = () => {
                         {viewMode === 'visual' ? (
                             <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
                                 {generatedPatches.map((patch, index) => (
-                                    <PatchCard key={patch.hash || index} patch={patch} index={index} />
+                                    <PatchCard
+                                        key={patch.hash || index}
+                                        patch={patch}
+                                        index={index}
+                                    />
                                 ))}
                             </div>
                         ) : (

@@ -83,9 +83,7 @@ describe('detectConflicts', () => {
         expect(conflicts).toHaveLength(1);
         expect(conflicts[0].path).toBe('/user');
         expect(conflicts[0].options).toHaveLength(2);
-        expect(conflicts[0].options[0]?.hash).toBe(
-            generatePatchOptionHash('remove', '/user')
-        );
+        expect(conflicts[0].options[0]?.hash).toBe(generatePatchOptionHash('remove', '/user'));
         expect(conflicts[0].options[1]?.hash).toBe(
             generatePatchOptionHash('replace', '/user/name', 'newName')
         );

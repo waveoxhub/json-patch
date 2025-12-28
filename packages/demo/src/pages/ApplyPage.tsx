@@ -29,13 +29,37 @@ const ApplyPage: React.FC = () => {
     }, [jsonInput, patchInput, schemaInput]);
 
     const loadExample = () => {
-        setJsonInput(JSON.stringify([
-            { id: "contact-1", name: "张三", phone: "13800138000", email: "zhang@test.com", tags: ["同事"], address: "北京" }
-        ], null, 2));
-        setPatchInput(JSON.stringify([
-            { op: "replace", path: "/contact-1/phone", value: "13888888888", hash: "h1" },
-            { op: "replace", path: "/contact-1/address", value: "北京市海淀区", hash: "h2" }
-        ], null, 2));
+        setJsonInput(
+            JSON.stringify(
+                [
+                    {
+                        id: 'contact-1',
+                        name: '张三',
+                        phone: '13800138000',
+                        email: 'zhang@test.com',
+                        tags: ['同事'],
+                        address: '北京',
+                    },
+                ],
+                null,
+                2
+            )
+        );
+        setPatchInput(
+            JSON.stringify(
+                [
+                    { op: 'replace', path: '/contact-1/phone', value: '13888888888', hash: 'h1' },
+                    {
+                        op: 'replace',
+                        path: '/contact-1/address',
+                        value: '北京市海淀区',
+                        hash: 'h2',
+                    },
+                ],
+                null,
+                2
+            )
+        );
         setSchemaInput(JSON.stringify(defaultSchemaData, null, 2));
     };
 
@@ -49,7 +73,9 @@ const ApplyPage: React.FC = () => {
                     <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <Play size={20} /> 补丁应用
                     </h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">将补丁数组应用到 JSON 数据，根据 Schema 验证并查看结果</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                        将补丁数组应用到 JSON 数据，根据 Schema 验证并查看结果
+                    </p>
                 </div>
                 <button
                     className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -65,7 +91,14 @@ const ApplyPage: React.FC = () => {
                     Schema
                 </div>
                 <div className="p-3">
-                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" defaultExpanded />
+                    <JsonEditor
+                        value={schemaInput}
+                        onChange={setSchemaInput}
+                        height="120px"
+                        placeholder="输入 Schema..."
+                        modelPath="schema.json"
+                        defaultExpanded
+                    />
                 </div>
             </div>
 
@@ -76,7 +109,12 @@ const ApplyPage: React.FC = () => {
                         原始 JSON
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={jsonInput} onChange={setJsonInput} height="160px" placeholder="输入原始 JSON..." />
+                        <JsonEditor
+                            value={jsonInput}
+                            onChange={setJsonInput}
+                            height="160px"
+                            placeholder="输入原始 JSON..."
+                        />
                     </div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
@@ -84,7 +122,12 @@ const ApplyPage: React.FC = () => {
                         补丁数组
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={patchInput} onChange={setPatchInput} height="160px" placeholder="输入要应用的补丁..." />
+                        <JsonEditor
+                            value={patchInput}
+                            onChange={setPatchInput}
+                            height="160px"
+                            placeholder="输入要应用的补丁..."
+                        />
                     </div>
                 </div>
             </div>
@@ -122,13 +165,19 @@ const ApplyPage: React.FC = () => {
                                 </p>
                                 <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto mb-4">
                                     {parsedPatches.map((patch, index) => (
-                                        <PatchCard key={patch.hash || index} patch={patch} index={index} />
+                                        <PatchCard
+                                            key={patch.hash || index}
+                                            patch={patch}
+                                            index={index}
+                                        />
                                     ))}
                                 </div>
                                 <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-4" />
                             </>
                         )}
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">结果 JSON</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+                            结果 JSON
+                        </p>
                         <JsonEditor value={result} onChange={() => {}} readOnly height="180px" />
                     </div>
                 </div>

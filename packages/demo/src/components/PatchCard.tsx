@@ -7,10 +7,21 @@ interface PatchCardProps {
     index: number;
 }
 
-const opConfig: Record<string, { icon: React.ComponentType<{ size: number; className?: string }>; label: string; colorClass: string }> = {
+const opConfig: Record<
+    string,
+    {
+        icon: React.ComponentType<{ size: number; className?: string }>;
+        label: string;
+        colorClass: string;
+    }
+> = {
     add: { icon: Plus, label: 'add', colorClass: 'text-green-600 dark:text-green-400' },
     remove: { icon: Minus, label: 'remove', colorClass: 'text-red-600 dark:text-red-400' },
-    replace: { icon: RefreshCw, label: 'replace', colorClass: 'text-neutral-500 dark:text-neutral-400' },
+    replace: {
+        icon: RefreshCw,
+        label: 'replace',
+        colorClass: 'text-neutral-500 dark:text-neutral-400',
+    },
     move: { icon: ArrowRight, label: 'move', colorClass: 'text-amber-600 dark:text-amber-400' },
     copy: { icon: Plus, label: 'copy', colorClass: 'text-green-600 dark:text-green-400' },
     test: { icon: RefreshCw, label: 'test', colorClass: 'text-neutral-500 dark:text-neutral-400' },
@@ -34,12 +45,14 @@ const PatchCard: React.FC<PatchCardProps> = ({ patch }) => {
         <div className="flex items-center gap-2.5 px-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md mb-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
             {/* 操作图标 */}
             <Icon size={14} className={`flex-shrink-0 ${config.colorClass}`} />
-            
+
             {/* 操作类型 */}
-            <span className={`font-mono text-xs font-medium w-13 flex-shrink-0 ${config.colorClass}`}>
+            <span
+                className={`font-mono text-xs font-medium w-13 flex-shrink-0 ${config.colorClass}`}
+            >
                 {config.label}
             </span>
-            
+
             {/* 路径 - move 操作显示 from → path */}
             {patch.op === 'move' && patch.from ? (
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -56,14 +69,14 @@ const PatchCard: React.FC<PatchCardProps> = ({ patch }) => {
                     {patch.path}
                 </code>
             )}
-            
+
             {/* 值 */}
             {patch.value !== undefined && (
                 <span className="text-xs text-neutral-500 dark:text-neutral-400 overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0">
                     = {formatValue(patch.value)}
                 </span>
             )}
-            
+
             {/* Hash */}
             {patch.hash && (
                 <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 flex-shrink-0">

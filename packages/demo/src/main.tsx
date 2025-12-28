@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { loader } from '@monaco-editor/react';
 import App from './App';
 import '@src/styles/app.css';
-import { schemaJsonPatchSchema, SCHEMA_JSON_PATCH_SCHEMA_URI } from './schemas/schemaJsonPatchSchema';
+import {
+    schemaJsonPatchSchema,
+    SCHEMA_JSON_PATCH_SCHEMA_URI,
+} from './schemas/schemaJsonPatchSchema';
 
 // 配置 Monaco Editor 的 JSON Schema 验证
 loader.init().then(monaco => {

@@ -68,7 +68,11 @@ const ConflictPage: React.FC = () => {
         }
     }, [patchGroups]);
 
-    const updateResolved = (groups: Patch[][], conflictList: readonly ConflictDetail[], res: ConflictResolutions) => {
+    const updateResolved = (
+        groups: Patch[][],
+        conflictList: readonly ConflictDetail[],
+        res: ConflictResolutions
+    ) => {
         try {
             const result = generateResolvedPatch(groups, [...conflictList], res, []);
             setResolvedPatches([...result.resolvedPatches]);
@@ -88,41 +92,78 @@ const ConflictPage: React.FC = () => {
     const loadExample = () => {
         setSchemaInput(JSON.stringify(defaultSchemaData, null, 2));
         setPatchGroups([
-            JSON.stringify([
-                // 冲突1: replace vs replace vs replace (版本号)
-                { op: "replace", path: "/version", value: "2.0.0", hash: "g1h1" },
-                // 冲突2: replace vs remove (一组修改，另一组删除)
-                { op: "replace", path: "/config/theme", value: "dark", hash: "g1h2" },
-                // 冲突3: add vs add (同路径添加不同值)
-                { op: "add", path: "/features/newFeature", value: { name: "特性A", enabled: true }, hash: "g1h3" },
-                // 冲突4: move vs move (移动到不同位置)
-                { op: "move", path: "/contacts/contact-2", from: "/contacts/contact-1", hash: "g1h4" },
-                // 无冲突补丁
-                { op: "add", path: "/metadata/createdBy", value: "开发组", hash: "g1h5" },
-            ], null, 2),
-            JSON.stringify([
-                // 冲突1: replace vs replace vs replace
-                { op: "replace", path: "/version", value: "3.0.0", hash: "g2h1" },
-                // 冲突2: replace vs remove
-                { op: "remove", path: "/config/theme", hash: "g2h2" },
-                // 冲突3: add vs add
-                { op: "add", path: "/features/newFeature", value: { name: "特性B", enabled: false }, hash: "g2h3" },
-                // 冲突4: move vs move
-                { op: "move", path: "/contacts/contact-3", from: "/contacts/contact-1", hash: "g2h4" },
-                // 无冲突补丁
-                { op: "replace", path: "/settings/maxItems", value: 100, hash: "g2h5" },
-            ], null, 2),
-            JSON.stringify([
-                // 冲突1: replace vs replace vs replace
-                { op: "replace", path: "/version", value: "2.5.0-beta", hash: "g3h1" },
-                // 冲突2: (不参与)
-                // 冲突3: add vs add
-                { op: "add", path: "/features/newFeature", value: { name: "特性C", priority: "high" }, hash: "g3h2" },
-                // 冲突4: move vs move
-                { op: "move", path: "/contacts/-", from: "/contacts/contact-1", hash: "g3h3" },
-                // 无冲突补丁
-                { op: "add", path: "/tags", value: ["生产", "稳定"], hash: "g3h4" },
-            ], null, 2),
+            JSON.stringify(
+                [
+                    // 冲突1: replace vs replace vs replace (版本号)
+                    { op: 'replace', path: '/version', value: '2.0.0', hash: 'g1h1' },
+                    // 冲突2: replace vs remove (一组修改，另一组删除)
+                    { op: 'replace', path: '/config/theme', value: 'dark', hash: 'g1h2' },
+                    // 冲突3: add vs add (同路径添加不同值)
+                    {
+                        op: 'add',
+                        path: '/features/newFeature',
+                        value: { name: '特性A', enabled: true },
+                        hash: 'g1h3',
+                    },
+                    // 冲突4: move vs move (移动到不同位置)
+                    {
+                        op: 'move',
+                        path: '/contacts/contact-2',
+                        from: '/contacts/contact-1',
+                        hash: 'g1h4',
+                    },
+                    // 无冲突补丁
+                    { op: 'add', path: '/metadata/createdBy', value: '开发组', hash: 'g1h5' },
+                ],
+                null,
+                2
+            ),
+            JSON.stringify(
+                [
+                    // 冲突1: replace vs replace vs replace
+                    { op: 'replace', path: '/version', value: '3.0.0', hash: 'g2h1' },
+                    // 冲突2: replace vs remove
+                    { op: 'remove', path: '/config/theme', hash: 'g2h2' },
+                    // 冲突3: add vs add
+                    {
+                        op: 'add',
+                        path: '/features/newFeature',
+                        value: { name: '特性B', enabled: false },
+                        hash: 'g2h3',
+                    },
+                    // 冲突4: move vs move
+                    {
+                        op: 'move',
+                        path: '/contacts/contact-3',
+                        from: '/contacts/contact-1',
+                        hash: 'g2h4',
+                    },
+                    // 无冲突补丁
+                    { op: 'replace', path: '/settings/maxItems', value: 100, hash: 'g2h5' },
+                ],
+                null,
+                2
+            ),
+            JSON.stringify(
+                [
+                    // 冲突1: replace vs replace vs replace
+                    { op: 'replace', path: '/version', value: '2.5.0-beta', hash: 'g3h1' },
+                    // 冲突2: (不参与)
+                    // 冲突3: add vs add
+                    {
+                        op: 'add',
+                        path: '/features/newFeature',
+                        value: { name: '特性C', priority: 'high' },
+                        hash: 'g3h2',
+                    },
+                    // 冲突4: move vs move
+                    { op: 'move', path: '/contacts/-', from: '/contacts/contact-1', hash: 'g3h3' },
+                    // 无冲突补丁
+                    { op: 'add', path: '/tags', value: ['生产', '稳定'], hash: 'g3h4' },
+                ],
+                null,
+                2
+            ),
         ]);
     };
 
@@ -148,7 +189,9 @@ const ConflictPage: React.FC = () => {
                     <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <GitMerge size={20} /> 冲突检测
                     </h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">检测多组补丁之间的路径冲突，选择解决方案</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                        检测多组补丁之间的路径冲突，选择解决方案
+                    </p>
                 </div>
                 <button
                     className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -164,13 +207,22 @@ const ConflictPage: React.FC = () => {
                     Schema
                 </div>
                 <div className="p-3">
-                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" defaultExpanded />
+                    <JsonEditor
+                        value={schemaInput}
+                        onChange={setSchemaInput}
+                        height="120px"
+                        placeholder="输入 Schema..."
+                        modelPath="schema.json"
+                        defaultExpanded
+                    />
                 </div>
             </div>
 
             {/* 补丁组区域 */}
             <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">补丁组</span>
+                <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                    补丁组
+                </span>
                 <button
                     className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-1"
                     onClick={addPatchGroup}
@@ -181,7 +233,10 @@ const ConflictPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {patchGroups.map((group, index) => (
-                    <div key={index} className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
+                    <div
+                        key={index}
+                        className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900"
+                    >
                         <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                             <span>组 {index + 1}</span>
                             {patchGroups.length > 2 && (
@@ -196,7 +251,7 @@ const ConflictPage: React.FC = () => {
                         <div className="p-3">
                             <JsonEditor
                                 value={group}
-                                onChange={(v) => updatePatchGroup(index, v)}
+                                onChange={v => updatePatchGroup(index, v)}
                                 height="140px"
                                 placeholder="输入补丁数组..."
                             />
@@ -230,11 +285,16 @@ const ConflictPage: React.FC = () => {
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[11px] font-medium">
                             <AlertTriangle size={10} /> 检测到 {conflicts.length} 个冲突
                         </span>
-                        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">点击选择解决方案</span>
+                        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+                            点击选择解决方案
+                        </span>
                     </div>
                     <div className="p-3">
                         {conflicts.map((conflict, cIndex) => (
-                            <div key={cIndex} className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-md mb-2 last:mb-0">
+                            <div
+                                key={cIndex}
+                                className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-md mb-2 last:mb-0"
+                            >
                                 <div className="mb-2 text-sm">
                                     <code className="font-mono text-xs bg-white dark:bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
                                         {conflict.path}
@@ -242,7 +302,8 @@ const ConflictPage: React.FC = () => {
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {conflict.options.map((option, oIndex) => {
-                                        const isSelected = getSelectedHash(conflict.path) === option.hash;
+                                        const isSelected =
+                                            getSelectedHash(conflict.path) === option.hash;
                                         return (
                                             <button
                                                 key={oIndex}
@@ -251,23 +312,36 @@ const ConflictPage: React.FC = () => {
                                                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                                                         : 'border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-500'
                                                 }`}
-                                                onClick={() => selectOption(conflict.path, option.hash)}
+                                                onClick={() =>
+                                                    selectOption(conflict.path, option.hash)
+                                                }
                                             >
                                                 <div className="flex justify-between items-center mb-1.5">
-                                                    <span className={`text-[11px] font-medium uppercase ${
-                                                        isSelected ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400'
-                                                    }`}>
+                                                    <span
+                                                        className={`text-[11px] font-medium uppercase ${
+                                                            isSelected
+                                                                ? 'text-green-600 dark:text-green-400'
+                                                                : 'text-neutral-500 dark:text-neutral-400'
+                                                        }`}
+                                                    >
                                                         组 {option.groupIndex + 1}
                                                     </span>
-                                                    {isSelected && <CheckCircle size={12} className="text-green-600 dark:text-green-400" />}
+                                                    {isSelected && (
+                                                        <CheckCircle
+                                                            size={12}
+                                                            className="text-green-600 dark:text-green-400"
+                                                        />
+                                                    )}
                                                 </div>
                                                 <div className="text-xs">
-                                                    <span className="font-mono text-neutral-500 dark:text-neutral-400 mr-2">{option.patch.op}</span>
+                                                    <span className="font-mono text-neutral-500 dark:text-neutral-400 mr-2">
+                                                        {option.patch.op}
+                                                    </span>
                                                     <span className="text-neutral-900 dark:text-neutral-100 break-all">
-                                                        {option.patch.value !== undefined 
-                                                            ? (typeof option.patch.value === 'string' 
-                                                                ? option.patch.value 
-                                                                : JSON.stringify(option.patch.value))
+                                                        {option.patch.value !== undefined
+                                                            ? typeof option.patch.value === 'string'
+                                                                ? option.patch.value
+                                                                : JSON.stringify(option.patch.value)
                                                             : '(删除)'}
                                                     </span>
                                                 </div>
@@ -287,7 +361,8 @@ const ConflictPage: React.FC = () => {
                     <div className="px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800 flex justify-between items-center">
                         <span className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[11px] font-medium">
-                                <CheckCircle size={10} /> {conflicts.length === 0 ? '无冲突' : '已解决'}
+                                <CheckCircle size={10} />{' '}
+                                {conflicts.length === 0 ? '无冲突' : '已解决'}
                             </span>
                             合并后的补丁 ({resolvedPatches.length})
                         </span>

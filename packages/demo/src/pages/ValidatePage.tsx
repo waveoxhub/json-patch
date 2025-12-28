@@ -70,7 +70,9 @@ const ValidatePage: React.FC = () => {
         newResults.push({
             item: '补丁结构',
             status: structureResult.isValid ? 'success' : 'error',
-            message: structureResult.isValid ? `${patches.length} 个补丁有效` : structureResult.errors.join('; '),
+            message: structureResult.isValid
+                ? `${patches.length} 个补丁有效`
+                : structureResult.errors.join('; '),
         });
 
         // 验证可应用性
@@ -95,19 +97,40 @@ const ValidatePage: React.FC = () => {
     }, [jsonInput, patchInput, schemaInput]);
 
     const loadExample = () => {
-        setJsonInput(JSON.stringify([
-            { id: "contact-1", name: "张三", phone: "13800138000", email: "zhang@test.com", tags: ["同事"], address: "北京" }
-        ], null, 2));
-        setPatchInput(JSON.stringify([
-            { op: "replace", path: "/contact-1/phone", value: "13888888888", hash: "h1" },
-            { op: "add", path: "/contact-1/tags/-", value: "技术部", hash: "h2" }
-        ], null, 2));
+        setJsonInput(
+            JSON.stringify(
+                [
+                    {
+                        id: 'contact-1',
+                        name: '张三',
+                        phone: '13800138000',
+                        email: 'zhang@test.com',
+                        tags: ['同事'],
+                        address: '北京',
+                    },
+                ],
+                null,
+                2
+            )
+        );
+        setPatchInput(
+            JSON.stringify(
+                [
+                    { op: 'replace', path: '/contact-1/phone', value: '13888888888', hash: 'h1' },
+                    { op: 'add', path: '/contact-1/tags/-', value: '技术部', hash: 'h2' },
+                ],
+                null,
+                2
+            )
+        );
         setSchemaInput(JSON.stringify(defaultSchemaData, null, 2));
     };
 
     const StatusIcon = ({ status }: { status: string }) => {
-        if (status === 'success') return <CheckCircle size={14} className="text-green-600 dark:text-green-400" />;
-        if (status === 'error') return <XCircle size={14} className="text-red-600 dark:text-red-400" />;
+        if (status === 'success')
+            return <CheckCircle size={14} className="text-green-600 dark:text-green-400" />;
+        if (status === 'error')
+            return <XCircle size={14} className="text-red-600 dark:text-red-400" />;
         return <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />;
     };
 
@@ -123,7 +146,9 @@ const ValidatePage: React.FC = () => {
                     <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <Shield size={20} /> 补丁验证
                     </h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">验证补丁结构和可应用性</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                        验证补丁结构和可应用性
+                    </p>
                 </div>
                 <button
                     className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -139,7 +164,14 @@ const ValidatePage: React.FC = () => {
                     Schema
                 </div>
                 <div className="p-3">
-                    <JsonEditor value={schemaInput} onChange={setSchemaInput} height="120px" placeholder="输入 Schema..." modelPath="schema.json" defaultExpanded />
+                    <JsonEditor
+                        value={schemaInput}
+                        onChange={setSchemaInput}
+                        height="120px"
+                        placeholder="输入 Schema..."
+                        modelPath="schema.json"
+                        defaultExpanded
+                    />
                 </div>
             </div>
 
@@ -150,7 +182,12 @@ const ValidatePage: React.FC = () => {
                         目标 JSON
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={jsonInput} onChange={setJsonInput} height="160px" placeholder="输入要验证的 JSON..." />
+                        <JsonEditor
+                            value={jsonInput}
+                            onChange={setJsonInput}
+                            height="160px"
+                            placeholder="输入要验证的 JSON..."
+                        />
                     </div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-neutral-50 dark:bg-neutral-900">
@@ -158,7 +195,12 @@ const ValidatePage: React.FC = () => {
                         补丁数组
                     </div>
                     <div className="p-3">
-                        <JsonEditor value={patchInput} onChange={setPatchInput} height="160px" placeholder="输入 JSON Patch 数组..." />
+                        <JsonEditor
+                            value={patchInput}
+                            onChange={setPatchInput}
+                            height="160px"
+                            placeholder="输入 JSON Patch 数组..."
+                        />
                     </div>
                 </div>
             </div>
@@ -176,41 +218,69 @@ const ValidatePage: React.FC = () => {
 
             {/* 结果卡片 */}
             {results.length > 0 && (
-                <div className={`mt-4 rounded-lg border overflow-hidden bg-neutral-50 dark:bg-neutral-900 ${
-                    allPassed ? 'border-green-500' : hasErrors ? 'border-red-500' : 'border-amber-500'
-                }`}>
-                    <div className={`px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide border-b flex items-center gap-2 ${
+                <div
+                    className={`mt-4 rounded-lg border overflow-hidden bg-neutral-50 dark:bg-neutral-900 ${
                         allPassed
-                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-neutral-500 dark:text-neutral-400'
+                            ? 'border-green-500'
                             : hasErrors
-                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-neutral-500 dark:text-neutral-400'
-                            : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-neutral-500 dark:text-neutral-400'
-                    }`}>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+                              ? 'border-red-500'
+                              : 'border-amber-500'
+                    }`}
+                >
+                    <div
+                        className={`px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide border-b flex items-center gap-2 ${
                             allPassed
-                                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-neutral-500 dark:text-neutral-400'
                                 : hasErrors
-                                ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400'
-                                : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400'
-                        }`}>
-                            {allPassed ? <><CheckCircle size={10} /> 全部通过</> :
-                             hasErrors ? <><XCircle size={10} /> 存在错误</> :
-                             <><AlertTriangle size={10} /> 部分警告</>}
+                                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-neutral-500 dark:text-neutral-400'
+                                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-neutral-500 dark:text-neutral-400'
+                        }`}
+                    >
+                        <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+                                allPassed
+                                    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                                    : hasErrors
+                                      ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400'
+                                      : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400'
+                            }`}
+                        >
+                            {allPassed ? (
+                                <>
+                                    <CheckCircle size={10} /> 全部通过
+                                </>
+                            ) : hasErrors ? (
+                                <>
+                                    <XCircle size={10} /> 存在错误
+                                </>
+                            ) : (
+                                <>
+                                    <AlertTriangle size={10} /> 部分警告
+                                </>
+                            )}
                         </span>
                         验证结果
                     </div>
                     <div className="p-3">
                         <div className="flex flex-col gap-1.5">
                             {results.map((result, index) => (
-                                <div key={index} className="flex justify-between items-center px-3 py-2 bg-neutral-100 dark:bg-neutral-800 rounded-md text-sm">
+                                <div
+                                    key={index}
+                                    className="flex justify-between items-center px-3 py-2 bg-neutral-100 dark:bg-neutral-800 rounded-md text-sm"
+                                >
                                     <span className="flex items-center gap-2">
                                         <StatusIcon status={result.status} />
                                         <strong className="font-medium">{result.item}</strong>
                                     </span>
-                                    <span className={`text-xs ${
-                                        result.status === 'success' ? 'text-green-600 dark:text-green-400' :
-                                        result.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
-                                    }`}>
+                                    <span
+                                        className={`text-xs ${
+                                            result.status === 'success'
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : result.status === 'error'
+                                                  ? 'text-red-600 dark:text-red-400'
+                                                  : 'text-amber-600 dark:text-amber-400'
+                                        }`}
+                                    >
                                         {result.message}
                                     </span>
                                 </div>
@@ -225,7 +295,11 @@ const ValidatePage: React.FC = () => {
                                 </p>
                                 <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
                                     {parsedPatches.map((patch, index) => (
-                                        <PatchCard key={patch.hash || index} patch={patch} index={index} />
+                                        <PatchCard
+                                            key={patch.hash || index}
+                                            patch={patch}
+                                            index={index}
+                                        />
                                     ))}
                                 </div>
                             </>
