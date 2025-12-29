@@ -33,6 +33,21 @@ A modern patch library designed for **fixed-structure JSON data**, like RFC 6902
 - 🛠️ **Conflict Detection & Resolution** - Automatically detect conflicts between multiple patches and support conflict resolution
 - 🔒 **Type Safety** - Fully developed using TypeScript, providing type definitions
 - ✅ **Validation** - Validate JSON data, patches, and patch application against schema
+- ⚡ **High Performance** - O(n) linear complexity with optimized algorithms
+
+## Performance
+
+| Function         | Scenario               | Performance        |
+| ---------------- | ---------------------- | ------------------ |
+| generatePatches  | 100 items, 20% changes | ~1,430 ops/sec     |
+| applyPatches     | 100 items, sparse      | ~326 ops/sec       |
+| detectConflicts  | 2 groups               | ~13,672 ops/sec    |
+| resolveConflicts | 10 conflicts           | ~274,781 ops/sec   |
+| validatePatches  | 10 patches             | ~2,601,370 ops/sec |
+
+Scaling analysis shows that per-item processing time **decreases** as data size grows (scaling factor 0.68x at 500 items), demonstrating **O(n) linear complexity**.
+
+📊 [View detailed benchmarks](./docs/BENCHMARKS.md)
 
 ## Installation
 
