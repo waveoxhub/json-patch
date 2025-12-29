@@ -21,12 +21,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeScene, onSceneChange }) => {
 
     return (
         <aside className="w-50 flex-shrink-0 flex flex-col bg-neutral-50 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700">
-            <div className="px-4 py-5 border-b border-neutral-200 dark:border-neutral-700">
-                <h1 className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-                    JSON Patch
-                </h1>
-                <div className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    Playground
+            <div className="px-4 py-5 border-b border-neutral-200 dark:border-neutral-700 flex items-center gap-3">
+                <img src="/favicon.svg" alt="JSON Patch Logo" className="w-8 h-8" />
+                <div>
+                    <h1 className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+                        JSON Patch
+                    </h1>
+                    <div className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                        Playground
+                    </div>
                 </div>
             </div>
             <nav className="flex-1 p-2">

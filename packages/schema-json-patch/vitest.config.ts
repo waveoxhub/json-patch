@@ -10,7 +10,17 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
-            exclude: ['node_modules/', 'test/', '**/*.d.ts', 'dist/', 'vitest.config.ts'],
+            exclude: [
+                'node_modules/',
+                'test/',
+                'benchmarks/',
+                '**/*.d.ts',
+                'dist/',
+                'vitest.config.ts',
+            ],
+        },
+        benchmark: {
+            include: ['benchmarks/**/*.bench.ts'],
         },
     },
 });

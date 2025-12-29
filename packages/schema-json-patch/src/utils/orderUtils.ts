@@ -1,6 +1,6 @@
 /**
  * 计算最长递增子序列的索引
- * 用于确定数组中哪些元素不需要移动
+ * 使用二分查找优化，时间复杂度 O(n log n)
  *
  * @param arr - 输入数组
  * @returns 最长递增子序列中元素的索引数组
@@ -9,30 +9,41 @@ export const longestIncreasingSubsequence = (arr: number[]): number[] => {
     if (arr.length === 0) return [];
 
     const n = arr.length;
-    // dp[i] 存储以索引 i 结尾的最长递增子序列的长度
-    const dp: number[] = new Array(n).fill(1);
+    // tails[i] 存储长度为 i+1 的递增子序列的最小末尾元素的索引
+    const tails: number[] = [];
     // parent[i] 存储在最长递增子序列中，索引 i 之前的元素索引
     const parent: number[] = new Array(n).fill(-1);
 
-    let maxLength = 1;
-    let maxIndex = 0;
-
-    for (let i = 1; i < n; i++) {
-        for (let j = 0; j < i; j++) {
-            if (arr[j] < arr[i] && dp[j] + 1 > dp[i]) {
-                dp[i] = dp[j] + 1;
-                parent[i] = j;
+    // 二分查找：找到第一个 >= target 的位置
+    const binarySearch = (target: number): number => {
+        let left = 0;
+        let right = tails.length;
+        while (left < right) {
+            const mid = (left + right) >>> 1;
+            if (arr[tails[mid]] < target) {
+                left = mid + 1;
+            } else {
+                right = mid;
             }
         }
-        if (dp[i] > maxLength) {
-            maxLength = dp[i];
-            maxIndex = i;
+        return left;
+    };
+
+    for (let i = 0; i < n; i++) {
+        const pos = binarySearch(arr[i]);
+        if (pos > 0) {
+            parent[i] = tails[pos - 1];
+        }
+        if (pos === tails.length) {
+            tails.push(i);
+        } else {
+            tails[pos] = i;
         }
     }
 
     // 回溯找到所有 LIS 元素的索引
     const lisIndices: number[] = [];
-    let current = maxIndex;
+    let current = tails[tails.length - 1];
     while (current !== -1) {
         lisIndices.unshift(current);
         current = parent[current];
