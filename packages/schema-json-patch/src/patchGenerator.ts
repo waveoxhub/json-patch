@@ -1,6 +1,5 @@
 import { Schema } from './types/schema.js';
 import { PatchOperation, Patch } from './types/patch.js';
-import { extractPathMap } from './utils/pathUtils.js';
 import { deepEqual } from './utils/deepEqual.js';
 import { generatePatchOptionHash } from './utils/hashUtils.js';
 import { detectOrderChanges } from './utils/orderUtils.js';
@@ -30,8 +29,6 @@ const createPatch = (op: PatchOperation, path: string, value?: unknown, from?: s
 interface PathProcessingState {
     /** 已处理的路径集合，防止重复生成补丁 */
     handledPaths: Set<string>;
-    /** 所有需要处理的路径列表 */
-    allPaths: string[];
 }
 
 /**
@@ -49,8 +46,6 @@ export const generatePatches = (
 ): ReadonlyArray<Patch> => {
     const sourceData = JSON.parse(sourceJson);
     const targetData = JSON.parse(targetJson);
-    const sourcePathMap = extractPathMap(schema, sourceData);
-    const targetPathMap = extractPathMap(schema, targetData);
     const patches: Patch[] = [];
 
     // 处理顶层数组
@@ -83,7 +78,6 @@ export const generatePatches = (
                     if (schema.$item.$split === true) {
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
-                            allPaths: [],
                         };
                         generateSplitPatches(
                             itemPath,
@@ -104,9 +98,6 @@ export const generatePatches = (
                         const itemPath = `/${id}`;
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
-                            allPaths: Array.from(
-                                new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
-                            ),
                         };
 
                         generateObjectFieldPatches(
@@ -156,7 +147,6 @@ export const generatePatches = (
                     if (schema.$item.$split === true) {
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
-                            allPaths: [],
                         };
                         generateSplitPatches(
                             itemPath,
@@ -174,9 +164,6 @@ export const generatePatches = (
                     if (!deepEqual(sourceItem, targetItem)) {
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
-                            allPaths: Array.from(
-                                new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
-                            ),
                         };
 
                         generateObjectFieldPatches(
@@ -206,18 +193,8 @@ export const generatePatches = (
         const sourceObj = sourceData as Record<string, unknown>;
         const targetObj = targetData as Record<string, unknown>;
 
-        // 按路径深度排序，浅层路径优先
-        const allPaths = Array.from(
-            new Set([...sourcePathMap.keys(), ...targetPathMap.keys()])
-        ).sort((a, b) => {
-            const depthA = a.split('/').length;
-            const depthB = b.split('/').length;
-            return depthA !== depthB ? depthA - depthB : a.localeCompare(b);
-        });
-
         const state: PathProcessingState = {
             handledPaths: new Set<string>(),
-            allPaths,
         };
 
         generateObjectFieldPatches('/', sourceObj, targetObj, patches, state, schema);
@@ -305,17 +282,19 @@ const shouldReplaceWhole = (
 
     const sourceKeys = Object.keys(sourceObj);
     const targetKeys = Object.keys(targetObj);
+    const sourceKeySet = new Set(sourceKeys);
+    const targetKeySet = new Set(targetKeys);
 
     // 如果添加/删除了多个属性，使用整体替换
-    const addedKeys = targetKeys.filter(k => !sourceKeys.includes(k));
-    const removedKeys = sourceKeys.filter(k => !targetKeys.includes(k));
+    const addedKeys = targetKeys.filter(k => !sourceKeySet.has(k));
+    const removedKeys = sourceKeys.filter(k => !targetKeySet.has(k));
 
     if (addedKeys.length > 1 || removedKeys.length > 1) {
         return true;
     }
 
     // 对于单属性对象，避免整体替换
-    const commonKeys = sourceKeys.filter(k => targetKeys.includes(k));
+    const commonKeys = sourceKeys.filter(k => targetKeySet.has(k));
     if (commonKeys.length === 1) {
         return false;
     }
@@ -337,12 +316,12 @@ const shouldReplaceWhole = (
 const handleDeletedFields = (
     path: string,
     sourceKeys: string[],
-    targetKeys: string[],
+    targetKeySet: Set<string>,
     patches: Patch[],
     state: PathProcessingState
 ): void => {
     for (const key of sourceKeys) {
-        if (!targetKeys.includes(key)) {
+        if (!targetKeySet.has(key)) {
             const fieldPath = buildPath(path, key);
             if (state.handledPaths.has(fieldPath)) continue;
 
@@ -616,16 +595,18 @@ const generateObjectFieldPatches = (
 
     const sourceKeys = Object.keys(sourceObj);
     const targetKeys = Object.keys(targetObj);
+    const sourceKeySet = new Set(sourceKeys);
+    const targetKeySet = new Set(targetKeys);
 
     // 处理删除的字段
-    handleDeletedFields(path, sourceKeys, targetKeys, patches, state);
+    handleDeletedFields(path, sourceKeys, targetKeySet, patches, state);
 
     // 处理新增和修改的字段
     for (const key of targetKeys) {
         const fieldPath = buildPath(path, key);
         if (state.handledPaths.has(fieldPath)) continue;
 
-        if (!sourceKeys.includes(key)) {
+        if (!sourceKeySet.has(key)) {
             // 新增字段
             handleAddedField(fieldPath, targetObj[key], schema, key, patches, state);
         } else if (!deepEqual(sourceObj[key], targetObj[key])) {
