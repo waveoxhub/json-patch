@@ -666,17 +666,29 @@ const optimizePatches = (patches: Patch[]): ReadonlyArray<Patch> => {
     const coveredPaths = new Set<string>();
     const optimized: Patch[] = [];
 
-    // 添加未覆盖的补丁
-    for (const patch of sortedPatches) {
-        let isCovered = false;
-        for (const covered of coveredPaths) {
-            if (patch.path.startsWith(covered + '/') || patch.path === covered) {
-                isCovered = true;
-                break;
+    /**
+     * 检查路径是否被已覆盖的父路径覆盖
+     * 使用 O(d) 的父路径逐级查找，其中 d 是路径深度
+     */
+    const isPathCovered = (path: string): boolean => {
+        // 检查精确匹配
+        if (coveredPaths.has(path)) return true;
+
+        // 逐级检查父路径
+        const segments = path.split('/').filter(Boolean);
+        let currentPath = '';
+        for (const segment of segments) {
+            currentPath = currentPath + '/' + segment;
+            if (coveredPaths.has(currentPath) && currentPath !== path) {
+                return true;
             }
         }
+        return false;
+    };
 
-        if (!isCovered) {
+    // 添加未覆盖的补丁
+    for (const patch of sortedPatches) {
+        if (!isPathCovered(patch.path)) {
             optimized.push(patch);
             if (patch.op === 'replace' || patch.op === 'add') {
                 coveredPaths.add(patch.path);

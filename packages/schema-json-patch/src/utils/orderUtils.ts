@@ -66,8 +66,11 @@ export const detectOrderChanges = (sourceOrder: string[], targetOrder: string[])
 
     if (common.length <= 1) return [];
 
-    // 计算公共元素在源数组中的相对位置
-    const sourcePositions = common.map(id => sourceOrder.indexOf(id));
+    // 预建源数组索引映射，避免 O(n²) 的 indexOf 调用
+    const sourceIndexMap = new Map(sourceOrder.map((id, index) => [id, index]));
+
+    // 计算公共元素在源数组中的相对位置 (O(n))
+    const sourcePositions = common.map(id => sourceIndexMap.get(id)!);
 
     // 使用 LIS 找到不需要移动的元素索引
     const lisIndices = longestIncreasingSubsequence(sourcePositions);
