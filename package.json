@@ -14,10 +14,12 @@
   "devDependencies": {
     "@types/node": "^22.13.12",
     "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "concurrently": "^8.2.2",
     "oxlint": "^0.16.0",
     "prettier": "^3.5.3",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "vitest": "^4.0.16"
   },
   "packageManager": "pnpm@8.15.4"
 }
