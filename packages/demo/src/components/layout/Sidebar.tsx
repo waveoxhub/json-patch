@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeScene, onSceneChange }) => {
             </nav>
             <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                 <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
-                    v1.0
+                    v{__LIBRARY_VERSION__}
                 </span>
                 <button
                     className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer flex items-center justify-center"

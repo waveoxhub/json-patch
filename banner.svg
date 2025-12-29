@@ -1,83 +1,159 @@
-<svg width="100%" height="300" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="300" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f6f8ff" />
-      <stop offset="100%" stop-color="#e6eaff" />
-    </linearGradient>
-    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="100%" stop-color="#8B5CF6" />
-    </linearGradient>
-    <linearGradient id="glow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22DDCB" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#4FACFE" stop-opacity="0.8" />
+    <!-- Background Gradient -->
+    <linearGradient id="bgShadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" /> <!-- slate-900 -->
+      <stop offset="100%" stop-color="#1e293b" /> <!-- slate-800 -->
     </linearGradient>
 
-    <radialGradient id="radial-glow" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5">
-      <stop offset="0%" stop-color="#4FACFE" stop-opacity="0.5" />
-      <stop offset="100%" stop-color="#4FACFE" stop-opacity="0" />
+    <!-- Text Gradient A (Top/Main) -->
+    <linearGradient id="textGradA" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e2e8f0" /> <!-- slate-200 -->
+      <stop offset="100%" stop-color="#94a3b8" /> <!-- slate-400 -->
+    </linearGradient>
+
+    <!-- Text Gradient B (Bottom/Accent) -->
+    <linearGradient id="textGradB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#818cf8" /> <!-- indigo-400 -->
+      <stop offset="100%" stop-color="#c084fc" /> <!-- purple-400 -->
+    </linearGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+
+    <!-- Scanline Mask -->
+    <mask id="scanlines">
+      <rect x="0" y="0" width="100%" height="100%" fill="white" />
+      <pattern id="lines" width="4" height="4" patternUnits="userSpaceOnUse">
+         <rect y="2" width="4" height="1" fill="black" opacity="0.6"/>
+      </pattern>
+      <rect width="100%" height="100%" fill="url(#lines)" />
+    </mask>
+
+    <!-- Clip Paths for Split Effect -->
+    <clipPath id="clipTop">
+      <rect x="0" y="0" width="1200" height="135" />
+    </clipPath>
+    <clipPath id="clipBottom">
+      <rect x="0" y="135" width="1200" height="165" />
+    </clipPath>
+
+    <!-- Glow Gradients -->
+    <radialGradient id="glowLeft" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
     </radialGradient>
-    
-
-    <linearGradient id="title-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#22DDCB" />
-      <stop offset="100%" stop-color="#4FACFE" />
-    </linearGradient>
-    
-    <linearGradient id="company-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A365D" />
-      <stop offset="50%" stop-color="#2D3748" />
-      <stop offset="100%" stop-color="#4A5568" />
-    </linearGradient>
-    
-    <filter id="soft-glow" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="4" result="blur" />
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 10 -5" result="glow" />
-      <feBlend in="SourceGraphic" in2="glow" mode="normal" />
-    </filter>
-    
-    <filter id="company-shadow" x="-10%" y="-10%" width="120%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#FFFFFF" flood-opacity="0.8" />
-    </filter>
+    <radialGradient id="glowRight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0" />
+    </radialGradient>
   </defs>
 
-  <rect width="100%" height="100%" fill="url(#bg-gradient)" rx="20" ry="20" />
-  
-  <circle cx="950" cy="150" r="250" fill="url(#radial-glow)" opacity="0.8" />
-  
-  <g opacity="0.7">
-    <path d="M0,0 L250,0 Q270,120 200,200 Q120,270 0,250 Z" fill="url(#accent-gradient)" opacity="0.1" />
-    
-    <path d="M1200,0 L1200,200 L900,0 Z" fill="url(#accent-gradient)" opacity="0.2" />
-    
-    <circle cx="950" cy="120" r="60" fill="url(#glow-gradient)" opacity="0.6" />
-    <circle cx="880" cy="180" r="30" fill="url(#glow-gradient)" opacity="0.4" />
-    
-    <rect x="100" y="200" width="80" height="80" rx="15" ry="15" fill="url(#accent-gradient)" opacity="0.05" transform="rotate(-15 100 200)" />
-    <rect x="150" y="220" width="40" height="40" rx="10" ry="10" fill="url(#glow-gradient)" opacity="0.2" transform="rotate(15 150 220)" />
+  <!-- 1. Background -->
+  <rect width="100%" height="100%" fill="url(#bgShadow)" rx="4"/>
+  <rect width="100%" height="100%" fill="url(#gridPattern)" opacity="0.4"/>
+
+  <!-- 2. Ambient Glow Effects -->
+  <circle cx="120" cy="150" r="280" fill="url(#glowLeft)" opacity="0.12" />
+  <circle cx="1080" cy="150" r="280" fill="url(#glowRight)" opacity="0.12" />
+
+  <!-- 3. Left Side: Abstract Data Blocks -->
+  <g transform="translate(20, 50)">
+    <!-- Floating Cards Stack -->
+    <g opacity="0.6">
+      <!-- Card 3 (Back) -->
+      <rect x="70" y="20" width="130" height="80" rx="10" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+      <rect x="82" y="36" width="65" height="8" rx="3" fill="#38bdf8" opacity="0.4"/>
+      <rect x="82" y="50" width="95" height="8" rx="3" fill="#475569" opacity="0.3"/>
+      <rect x="82" y="64" width="45" height="8" rx="3" fill="#818cf8" opacity="0.4"/>
+    </g>
+    <g opacity="0.75">
+      <!-- Card 2 (Middle) -->
+      <rect x="40" y="55" width="130" height="80" rx="10" fill="#1e293b" stroke="#64748b" stroke-width="0.8"/>
+      <rect x="52" y="71" width="70" height="8" rx="3" fill="#c084fc" opacity="0.5"/>
+      <rect x="52" y="85" width="100" height="8" rx="3" fill="#475569" opacity="0.3"/>
+      <rect x="52" y="99" width="55" height="8" rx="3" fill="#22d3ee" opacity="0.5"/>
+    </g>
+    <g opacity="0.9">
+      <!-- Card 1 (Front) -->
+      <rect x="10" y="90" width="130" height="80" rx="10" fill="#1e293b" stroke="#818cf8" stroke-width="1.2"/>
+      <rect x="22" y="106" width="80" height="8" rx="3" fill="#818cf8" opacity="0.6"/>
+      <rect x="22" y="120" width="105" height="8" rx="3" fill="#475569" opacity="0.4"/>
+      <rect x="22" y="134" width="60" height="8" rx="3" fill="#f472b6" opacity="0.5"/>
+    </g>
   </g>
 
-  <text x="100" y="180" 
-        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-        font-size="110" 
-        font-weight="800" 
-        letter-spacing="-2" 
-        fill="url(#title-gradient)"
-        shape-rendering="geometricPrecision"
-        text-rendering="optimizeLegibility"
-        filter="url(#soft-glow)">
-    JSON Patch
-  </text>
+  <!-- 4. Right Side: Abstract Data Blocks (Mirrored) -->
+  <g transform="translate(970, 50)">
+    <!-- Floating Cards Stack -->
+    <g opacity="0.6">
+      <!-- Card 3 (Back) -->
+      <rect x="70" y="20" width="130" height="80" rx="10" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+      <rect x="82" y="36" width="65" height="8" rx="3" fill="#22d3ee" opacity="0.4"/>
+      <rect x="82" y="50" width="95" height="8" rx="3" fill="#475569" opacity="0.3"/>
+      <rect x="82" y="64" width="45" height="8" rx="3" fill="#22c55e" opacity="0.4"/>
+    </g>
+    <g opacity="0.75">
+      <!-- Card 2 (Middle) -->
+      <rect x="40" y="55" width="130" height="80" rx="10" fill="#1e293b" stroke="#64748b" stroke-width="0.8"/>
+      <rect x="52" y="71" width="70" height="8" rx="3" fill="#4ade80" opacity="0.5"/>
+      <rect x="52" y="85" width="100" height="8" rx="3" fill="#475569" opacity="0.3"/>
+      <rect x="52" y="99" width="55" height="8" rx="3" fill="#38bdf8" opacity="0.5"/>
+    </g>
+    <g opacity="0.9">
+      <!-- Card 1 (Front) -->
+      <rect x="10" y="90" width="130" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.2"/>
+      <rect x="22" y="106" width="80" height="8" rx="3" fill="#22c55e" opacity="0.6"/>
+      <rect x="22" y="120" width="105" height="8" rx="3" fill="#475569" opacity="0.4"/>
+      <rect x="22" y="134" width="60" height="8" rx="3" fill="#4ade80" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- 5. CENTER: ARTISTIC TEXT -->
+  <g mask="url(#scanlines)">
+    <!-- Base Layer (Top Half - Clean) -->
+    <text x="50%" y="140" text-anchor="middle" dominant-baseline="middle"
+          font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          font-size="90" font-weight="900" letter-spacing="-3"
+          fill="url(#textGradA)"
+          clip-path="url(#clipTop)">
+      JSON PATCH
+    </text>
+
+    <!-- Offset Layer (Bottom Half - Glitch/Patch) -->
+    <text x="50%" y="140" text-anchor="middle" dominant-baseline="middle"
+          font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          font-size="90" font-weight="900" letter-spacing="-3"
+          fill="url(#textGradB)"
+          clip-path="url(#clipBottom)"
+          transform="translate(4, 0)"> <!-- Shifted 4px right -->
+      JSON PATCH
+    </text>
+  </g>
   
-  <text x="1080" y="260"
-        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        font-size="28"
-        font-weight="700"
-        fill="url(#company-gradient)"
-        text-anchor="end"
-        filter="url(#company-shadow)">
-    @waveox
+  <!-- Horizontal Slice Line -->
+  <line x1="300" y1="135" x2="900" y2="135" stroke="#1e293b" stroke-width="2" />
+  <line x1="300" y1="135" x2="900" y2="135" stroke="#818cf8" stroke-width="1" stroke-dasharray="10 20" opacity="0.5"/>
+
+  <!-- Subtitle -->
+  <text x="50%" y="200" text-anchor="middle" dominant-baseline="middle"
+        font-family="'JetBrains Mono', monospace"
+        font-size="14"
+        font-weight="500"
+        letter-spacing="6"
+        fill="#64748b">
+    SCHEMA DRIVEN • CONFLICT AWARE
   </text>
-  
-  <rect x="985" y="240" width="100" height="30" rx="15" ry="15" fill="white" opacity="0.15" />
+
+  <!-- 6. Footer -->
+  <text x="1160" y="270" text-anchor="end"
+        font-family="'Inter', sans-serif"
+        font-size="12"
+        font-weight="600"
+        fill="#475569"
+        opacity="0.6">
+    @WAVEOX
+  </text>
 </svg>
