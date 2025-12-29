@@ -406,6 +406,10 @@ const pathExists = (
                 }
 
                 const pkField = schema.$item.$pk;
+                // 如果没有定义主键，无法通过主键查找
+                if (!pkField) {
+                    return false;
+                }
                 const item = current.find(
                     (i: unknown) =>
                         isObject(i) && (i as Record<string, unknown>)[pkField] === component
