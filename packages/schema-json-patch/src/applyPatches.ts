@@ -10,6 +10,49 @@ import {
 import { deepClone } from './utils/deepClone.js';
 
 /**
+ * 主键索引缓存，用于加速数组元素查找
+ * 键为数组的引用标识，值为主键到索引的 Map
+ */
+type PkIndexCache = WeakMap<unknown[], Map<string, number>>;
+
+/**
+ * 为数组建立主键索引
+ */
+const buildPkIndex = (array: unknown[], pkField: string): Map<string, number> => {
+    const index = new Map<string, number>();
+    for (let i = 0; i < array.length; i++) {
+        const item = array[i];
+        if (isObject(item) && pkField in item) {
+            index.set(String(item[pkField]), i);
+        }
+    }
+    return index;
+};
+
+/**
+ * 获取或创建数组的主键索引
+ */
+const getPkIndex = (
+    cache: PkIndexCache,
+    array: unknown[],
+    pkField: string
+): Map<string, number> => {
+    let index = cache.get(array);
+    if (!index) {
+        index = buildPkIndex(array, pkField);
+        cache.set(array, index);
+    }
+    return index;
+};
+
+/**
+ * 使索引缓存失效（当数组结构变化时调用）
+ */
+const invalidatePkIndex = (cache: PkIndexCache, array: unknown[]): void => {
+    cache.delete(array);
+};
+
+/**
  * 将补丁应用到JSON状态
  *
  * @param sourceJson - 源JSON字符串
@@ -23,9 +66,17 @@ export const applyPatches = (
     schema: Schema
 ): string => {
     try {
-        let state = JSON.parse(sourceJson);
+        // 优化：只在开始时克隆一次，后续就地修改
+        let state: unknown = deepClone(JSON.parse(sourceJson));
+        // 创建主键索引缓存
+        const pkIndexCache: PkIndexCache = new WeakMap();
+
         for (const patch of patches) {
-            state = applyPatch(state, patch, schema);
+            const newState = applyPatchInPlace(state, patch, schema, pkIndexCache);
+            // 如果返回了新状态（根节点替换），则更新 state
+            if (newState !== undefined) {
+                state = newState;
+            }
         }
         return JSON.stringify(state);
     } catch (error) {
@@ -37,27 +88,31 @@ export const applyPatches = (
 };
 
 /**
- * 将单个补丁应用到状态对象
+ * 将单个补丁就地应用到状态对象（不克隆）
  *
- * @param state - 当前状态
+ * @param state - 当前状态（会被修改）
  * @param patch - 补丁对象
  * @param schema - 数据结构模式
- * @returns 更新后的状态
+ * @param pkIndexCache - 主键索引缓存
+ * @returns 仅在根节点替换时返回新状态，其他情况返回 undefined
  */
-const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
+const applyPatchInPlace = (
+    state: unknown,
+    patch: Patch,
+    schema: Schema,
+    pkIndexCache: PkIndexCache
+): unknown | undefined => {
     const { op, path, value } = patch;
     const pathComponents = parseJsonPath(path);
 
-    // 处理空路径的情况（整个文档）
+    // 处理空路径的情况（整个文档替换）
     if (pathComponents.length === 0) {
         return op === 'remove' ? null : value;
     }
 
-    const result = deepClone(state);
-
     switch (op) {
         case 'add':
-            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+            modifyAtPath(state, pathComponents, schema, pkIndexCache, (parent, key) => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
@@ -69,17 +124,26 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                     if (isObject(value) && hasObjectItemsWithPk(arraySchema)) {
                         const pkField = getPrimaryKeyField(arraySchema);
                         if (pkField && pkField in value) {
-                            const index = getOrCreateArrayIndex(
+                            const index = getOrCreateArrayIndexWithCache(
                                 parent,
                                 String(value[pkField]),
-                                arraySchema
+                                arraySchema,
+                                pkIndexCache
                             );
                             parent[index] = value;
+                            // 更新索引缓存
+                            const pkIndex = pkIndexCache.get(parent);
+                            if (pkIndex) {
+                                pkIndex.set(String(value[pkField]), index);
+                            }
                         } else {
                             parent.push(value);
+                            invalidatePkIndex(pkIndexCache, parent);
                         }
                     } else {
-                        parent[findInsertionIndex(parent, key, arraySchema)] = value;
+                        parent[
+                            findInsertionIndexWithCache(parent, key, arraySchema, pkIndexCache)
+                        ] = value;
                     }
                 } else if (isObject(parent)) {
                     const fieldSchema = getSchemaForPath(schema, pathComponents);
@@ -94,16 +158,24 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             const pkField = getPrimaryKeyField(fieldSchema);
                             let index;
                             if (pkField && pkField in value) {
-                                index = getOrCreateArrayIndex(
+                                index = getOrCreateArrayIndexWithCache(
                                     array,
                                     String(value[pkField]),
-                                    fieldSchema
+                                    fieldSchema,
+                                    pkIndexCache
                                 );
                             } else {
                                 array.push(value);
                                 index = array.length - 1;
                             }
                             array[index] = value;
+                            // 更新索引缓存
+                            if (pkField && pkField in value) {
+                                const pkIndex = pkIndexCache.get(array);
+                                if (pkIndex) {
+                                    pkIndex.set(String(value[pkField]), index);
+                                }
+                            }
                         } else {
                             (parent[key] as unknown[]).push(value);
                         }
@@ -115,7 +187,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             break;
 
         case 'remove':
-            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+            modifyAtPath(state, pathComponents, schema, pkIndexCache, (parent, key) => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
@@ -123,9 +195,11 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    const index = findArrayIndex(parent, key, arraySchema);
+                    const index = findArrayIndexWithCache(parent, key, arraySchema, pkIndexCache);
                     if (index !== -1) {
                         parent.splice(index, 1);
+                        // 删除后索引失效，需要重建
+                        invalidatePkIndex(pkIndexCache, parent);
                     }
                 } else if (isObject(parent)) {
                     delete parent[key];
@@ -134,7 +208,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             break;
 
         case 'replace':
-            modifyAtPath(result, pathComponents, schema, (parent, key) => {
+            modifyAtPath(state, pathComponents, schema, pkIndexCache, (parent, key) => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
@@ -142,7 +216,12 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for path '${path}'`
                         );
                     }
-                    const index = getOrCreateArrayIndex(parent, key, arraySchema);
+                    const index = getOrCreateArrayIndexWithCache(
+                        parent,
+                        key,
+                        arraySchema,
+                        pkIndexCache
+                    );
                     parent[index] = value;
                 } else if (isObject(parent)) {
                     parent[key] = value;
@@ -151,7 +230,6 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             break;
 
         case 'move': {
-            // move 操作：从 from 路径移除值，然后添加到 path 路径
             const { from } = patch;
             if (!from) {
                 throw new Error('Move operation requires a "from" field');
@@ -161,7 +239,7 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             let movedValue: unknown;
 
             // 1. 从源路径提取并移除值
-            modifyAtPath(result, fromComponents, schema, (parent, key) => {
+            modifyAtPath(state, fromComponents, schema, pkIndexCache, (parent, key) => {
                 if (Array.isArray(parent)) {
                     const arraySchema = getSchemaForPath(schema, fromComponents.slice(0, -1));
                     if (!arraySchema || arraySchema.$type !== 'array') {
@@ -169,12 +247,13 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             `Schema mismatch: expected array schema for from path '${from}'`
                         );
                     }
-                    const index = findArrayIndex(parent, key, arraySchema);
+                    const index = findArrayIndexWithCache(parent, key, arraySchema, pkIndexCache);
                     if (index === -1) {
                         throw new Error(`Source path '${from}' does not exist for move operation`);
                     }
                     movedValue = parent[index];
                     parent.splice(index, 1);
+                    invalidatePkIndex(pkIndexCache, parent);
                 } else if (isObject(parent)) {
                     if (!(key in parent)) {
                         throw new Error(`Source path '${from}' does not exist for move operation`);
@@ -185,21 +264,16 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
             });
 
             // 2. 将值添加到目标路径
-            // 语义说明：
-            //   - /0 或 /fieldPath/0：移动到数组第一位
-            //   - /{prevId} 或 /fieldPath/{prevId}：移动到 prevId 元素之后
-            //   - /- 或 /fieldPath/-：移动到数组末尾
             if (path.endsWith('/-')) {
-                // 添加到数组末尾
                 const parentPath = path.slice(0, -2);
                 const parentComponents = parentPath ? parseJsonPath(parentPath) : [];
-                modifyAtPath(result, [...parentComponents, '-'], schema, parent => {
+                modifyAtPath(state, [...parentComponents, '-'], schema, pkIndexCache, parent => {
                     if (Array.isArray(parent)) {
                         parent.push(movedValue);
                     }
                 });
             } else {
-                modifyAtPath(result, pathComponents, schema, (parent, key) => {
+                modifyAtPath(state, pathComponents, schema, pkIndexCache, (parent, key) => {
                     if (Array.isArray(parent)) {
                         const arraySchema = getSchemaForPath(schema, pathComponents.slice(0, -1));
                         if (!arraySchema || arraySchema.$type !== 'array') {
@@ -208,18 +282,21 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
                             );
                         }
 
-                        // 检查是否是数字索引 (如 "0" 表示第一位)
                         const numericIndex = parseInt(key, 10);
                         if (!isNaN(numericIndex) && numericIndex === 0) {
-                            // 移动到第一位
                             parent.unshift(movedValue);
+                            invalidatePkIndex(pkIndexCache, parent);
                         } else {
-                            // 在目标元素之后插入
-                            const targetIndex = findArrayIndex(parent, key, arraySchema);
+                            const targetIndex = findArrayIndexWithCache(
+                                parent,
+                                key,
+                                arraySchema,
+                                pkIndexCache
+                            );
                             if (targetIndex !== -1) {
                                 parent.splice(targetIndex + 1, 0, movedValue);
+                                invalidatePkIndex(pkIndexCache, parent);
                             } else {
-                                // 如果目标不存在，添加到末尾
                                 parent.push(movedValue);
                             }
                         }
@@ -234,9 +311,178 @@ const applyPatch = (state: unknown, patch: Patch, schema: Schema): unknown => {
         default:
             throw new Error(`Unsupported operation: ${op}`);
     }
-
-    return result;
 };
+
+/**
+ * 在数组中查找适合插入的索引位置（使用缓存）
+ */
+const findInsertionIndexWithCache = (
+    array: unknown[],
+    key: string,
+    schema: ArraySchema,
+    cache: PkIndexCache
+): number => {
+    const index = findArrayIndexWithCache(array, key, schema, cache);
+    return index !== -1 ? index : array.length;
+};
+
+/**
+ * 在数组中查找项目的索引（使用主键索引缓存）
+ */
+const findArrayIndexWithCache = (
+    array: unknown[],
+    key: string,
+    schema: ArraySchema,
+    cache: PkIndexCache
+): number => {
+    const pkField = getPrimaryKeyField(schema);
+
+    if (pkField) {
+        // 使用主键索引缓存进行 O(1) 查找
+        const pkIndex = getPkIndex(cache, array, pkField);
+        const cachedIndex = pkIndex.get(key);
+        if (cachedIndex !== undefined && cachedIndex < array.length) {
+            // 验证缓存的索引是否仍然有效
+            const item = array[cachedIndex];
+            if (isObject(item) && String(item[pkField]) === key) {
+                return cachedIndex;
+            }
+            // 缓存失效，重建索引
+            cache.delete(array);
+            return findArrayIndexWithCache(array, key, schema, cache);
+        }
+        return -1;
+    }
+
+    // 无主键，尝试直接使用索引
+    const index = parseInt(key, 10);
+    return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
+};
+
+/**
+ * 在数组中查找或创建项目，返回其索引（使用缓存）
+ */
+const getOrCreateArrayIndexWithCache = (
+    array: unknown[],
+    key: string,
+    schema: ArraySchema,
+    cache: PkIndexCache
+): number => {
+    const index = findArrayIndexWithCache(array, key, schema, cache);
+    if (index !== -1) {
+        return index;
+    }
+
+    const pkField = getPrimaryKeyField(schema);
+    if (pkField) {
+        const newItem = { [pkField]: key };
+        array.push(newItem);
+        // 更新缓存
+        const pkIndex = cache.get(array);
+        if (pkIndex) {
+            pkIndex.set(key, array.length - 1);
+        }
+        return array.length - 1;
+    }
+
+    const numIndex = parseInt(key, 10);
+    if (!isNaN(numIndex) && numIndex >= 0) {
+        if (numIndex >= array.length) {
+            for (let i = array.length; i < numIndex; i++) {
+                array.push(null);
+            }
+            array.push(null);
+        }
+        return numIndex;
+    }
+
+    array.push(null);
+    return array.length - 1;
+};
+
+/**
+ * 在指定路径修改对象，使用迭代而非递归方式
+ */
+const modifyAtPath = (
+    root: unknown,
+    pathComponents: ReadonlyArray<string>,
+    schema: Schema,
+    pkIndexCache: PkIndexCache,
+    modifierFn: (parent: Record<string, unknown> | unknown[], key: string) => void
+): void => {
+    if (pathComponents.length === 0) {
+        return;
+    }
+
+    let current = root;
+    let currentSchema: Schema | undefined = schema;
+    const lastIndex = pathComponents.length - 1;
+
+    for (let i = 0; i < lastIndex; i++) {
+        const component = pathComponents[i];
+
+        if (!currentSchema) {
+            throw new Error(`Schema not found for path component: ${component}`);
+        }
+
+        if (currentSchema.$type === 'object') {
+            if (!isObject(current)) {
+                throw new Error(`Expected object at path component: ${component}`);
+            }
+
+            const fieldSchema = currentSchema.$fields[component];
+            if (!fieldSchema) {
+                throw new Error(`Schema field not found: ${component}`);
+            }
+
+            if (current[component] === undefined) {
+                current[component] = fieldSchema.$type === 'array' ? [] : {};
+            }
+
+            current = current[component];
+            currentSchema = fieldSchema as Schema;
+        } else if (currentSchema.$type === 'array') {
+            if (!Array.isArray(current)) {
+                throw new Error(`Expected array at path component: ${component}`);
+            }
+
+            const arraySchema: ArraySchema = currentSchema;
+            const index = getOrCreateArrayIndexWithCache(
+                current,
+                component,
+                arraySchema,
+                pkIndexCache
+            );
+
+            if (current[index] === undefined) {
+                if (isObject(arraySchema.$item)) {
+                    const itemType = arraySchema.$item.$type;
+                    current[index] = itemType === 'object' ? {} : null;
+                } else {
+                    current[index] = null;
+                }
+            }
+
+            current = current[index];
+            if (isObject(arraySchema.$item) && arraySchema.$item.$type === 'object') {
+                currentSchema = arraySchema.$item;
+            } else {
+                currentSchema = undefined;
+            }
+        } else {
+            throw new Error(
+                `Unexpected schema type: ${
+                    currentSchema ? (currentSchema as any).$type : 'unknown'
+                }`
+            );
+        }
+    }
+
+    const lastComponent = pathComponents[lastIndex];
+    modifierFn(current as Record<string, unknown> | unknown[], lastComponent);
+};
+
+// ============ 保留原有的独立函数以支持其他可能的调用 ============
 
 /**
  * 在数组中查找适合插入的索引位置
@@ -252,14 +498,12 @@ const findInsertionIndex = (array: unknown[], key: string, schema: ArraySchema):
 const findArrayIndex = (array: unknown[], key: string, schema: ArraySchema): number => {
     const pkField = getPrimaryKeyField(schema);
 
-    // 如果有主键，使用主键查找
     if (pkField) {
         return array.findIndex(
             item => isObject(item) && item[pkField] !== undefined && String(item[pkField]) === key
         );
     }
 
-    // 无主键，尝试直接使用索引
     const index = parseInt(key, 10);
     return isNaN(index) ? -1 : Math.min(Math.max(0, index), array.length - 1);
 };
@@ -273,7 +517,6 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
         return index;
     }
 
-    // 如果有主键，需要创建一个新对象
     const pkField = getPrimaryKeyField(schema);
     if (pkField) {
         const newItem = { [pkField]: key };
@@ -281,10 +524,8 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
         return array.length - 1;
     }
 
-    // 对于非对象数组，使用键作为索引
     const numIndex = parseInt(key, 10);
     if (!isNaN(numIndex) && numIndex >= 0) {
-        // 如果索引超出范围，填充数组
         if (numIndex >= array.length) {
             for (let i = array.length; i < numIndex; i++) {
                 array.push(null);
@@ -294,92 +535,9 @@ const getOrCreateArrayIndex = (array: unknown[], key: string, schema: ArraySchem
         return numIndex;
     }
 
-    // 如果无法使用键作为索引，添加到数组末尾
     array.push(null);
     return array.length - 1;
 };
 
-/**
- * 在指定路径修改对象，使用迭代而非递归方式
- */
-const modifyAtPath = (
-    root: unknown,
-    pathComponents: ReadonlyArray<string>,
-    schema: Schema,
-    modifierFn: (parent: Record<string, unknown> | unknown[], key: string) => void
-): void => {
-    if (pathComponents.length === 0) {
-        return;
-    }
-
-    let current = root;
-    let currentSchema: Schema | undefined = schema;
-    const lastIndex = pathComponents.length - 1;
-
-    // 遍历路径直到倒数第二个组件
-    for (let i = 0; i < lastIndex; i++) {
-        const component = pathComponents[i];
-
-        if (!currentSchema) {
-            throw new Error(`Schema not found for path component: ${component}`);
-        }
-
-        if (currentSchema.$type === 'object') {
-            if (!isObject(current)) {
-                throw new Error(`Expected object at path component: ${component}`);
-            }
-
-            // 获取字段模式
-            const fieldSchema = currentSchema.$fields[component];
-            if (!fieldSchema) {
-                throw new Error(`Schema field not found: ${component}`);
-            }
-
-            // 如果字段不存在，创建它
-            if (current[component] === undefined) {
-                current[component] = fieldSchema.$type === 'array' ? [] : {};
-            }
-
-            current = current[component];
-            currentSchema = fieldSchema as Schema;
-        } else if (currentSchema.$type === 'array') {
-            if (!Array.isArray(current)) {
-                throw new Error(`Expected array at path component: ${component}`);
-            }
-
-            // 显式类型注释，确保完整的ArraySchema类型
-            const arraySchema: ArraySchema = currentSchema;
-            const index = getOrCreateArrayIndex(current, component, arraySchema);
-
-            // 确保索引位置有值
-            if (current[index] === undefined) {
-                if (isObject(arraySchema.$item)) {
-                    const itemType = arraySchema.$item.$type;
-                    current[index] = itemType === 'object' ? {} : null;
-                } else {
-                    // 基本类型的数组项
-                    current[index] = null;
-                }
-            }
-
-            current = current[index];
-            // 明确处理$item可能的两种类型
-            if (isObject(arraySchema.$item) && arraySchema.$item.$type === 'object') {
-                currentSchema = arraySchema.$item;
-            } else {
-                // 如果是基本类型，则没有进一步的schema
-                currentSchema = undefined;
-            }
-        } else {
-            throw new Error(
-                `Unexpected schema type: ${
-                    currentSchema ? (currentSchema as any).$type : 'unknown'
-                }`
-            );
-        }
-    }
-
-    // 对最后一个路径组件应用修改函数
-    const lastComponent = pathComponents[lastIndex];
-    modifierFn(current as Record<string, unknown> | unknown[], lastComponent);
-};
+// 导出用于测试的辅助函数（可选）
+export { findArrayIndex, getOrCreateArrayIndex, findInsertionIndex };
