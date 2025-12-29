@@ -35,17 +35,9 @@
 
 ## 性能
 
-| 功能             | 场景             | 性能               |
-| ---------------- | ---------------- | ------------------ |
-| generatePatches  | 100 项, 20% 变更 | ~1,430 ops/sec     |
-| applyPatches     | 100 项, 稀疏补丁 | ~326 ops/sec       |
-| detectConflicts  | 2 组冲突         | ~13,672 ops/sec    |
-| resolveConflicts | 10 个冲突        | ~274,781 ops/sec   |
-| validatePatches  | 10 个补丁        | ~2,601,370 ops/sec |
+详细的性能基准测试报告请参考独立文档：
 
-分析表明，随着数据量增长，每项处理时间反而**降低**（500 项时扩展因子为 0.68x），这证明了库具备 **O(n) 线性复杂度**。
-
-📊 [查看详细基准测试](./docs/BENCHMARKS.zh-CN.md)
+📊 [查看详细基准测试报告](./docs/BENCHMARKS.zh-CN.md)
 
 ## 安装
 

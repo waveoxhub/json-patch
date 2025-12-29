@@ -29,6 +29,20 @@ Traditional JSON Patch (RFC 6902) uses array indices like `/items/0/name`. When 
 | Multi-user collaboration | ❌                     | ✅ Conflict detection & resolution |
 | Patch validation         | ❌                     | ✅ Schema-aware validation         |
 
+## ⚡ Performance
+
+Benchmark results for core operations with 100 items:
+
+| Feature              | Scenario              | Performance (ops/sec) |
+| :------------------- | :-------------------- | :-------------------- |
+| **generatePatches**  | 100 Items, 20% Change | **~1,600**            |
+| **applyPatches**     | 100 Items, Sparse     | **~3,000**            |
+| **detectConflicts**  | 2 Groups, Mixed       | **~10,900**           |
+| **resolveConflicts** | 10 Conflicts          | **~270,000**          |
+
+> [!NOTE]
+> For the full benchmark report, please see [BENCHMARKS](./packages/schema-json-patch/docs/BENCHMARKS.md).
+
 ## 📝 Demo
 
 Try the interactive demo: **[https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)**
