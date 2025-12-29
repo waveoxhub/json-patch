@@ -1,6 +1,5 @@
 /**
  * 计算最长递增子序列的索引
- * 使用二分查找优化，时间复杂度 O(n log n)
  *
  * @param arr - 输入数组
  * @returns 最长递增子序列中元素的索引数组
@@ -66,10 +65,10 @@ export const detectOrderChanges = (sourceOrder: string[], targetOrder: string[])
 
     if (common.length <= 1) return [];
 
-    // 预建源数组索引映射，避免 O(n²) 的 indexOf 调用
+    // 预建源数组索引映射
     const sourceIndexMap = new Map(sourceOrder.map((id, index) => [id, index]));
 
-    // 计算公共元素在源数组中的相对位置 (O(n))
+    // 计算公共元素在源数组中的相对位置
     const sourcePositions = common.map(id => sourceIndexMap.get(id)!);
 
     // 使用 LIS 找到不需要移动的元素索引

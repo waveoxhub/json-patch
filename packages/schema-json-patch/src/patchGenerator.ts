@@ -668,7 +668,6 @@ const optimizePatches = (patches: Patch[]): ReadonlyArray<Patch> => {
 
     /**
      * 检查路径是否被已覆盖的父路径覆盖
-     * 使用 O(d) 的父路径逐级查找，其中 d 是路径深度
      */
     const isPathCovered = (path: string): boolean => {
         // 检查精确匹配

@@ -76,8 +76,8 @@ const ConflictPage: React.FC = () => {
         try {
             const result = generateResolvedPatch(groups, [...conflictList], res, []);
             setResolvedPatches([...result.resolvedPatches]);
-        } catch (e) {
-            console.error(e);
+        } catch {
+            // 静默处理错误
         }
     };
 

@@ -3,7 +3,6 @@ import { HASH_CONFIG } from '../constants.js';
 
 /**
  * 生成补丁选项的哈希值
- * 使用 FNV-1a 算法，提供更好的分布性和跨平台一致性
  * @param op 补丁操作类型
  * @param path 补丁路径
  * @param value 补丁值
