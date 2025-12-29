@@ -74,6 +74,3 @@ for (const size of sizes) {
         `${size}\t| ${avgTime.toFixed(2)}\t\t| ${opsPerSec.toFixed(0)}\t\t| ${timePerItem.toFixed(2)}\t\t\t| ${scalingFactor.toFixed(2)}x`
     );
 }
-
-console.log('\n⚠️ 理想情况下 Scaling factor 应该接近 1.0x (线性扩展)');
-console.log('   如果显著大于 1，表明存在超线性（O(n²) 或更差）的性能问题\n');

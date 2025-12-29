@@ -120,6 +120,3 @@ for (const size of sizes) {
         `${size}\t| ${avgTime.toFixed(2)}\t\t| ${timePerItem.toFixed(2)}\t\t\t| ${scalingFactor.toFixed(2)}x`
     );
 }
-
-console.log('\n✅ 如果 Scaling factor 保持 < 2x，性能是可接受的');
-console.log('❌ 如果 Scaling factor > 2x 且持续增长，存在非线性性能问题\n');
