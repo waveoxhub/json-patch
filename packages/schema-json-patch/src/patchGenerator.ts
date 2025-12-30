@@ -35,8 +35,8 @@ interface PathProcessingState {
  * 根据 Schema 生成两个对象之间的补丁
  *
  * @param schema - 数据结构模式
- * @param sourceJson - 源数据
- * @param targetJson - 目标数据
+ * @param sourceJson - 源数据 (JSON 字符串)
+ * @param targetJson - 目标数据 (JSON 字符串)
  * @returns 补丁数组
  */
 export const generatePatches = (
@@ -46,6 +46,34 @@ export const generatePatches = (
 ): ReadonlyArray<Patch> => {
     const sourceData = JSON.parse(sourceJson);
     const targetData = JSON.parse(targetJson);
+    return generatePatchesCore(schema, sourceData, targetData);
+};
+
+/**
+ * 根据 Schema 生成两个已解析对象之间的补丁
+ * 适用于数据已经解析的场景，可避免重复 JSON.parse 的性能开销
+ *
+ * @param schema - 数据结构模式
+ * @param sourceData - 源数据 (已解析的对象)
+ * @param targetData - 目标数据 (已解析的对象)
+ * @returns 补丁数组
+ */
+export const generatePatchesFromData = (
+    schema: Schema,
+    sourceData: unknown,
+    targetData: unknown
+): ReadonlyArray<Patch> => {
+    return generatePatchesCore(schema, sourceData, targetData);
+};
+
+/**
+ * 核心补丁生成逻辑
+ */
+const generatePatchesCore = (
+    schema: Schema,
+    sourceData: unknown,
+    targetData: unknown
+): ReadonlyArray<Patch> => {
     const patches: Patch[] = [];
 
     // 处理顶层数组
@@ -119,14 +147,16 @@ export const generatePatches = (
                 const targetOrder = targetData.map(item => String(item[pkField]));
                 const movedIds = detectOrderChanges(sourceOrder, targetOrder);
 
-                for (const id of movedIds) {
-                    // from: 源元素的主键路径
-                    // path: 目标位置 - 使用目标索引位置
-                    //   - 如果移动到第一位，使用 /0
-                    //   - 否则使用前一个元素的主键路径（表示插入到该元素之后）
-                    const targetIndex = targetOrder.indexOf(id);
-                    const toPath = targetIndex === 0 ? '/0' : `/${targetOrder[targetIndex - 1]}`;
-                    patches.push(createPatch('move', toPath, undefined, `/${id}`));
+                if (movedIds.length > 0) {
+                    // 构建目标顺序索引 Map，避免 indexOf 的 O(n) 查找
+                    const targetOrderMap = new Map(targetOrder.map((id, idx) => [id, idx]));
+
+                    for (const id of movedIds) {
+                        const targetIndex = targetOrderMap.get(id)!;
+                        const toPath =
+                            targetIndex === 0 ? '/0' : `/${targetOrder[targetIndex - 1]}`;
+                        patches.push(createPatch('move', toPath, undefined, `/${id}`));
+                    }
                 }
             }
         } else {
@@ -206,10 +236,10 @@ export const generatePatches = (
 };
 
 /**
- * 构建路径字符串，处理斜杠问题
+ * 构建路径字符串
  */
 const buildPath = (basePath: string, key: string): string =>
-    basePath.endsWith('/') ? `${basePath}${key}` : `${basePath}/${key}`;
+    basePath === '/' ? `/${key}` : `${basePath}/${key}`;
 
 /**
  * 为对象生成拆分的 add 补丁
@@ -270,13 +300,17 @@ const shouldReplaceWhole = (
     targetObj: Record<string, unknown>,
     schema: Schema
 ): boolean => {
+    // 快速引用相等检查
+    if (sourceObj === targetObj) return false;
+
     // 如果 Schema 配置了 $split，强制不整体替换
     if (schema.$type === 'object' && '$split' in schema && schema.$split === true) {
         return false;
     }
 
-    // 对于包含非对象成员的数组，替换整个数组
+    // 对于包含非对象成员的数组，替换整个数组（需要先检查是否有变化）
     if (schema.$type === 'array' && schema.$item && schema.$item.$type !== 'object') {
+        // 这里只检查是否应该整体替换，实际差异由调用者确认
         return true;
     }
 
@@ -430,18 +464,19 @@ const handleNestedArrayWithPk = (
         const targetOrder = targetValue.map(item => String(item[pkField]));
         const movedIds = detectOrderChanges(sourceOrder, targetOrder);
 
-        for (const id of movedIds) {
-            // from: 源元素的主键路径
-            // path: 目标位置 - 使用目标索引位置
-            //   - 如果移动到第一位，使用 /0
-            //   - 否则使用前一个元素的主键路径（表示插入到该元素之后）
-            const targetIndex = targetOrder.indexOf(id);
-            const toPath =
-                targetIndex === 0
-                    ? buildPath(fieldPath, '0')
-                    : buildPath(fieldPath, targetOrder[targetIndex - 1]);
-            const fromPath = buildPath(fieldPath, id);
-            patches.push(createPatch('move', toPath, undefined, fromPath));
+        if (movedIds.length > 0) {
+            // 构建目标顺序索引 Map，避免 indexOf 的 O(n) 查找
+            const targetOrderMap = new Map(targetOrder.map((id, idx) => [id, idx]));
+
+            for (const id of movedIds) {
+                const targetIndex = targetOrderMap.get(id)!;
+                const toPath =
+                    targetIndex === 0
+                        ? buildPath(fieldPath, '0')
+                        : buildPath(fieldPath, targetOrder[targetIndex - 1]);
+                const fromPath = buildPath(fieldPath, id);
+                patches.push(createPatch('move', toPath, undefined, fromPath));
+            }
         }
     }
 };
@@ -581,8 +616,8 @@ const generateObjectFieldPatches = (
     state: PathProcessingState,
     schema: Schema
 ): void => {
-    // 检查是否需要整体替换
-    if (!deepEqual(sourceObj, targetObj) && shouldReplaceWhole(sourceObj, targetObj, schema)) {
+    // 检查是否需要整体替换（shouldReplaceWhole 内部会检查各字段差异）
+    if (shouldReplaceWhole(sourceObj, targetObj, schema)) {
         patches.push(createPatch('replace', path === '/' ? '' : path, targetObj));
         state.handledPaths.add(path);
 
@@ -646,51 +681,55 @@ const getOperationPriority = (op: string): number => {
 const optimizePatches = (patches: Patch[]): ReadonlyArray<Patch> => {
     if (patches.length <= 1) return patches;
 
+    // 预计算路径深度，避免重复 split
+    const patchesWithDepth = patches.map(p => ({
+        patch: p,
+        depth: p.path.split('/').length - 1,
+    }));
+
     // 按操作类型和路径深度排序
-    const sortedPatches = [...patches].sort((a, b) => {
-        const priorityA = getOperationPriority(a.op);
-        const priorityB = getOperationPriority(b.op);
+    patchesWithDepth.sort((a, b) => {
+        const priorityA = getOperationPriority(a.patch.op);
+        const priorityB = getOperationPriority(b.patch.op);
 
         if (priorityA !== priorityB) {
             return priorityA - priorityB;
         }
 
-        // 从浅到深排序
-        const depthA = a.path.split('/').filter(Boolean).length;
-        const depthB = b.path.split('/').filter(Boolean).length;
-
-        return depthA - depthB;
+        return a.depth - b.depth;
     });
 
-    // 记录已处理的路径
+    // 记录已覆盖的路径
     const coveredPaths = new Set<string>();
     const optimized: Patch[] = [];
 
-    /**
-     * 检查路径是否被已覆盖的父路径覆盖
-     */
-    const isPathCovered = (path: string): boolean => {
-        // 检查精确匹配
-        if (coveredPaths.has(path)) return true;
+    // 添加未覆盖的补丁
+    for (const { patch, depth } of patchesWithDepth) {
+        const path = patch.path;
 
-        // 逐级检查父路径
-        const segments = path.split('/').filter(Boolean);
-        let currentPath = '';
-        for (const segment of segments) {
-            currentPath = currentPath + '/' + segment;
-            if (coveredPaths.has(currentPath) && currentPath !== path) {
-                return true;
+        // 快速检查：精确匹配
+        if (coveredPaths.has(path)) continue;
+
+        // 检查是否有父路径已覆盖
+        let isCovered = false;
+        if (depth > 1) {
+            let parentPath = '';
+            const len = path.length;
+            for (let i = 1; i < len; i++) {
+                if (path[i] === '/') {
+                    parentPath = path.slice(0, i);
+                    if (coveredPaths.has(parentPath)) {
+                        isCovered = true;
+                        break;
+                    }
+                }
             }
         }
-        return false;
-    };
 
-    // 添加未覆盖的补丁
-    for (const patch of sortedPatches) {
-        if (!isPathCovered(patch.path)) {
+        if (!isCovered) {
             optimized.push(patch);
             if (patch.op === 'replace' || patch.op === 'add') {
-                coveredPaths.add(patch.path);
+                coveredPaths.add(path);
             }
         }
     }
