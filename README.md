@@ -33,12 +33,13 @@ Traditional JSON Patch (RFC 6902) uses array indices like `/items/0/name`. When 
 
 Benchmark results for core operations with 100 items:
 
-| Feature              | Scenario              | Performance (ops/sec) |
-| :------------------- | :-------------------- | :-------------------- |
-| **generatePatches**  | 100 Items, 20% Change | **~1,600**            |
-| **applyPatches**     | 100 Items, Sparse     | **~3,000**            |
-| **detectConflicts**  | 2 Groups, Mixed       | **~10,900**           |
-| **resolveConflicts** | 10 Conflicts          | **~270,000**          |
+| Feature                     | Scenario              | Performance (ops/sec) |
+| :-------------------------- | :-------------------- | :-------------------- |
+| **generatePatches**         | 100 Items, 20% Change | **~1,500**            |
+| **generatePatchesFromData** | 500 Items, 10% Change | **~1,500** ⚡         |
+| **applyPatches**            | 100 Items, Sparse     | **~3,000**            |
+| **detectConflicts**         | 2 Groups, Mixed       | **~10,900**           |
+| **resolveConflicts**        | 10 Conflicts          | **~270,000**          |
 
 > [!NOTE]
 > For the full benchmark report, please see [BENCHMARKS](./packages/schema-json-patch/docs/BENCHMARKS.md).

@@ -33,12 +33,13 @@
 
 核心操作在 100 项数据规模下的基准测试结果：
 
-| 功能                 | 场景             | 性能 (ops/sec) |
-| :------------------- | :--------------- | :------------- |
-| **generatePatches**  | 100 项, 20% 变动 | **~1,600**     |
-| **applyPatches**     | 100 项, 稀疏补丁 | **~3,000**     |
-| **detectConflicts**  | 2 组, 混合冲突   | **~10,900**    |
-| **resolveConflicts** | 10 个冲突        | **~270,000**   |
+| 功能                        | 场景             | 性能 (ops/sec) |
+| :-------------------------- | :--------------- | :------------- |
+| **generatePatches**         | 100 项, 20% 变动 | **~1,500**     |
+| **generatePatchesFromData** | 500 项, 10% 变动 | **~1,500** ⚡  |
+| **applyPatches**            | 100 项, 稀疏补丁 | **~3,000**     |
+| **detectConflicts**         | 2 组, 混合冲突   | **~10,900**    |
+| **resolveConflicts**        | 10 个冲突        | **~270,000**   |
 
 > [!NOTE]
 > 完整基准测试报告请查看 [BENCHMARKS](./packages/schema-json-patch/docs/BENCHMARKS.zh-CN.md)。

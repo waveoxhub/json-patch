@@ -4,42 +4,52 @@ Detailed performance benchmarks for `@waveox/schema-json-patch`.
 
 ## Summary
 
-| Function             | Scenario                  | Performance        |
-| -------------------- | ------------------------- | ------------------ |
-| **generatePatches**  | 10 items, few changes     | ~15,005 ops/sec    |
-| **generatePatches**  | 100 items, 20% changes    | ~1,617 ops/sec     |
-| **generatePatches**  | 500 items, 10% changes    | ~314 ops/sec       |
-| **applyPatches**     | 10 items, few patches     | ~29,173 ops/sec    |
-| **applyPatches**     | 100 items, sparse patches | ~3,089 ops/sec     |
-| **detectConflicts**  | 2 groups, few overlaps    | ~10,949 ops/sec    |
-| **detectConflicts**  | 5 groups with overlaps    | ~5,825 ops/sec     |
-| **resolveConflicts** | 3 conflicts               | ~652,499 ops/sec   |
-| **resolveConflicts** | 10 conflicts              | ~274,235 ops/sec   |
-| **validatePatches**  | 10 patches                | ~2,487,973 ops/sec |
-| **validateJson**     | 100 items                 | ~6,657 ops/sec     |
+| Function                    | Scenario                  | Performance        |
+| --------------------------- | ------------------------- | ------------------ |
+| **generatePatches**         | 10 items, few changes     | ~11,000 ops/sec    |
+| **generatePatches**         | 100 items, 20% changes    | ~1,500 ops/sec     |
+| **generatePatches**         | 500 items, 10% changes    | ~332 ops/sec       |
+| **generatePatchesFromData** | 500 items, 10% changes    | ~1,512 ops/sec     |
+| **applyPatches**            | 10 items, few patches     | ~29,173 ops/sec    |
+| **applyPatches**            | 100 items, sparse patches | ~3,089 ops/sec     |
+| **detectConflicts**         | 2 groups, few overlaps    | ~10,949 ops/sec    |
+| **detectConflicts**         | 5 groups with overlaps    | ~5,825 ops/sec     |
+| **resolveConflicts**        | 3 conflicts               | ~652,499 ops/sec   |
+| **resolveConflicts**        | 10 conflicts              | ~274,235 ops/sec   |
+| **validatePatches**         | 10 patches                | ~2,487,973 ops/sec |
+| **validateJson**            | 100 items                 | ~6,657 ops/sec     |
+
+> [!TIP] > `generatePatchesFromData` is a new high-performance API that skips JSON.parse when data is already parsed, achieving **4.5x** better performance.
 
 ---
 
 ## Detailed Results
 
-### Generate Patches (`generatePatches`)
+### Generate Patches (`generatePatches` / `generatePatchesFromData`)
 
 | Dataset      | Scenario     | ops/sec | Mean (ms) |
 | ------------ | ------------ | ------- | --------- |
-| Small (10)   | Few changes  | 15,005  | 0.06      |
-| Small (10)   | All modified | 7,654   | 0.13      |
-| Medium (100) | Sparse 20%   | 1,617   | 0.61      |
-| Medium (100) | Dense 50%    | 1,154   | 0.86      |
-| Large (500)  | Sparse 10%   | 314     | 3.18      |
-| Large (500)  | Bulk all     | 185     | 5.40      |
+| Small (10)   | Few changes  | 11,000  | 0.09      |
+| Small (10)   | All modified | 7,200   | 0.14      |
+| Medium (100) | Sparse 20%   | 1,500   | 0.67      |
+| Medium (100) | Dense 50%    | 1,200   | 0.83      |
+| Large (500)  | Sparse 10%   | 332     | 3.01      |
+| Large (500)  | Bulk all     | 182     | 5.48      |
+
+**High-Performance API `generatePatchesFromData` (500 items):**
+
+| Scenario   | ops/sec | Mean (ms) | vs generatePatches |
+| ---------- | ------- | --------- | ------------------ |
+| Sparse 10% | 1,512   | 0.66      | **4.5x faster**    |
+| Bulk all   | 303     | 3.29      | **1.7x faster**    |
 
 **Order Changes (100 items):**
 
 | Scenario        | ops/sec | Mean (ms) |
 | --------------- | ------- | --------- |
-| Fully shuffled  | 1,288   | 0.77      |
-| Reversed        | 1,364   | 0.73      |
-| Partial reorder | 1,618   | 0.61      |
+| Fully shuffled  | 1,350   | 0.74      |
+| Reversed        | 1,400   | 0.71      |
+| Partial reorder | 1,600   | 0.62      |
 
 ---
 
@@ -116,9 +126,9 @@ Detailed performance benchmarks for `@waveox/schema-json-patch`.
 
 | Size | Time (ms) | Time per item (μs) | Scaling Factor |
 | ---- | --------- | ------------------ | -------------- |
-| 10   | 0.06      | 6.0                | 1.00x          |
-| 100  | 0.61      | 6.1                | 1.01x          |
-| 500  | 3.18      | 6.4                | 1.06x          |
+| 10   | 0.09      | 9.0                | 1.00x          |
+| 100  | 0.67      | 6.7                | 0.74x          |
+| 500  | 3.01      | 6.0                | 0.67x          |
 
 > [!TIP]
 > The library maintains **O(n) linear complexity** across key operations, demonstrating excellent scalability especially when handling large datasets and frequent patch applications.
@@ -140,4 +150,4 @@ pnpm vitest bench --run benchmarks/validate/
 ```
 
 _Benchmarks run on: Linux, Node.js v22+_  
-_Last updated: 2025-12-29_
+_Last updated: 2025-12-30_
