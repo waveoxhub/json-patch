@@ -46,7 +46,7 @@ Benchmark results for core operations with 100 items:
 
 ## 📝 Demo
 
-Try the interactive demo: **[https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)**
+Try the interactive demo: **[https://waveoxhub.github.io/schema-json-patch/](https://waveoxhub.github.io/schema-json-patch/)**
 
 ## 📦 Installation
 
@@ -100,8 +100,8 @@ For detailed API documentation, see [@waveox/schema-json-patch](./packages/schem
 ## 🤝 Contributing
 
 ```bash
-git clone https://github.com/waveoxhub/json-patch
-cd json-patch
+git clone https://github.com/waveoxhub/schema-json-patch
+cd schema-json-patch
 pnpm install
 pnpm build
 pnpm test

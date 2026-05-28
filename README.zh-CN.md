@@ -46,7 +46,7 @@
 
 ## 📝 在线演示
 
-试用交互式演示：**[https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)**
+试用交互式演示：**[https://waveoxhub.github.io/schema-json-patch/](https://waveoxhub.github.io/schema-json-patch/)**
 
 ## 📦 安装
 
@@ -100,8 +100,8 @@ const result = applyPatches(JSON.stringify(original), patches, schema);
 ## 🤝 参与贡献
 
 ```bash
-git clone https://github.com/waveoxhub/json-patch
-cd json-patch
+git clone https://github.com/waveoxhub/schema-json-patch
+cd schema-json-patch
 pnpm install
 pnpm build
 pnpm test

@@ -264,8 +264,8 @@ You're welcome to participate in project development:
 
 ```bash
 # Clone repository
-git clone https://github.com/waveoxhub/json-patch
-cd json-patch/schema-json-patch
+git clone https://github.com/waveoxhub/schema-json-patch
+cd schema-json-patch/packages/schema-json-patch
 
 # Install dependencies
 pnpm install
@@ -282,7 +282,7 @@ pnpm coverage
 
 ## Demo
 
-Try the live demo: [https://waveoxhub.github.io/json-patch/](https://waveoxhub.github.io/json-patch/)
+Try the live demo: [https://waveoxhub.github.io/schema-json-patch/](https://waveoxhub.github.io/schema-json-patch/)
 
 ## License
 
