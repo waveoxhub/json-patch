@@ -524,7 +524,11 @@ describe('Validation Functionality', () => {
                     op: 'replace',
                     path: '/replaceRules/rule1',
                     value: replacementRule,
-                    hash: generatePatchOptionHash('replace', '/replaceRules/rule1', replacementRule),
+                    hash: generatePatchOptionHash(
+                        'replace',
+                        '/replaceRules/rule1',
+                        replacementRule
+                    ),
                 },
             ];
             const schema: ObjectSchema = {

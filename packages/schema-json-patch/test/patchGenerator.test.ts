@@ -1169,9 +1169,7 @@ describe('patchGenerator', () => {
             };
 
             const source = JSON.stringify({
-                replaceRules: [
-                    { id: 'rule1', reg: '^Top$', replace: '热门', type: 'regex' },
-                ],
+                replaceRules: [{ id: 'rule1', reg: '^Top$', replace: '热门', type: 'regex' }],
             });
             const targetRule = { id: 'rule1', reg: '^Top$', replace: '最热', type: 'regex' };
             const target = JSON.stringify({ replaceRules: [targetRule] });
