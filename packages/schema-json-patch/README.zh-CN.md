@@ -106,6 +106,40 @@ console.log(patches);
 // ]
 ```
 
+### 控制对象差异粒度
+
+对象 Schema 支持两个可选的补丁生成控制项：
+
+- `$split: true`：将 add/replace 拆成更细的字段级补丁。
+- `$atomic: true`：把对象当作一个整体审查单元；修改已有对象时，在当前对象路径生成整体 `replace`，不继续下钻到子字段。如果同时设置 `$split` 和 `$atomic`，已有对象修改时 `$atomic` 优先。
+
+当数组元素整体比叶子字段更容易审查时，可以在对象数组成员上使用 `$atomic`：
+
+```typescript
+const schema: Schema = {
+    $type: 'object',
+    $fields: {
+        replaceRules: {
+            $type: 'array',
+            $item: {
+                $type: 'object',
+                $pk: 'id',
+                $atomic: true,
+                $fields: {
+                    id: { $type: 'string' },
+                    reg: { $type: 'string' },
+                    replace: { $type: 'string' },
+                    type: { $type: 'string' },
+                },
+            },
+        },
+    },
+};
+
+// 只修改 replaceRules["rule1"].replace 时会生成：
+// [{ op: "replace", path: "/replaceRules/rule1", value: { ...完整规则对象 } }]
+```
+
 ### 应用补丁
 
 ```typescript

@@ -108,6 +108,40 @@ console.log(patches);
 // ]
 ```
 
+### Control Object Diff Granularity
+
+Object schemas support two optional patch generation controls:
+
+- `$split: true` splits add/replace output into finer field-level patches.
+- `$atomic: true` treats an object as one review unit for modifications, so changes replace the object at its current path instead of descending into child fields. When both are present, `$atomic` wins for modified existing objects.
+
+Use `$atomic` on object-array items when the whole item is easier to review than a leaf field:
+
+```typescript
+const schema: Schema = {
+    $type: 'object',
+    $fields: {
+        replaceRules: {
+            $type: 'array',
+            $item: {
+                $type: 'object',
+                $pk: 'id',
+                $atomic: true,
+                $fields: {
+                    id: { $type: 'string' },
+                    reg: { $type: 'string' },
+                    replace: { $type: 'string' },
+                    type: { $type: 'string' },
+                },
+            },
+        },
+    },
+};
+
+// Changing only replaceRules["rule1"].replace emits:
+// [{ op: "replace", path: "/replaceRules/rule1", value: { ...full rule object } }]
+```
+
 ### Apply Patches
 
 ```typescript

@@ -4,6 +4,7 @@ const DESC = {
     TYPE_ROOT: '类型，可选值：object | array（根结构类型）',
     FIELDS: '对象的字段',
     SPLIT: '启用后生成细粒度补丁，便于逐一审查，默认 false',
+    ATOMIC: '启用后对象修改会整体替换当前路径，不继续下钻到子字段，默认 false',
     PK: '主键字段名（如 "id"），用于唯一标识元素；不设置则按索引匹配',
     ORDERED: '是否追踪顺序变化，默认 true',
     ITEM: '数组的成员',
@@ -56,6 +57,10 @@ export const schemaJsonPatchSchema = {
                     type: 'boolean',
                     description: DESC.SPLIT,
                 },
+                $atomic: {
+                    type: 'boolean',
+                    description: DESC.ATOMIC,
+                },
             },
             required: ['$type', '$fields'],
             additionalProperties: false,
@@ -96,6 +101,10 @@ export const schemaJsonPatchSchema = {
                 $split: {
                     type: 'boolean',
                     description: DESC.SPLIT,
+                },
+                $atomic: {
+                    type: 'boolean',
+                    description: DESC.ATOMIC,
                 },
             },
             required: ['$type', '$fields'],
@@ -145,6 +154,10 @@ export const schemaJsonPatchSchema = {
                 $split: {
                     type: 'boolean',
                     description: DESC.SPLIT,
+                },
+                $atomic: {
+                    type: 'boolean',
+                    description: DESC.ATOMIC,
                 },
             },
             required: ['$type', '$fields'],
