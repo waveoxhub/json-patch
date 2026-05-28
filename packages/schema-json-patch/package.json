@@ -47,7 +47,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/waveoxhub/json-patch",
+        "url": "https://github.com/waveoxhub/schema-json-patch",
         "directory": "packages/schema-json-patch"
     },
     "publishConfig": {
