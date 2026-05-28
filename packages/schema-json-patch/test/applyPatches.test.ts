@@ -52,6 +52,45 @@ describe('applyPatches', () => {
         expect(resultObj).toEqual({ name: 'newTest' });
     });
 
+    it('should apply replace operation to an object array item by primary key path', () => {
+        const schema: Schema = {
+            $type: 'object',
+            $fields: {
+                replaceRules: {
+                    $type: 'array',
+                    $item: {
+                        $type: 'object',
+                        $pk: 'id',
+                        $atomic: true,
+                        $fields: {
+                            id: { $type: 'string' },
+                            reg: { $type: 'string' },
+                            replace: { $type: 'string' },
+                            type: { $type: 'string' },
+                        },
+                    },
+                },
+            },
+        };
+        const json = JSON.stringify({
+            replaceRules: [{ id: 'rule1', reg: '^Top$', replace: '热门', type: 'regex' }],
+        });
+        const replacementRule = { id: 'rule1', reg: '^Top$', replace: '最热', type: 'regex' };
+        const patches: Patch[] = [
+            {
+                op: 'replace',
+                path: '/replaceRules/rule1',
+                value: replacementRule,
+                hash: generatePatchOptionHash('replace', '/replaceRules/rule1', replacementRule),
+            },
+        ];
+
+        const result = applyPatches(json, patches, schema);
+        const resultObj = JSON.parse(result);
+
+        expect(resultObj).toEqual({ replaceRules: [replacementRule] });
+    });
+
     it('should apply add operation for new property', () => {
         const schema: Schema = {
             $type: 'object',

@@ -5,7 +5,7 @@ import {
     CustomConflictResolution,
     ConflictOptionDetail,
 } from './types/patch.js';
-import { Schema } from './types/schema.js';
+import { ArraySchema, FieldSchema, Schema } from './types/schema.js';
 import { isObject, getSchemaForPath } from './utils/schemaUtils.js';
 import { detectConflicts } from './detectConflicts.js';
 import { parseJsonPath } from './utils/pathUtils.js';
@@ -382,9 +382,17 @@ const pathExists = (
     }
 
     let current: unknown = state;
+    let currentSchema: FieldSchema | Schema | undefined = schema;
 
     for (const component of pathComponents) {
         if (Array.isArray(current)) {
+            if (currentSchema?.$type !== 'array') {
+                return false;
+            }
+
+            const arraySchema: ArraySchema = currentSchema;
+            const itemSchema = arraySchema.$item;
+
             // 通过索引或主键处理数组
             if (component.match(/^\d+$/)) {
                 // 数字索引
@@ -393,19 +401,14 @@ const pathExists = (
                     return false;
                 }
                 current = current[index];
+                currentSchema = itemSchema;
             } else {
                 // 主键查找
-
-                if (
-                    !schema ||
-                    schema.$type !== 'array' ||
-                    !schema.$item ||
-                    schema.$item.$type !== 'object'
-                ) {
+                if (itemSchema.$type !== 'object') {
                     return false;
                 }
 
-                const pkField = schema.$item.$pk;
+                const pkField = '$pk' in itemSchema ? itemSchema.$pk : undefined;
                 // 如果没有定义主键，无法通过主键查找
                 if (!pkField) {
                     return false;
@@ -418,6 +421,7 @@ const pathExists = (
                     return false;
                 }
                 current = item;
+                currentSchema = itemSchema;
             }
         } else if (isObject(current)) {
             // 处理对象属性
@@ -425,6 +429,8 @@ const pathExists = (
                 return false;
             }
             current = current[component];
+            currentSchema =
+                currentSchema?.$type === 'object' ? currentSchema.$fields[component] : undefined;
         } else {
             // 无法继续导航
             return false;

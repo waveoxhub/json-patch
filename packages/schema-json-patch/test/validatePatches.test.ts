@@ -513,5 +513,44 @@ describe('Validation Functionality', () => {
             expect(result.isValid).toBe(true);
             expect(result.errors.length).toBe(0);
         });
+
+        it('should validate parent replace patches for object array items addressed by primary key', () => {
+            const json = JSON.stringify({
+                replaceRules: [{ id: 'rule1', reg: '^Top$', replace: '热门', type: 'regex' }],
+            });
+            const replacementRule = { id: 'rule1', reg: '^Top$', replace: '最热', type: 'regex' };
+            const patches: Patch[] = [
+                {
+                    op: 'replace',
+                    path: '/replaceRules/rule1',
+                    value: replacementRule,
+                    hash: generatePatchOptionHash('replace', '/replaceRules/rule1', replacementRule),
+                },
+            ];
+            const schema: ObjectSchema = {
+                $type: 'object',
+                $fields: {
+                    replaceRules: {
+                        $type: 'array',
+                        $item: {
+                            $type: 'object',
+                            $pk: 'id',
+                            $atomic: true,
+                            $fields: {
+                                id: { $type: 'string' },
+                                reg: { $type: 'string' },
+                                replace: { $type: 'string' },
+                                type: { $type: 'string' },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const result = validatePatchApplication(json, patches, schema);
+
+            expect(result.isValid).toBe(true);
+            expect(result.errors.length).toBe(0);
+        });
     });
 });
