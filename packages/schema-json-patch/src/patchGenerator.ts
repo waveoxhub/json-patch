@@ -1,4 +1,4 @@
-import { Schema } from './types/schema.js';
+import { ObjectSchema, Schema } from './types/schema.js';
 import { PatchOperation, Patch } from './types/patch.js';
 import { deepEqual } from './utils/deepEqual.js';
 import { generatePatchOptionHash } from './utils/hashUtils.js';
@@ -30,6 +30,17 @@ interface PathProcessingState {
     /** 已处理的路径集合，防止重复生成补丁 */
     handledPaths: Set<string>;
 }
+
+const isObjectSchema = (schema: Schema | undefined): schema is ObjectSchema =>
+    schema?.$type === 'object';
+
+const isAtomicObjectSchema = (schema: Schema | undefined): schema is ObjectSchema =>
+    isObjectSchema(schema) && schema.$atomic === true;
+
+const shouldSplitObjectSchema = (schema: Schema | undefined): schema is ObjectSchema =>
+    isObjectSchema(schema) && schema.$split === true;
+
+const normalizeObjectPatchPath = (path: string): string => (path === '/' ? '' : path);
 
 /**
  * 根据 Schema 生成两个对象之间的补丁
@@ -103,7 +114,7 @@ const generatePatchesCore = (
                 if (!sourceIdMap.has(id)) {
                     // 新项目：检查是否需要拆分
                     const itemPath = `/${id}`;
-                    if (schema.$item.$split === true) {
+                    if (shouldSplitObjectSchema(schema.$item)) {
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
                         };
@@ -174,7 +185,7 @@ const generatePatchesCore = (
 
                 if (i >= sourceData.length) {
                     // 新增项目
-                    if (schema.$item.$split === true) {
+                    if (shouldSplitObjectSchema(schema.$item)) {
                         const state: PathProcessingState = {
                             handledPaths: new Set<string>(),
                         };
@@ -272,10 +283,7 @@ const generateSplitPatches = (
             typeof value === 'object' &&
             value !== null &&
             !Array.isArray(value) &&
-            fieldSchema &&
-            fieldSchema.$type === 'object' &&
-            '$split' in fieldSchema &&
-            fieldSchema.$split === true
+            shouldSplitObjectSchema(fieldSchema)
         ) {
             generateSplitPatches(
                 fieldPath,
@@ -303,8 +311,13 @@ const shouldReplaceWhole = (
     // 快速引用相等检查
     if (sourceObj === targetObj) return false;
 
+    // 如果 Schema 配置了 $atomic，在当前对象路径整体替换，不继续下钻
+    if (isAtomicObjectSchema(schema)) {
+        return !deepEqual(sourceObj, targetObj);
+    }
+
     // 如果 Schema 配置了 $split，强制不整体替换
-    if (schema.$type === 'object' && '$split' in schema && schema.$split === true) {
+    if (shouldSplitObjectSchema(schema)) {
         return false;
     }
 
@@ -384,10 +397,7 @@ const handleAddedField = (
 
     // 如果是对象且设置了 $split，拆分为细粒度操作
     if (
-        fieldSchema &&
-        fieldSchema.$type === 'object' &&
-        '$split' in fieldSchema &&
-        fieldSchema.$split === true &&
+        shouldSplitObjectSchema(fieldSchema) &&
         typeof targetValue === 'object' &&
         targetValue !== null &&
         !Array.isArray(targetValue)
@@ -618,7 +628,7 @@ const generateObjectFieldPatches = (
 ): void => {
     // 检查是否需要整体替换（shouldReplaceWhole 内部会检查各字段差异）
     if (shouldReplaceWhole(sourceObj, targetObj, schema)) {
-        patches.push(createPatch('replace', path === '/' ? '' : path, targetObj));
+        patches.push(createPatch('replace', normalizeObjectPatchPath(path), targetObj));
         state.handledPaths.add(path);
 
         const allKeys = [...new Set([...Object.keys(sourceObj), ...Object.keys(targetObj)])];

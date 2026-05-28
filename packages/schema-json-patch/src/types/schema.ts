@@ -12,6 +12,8 @@ export type ObjectSchema = {
     readonly $fields: Record<string, FieldSchema>;
     /** 启用时，add/replace 操作会拆分为细粒度操作 */
     readonly $split?: boolean;
+    /** 启用时，对象修改会在当前路径整体替换，不继续下钻到子字段 */
+    readonly $atomic?: boolean;
 };
 
 /**
@@ -55,6 +57,7 @@ export type FieldSchema =
           readonly $type: 'object';
           readonly $fields: Record<string, FieldSchema>;
           readonly $split?: boolean;
+          readonly $atomic?: boolean;
       }
     | ArraySchema;
 

@@ -1116,6 +1116,228 @@ describe('patchGenerator', () => {
         });
     });
 
+    describe('$atomic Configuration', () => {
+        it('should replace a changed keyed array item as a whole object', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $atomic: true,
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                        age: { $type: 'number' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([{ id: 'user1', name: '张三', age: 25 }]);
+            const targetValue = { id: 'user1', name: '张三', age: 26 };
+            const target = JSON.stringify([targetValue]);
+
+            const patches = generatePatches(schema, source, target);
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'replace',
+                path: '/user1',
+                value: targetValue,
+                hash: generatePatchOptionHash('replace', '/user1', targetValue),
+            });
+        });
+
+        it('should replace atomic replaceRules items at the rule path', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    replaceRules: {
+                        $type: 'array',
+                        $item: {
+                            $type: 'object',
+                            $pk: 'id',
+                            $atomic: true,
+                            $fields: {
+                                id: { $type: 'string' },
+                                reg: { $type: 'string' },
+                                replace: { $type: 'string' },
+                                type: { $type: 'string' },
+                            },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({
+                replaceRules: [
+                    { id: 'rule1', reg: '^Top$', replace: '热门', type: 'regex' },
+                ],
+            });
+            const targetRule = { id: 'rule1', reg: '^Top$', replace: '最热', type: 'regex' };
+            const target = JSON.stringify({ replaceRules: [targetRule] });
+
+            const patches = generatePatches(schema, source, target);
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'replace',
+                path: '/replaceRules/rule1',
+                value: targetRule,
+                hash: generatePatchOptionHash('replace', '/replaceRules/rule1', targetRule),
+            });
+        });
+
+        it('should replace nested atomic object fields at the object path', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $fields: {
+                    profile: {
+                        $type: 'object',
+                        $atomic: true,
+                        $fields: {
+                            address: { $type: 'string' },
+                            phone: { $type: 'string' },
+                        },
+                    },
+                },
+            };
+
+            const source = JSON.stringify({ profile: { address: '北京', phone: '123' } });
+            const targetProfile = { address: '上海', phone: '123' };
+            const target = JSON.stringify({ profile: targetProfile });
+
+            const patches = generatePatches(schema, source, target);
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'replace',
+                path: '/profile',
+                value: targetProfile,
+                hash: generatePatchOptionHash('replace', '/profile', targetProfile),
+            });
+        });
+
+        it('should replace index-based atomic array items at the item path', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $atomic: true,
+                    $fields: {
+                        name: { $type: 'string' },
+                        value: { $type: 'number' },
+                    },
+                },
+            };
+
+            const source = JSON.stringify([{ name: 'item1', value: 1 }]);
+            const targetValue = { name: 'item1', value: 2 };
+            const target = JSON.stringify([targetValue]);
+
+            const patches = generatePatches(schema, source, target);
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'replace',
+                path: '/0',
+                value: targetValue,
+                hash: generatePatchOptionHash('replace', '/0', targetValue),
+            });
+        });
+
+        it('should let $atomic override $split for modified objects', () => {
+            const schema: Schema = {
+                $type: 'object',
+                $atomic: true,
+                $split: true,
+                $fields: {
+                    name: { $type: 'string' },
+                    age: { $type: 'number' },
+                },
+            };
+
+            const source = JSON.stringify({ name: 'old', age: 20 });
+            const targetValue = { name: 'new', age: 21 };
+            const target = JSON.stringify(targetValue);
+
+            const patches = generatePatches(schema, source, target);
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'replace',
+                path: '',
+                value: targetValue,
+                hash: generatePatchOptionHash('replace', '', targetValue),
+            });
+        });
+
+        it('should keep whole-object add behavior when $atomic is true', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $atomic: true,
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const targetValue = { id: 'user1', name: '张三' };
+            const patches = generatePatches(
+                schema,
+                JSON.stringify([]),
+                JSON.stringify([targetValue])
+            );
+
+            expect(patches).toHaveLength(1);
+            expect(patches[0]).toStrictEqual({
+                op: 'add',
+                path: '/user1',
+                value: targetValue,
+                hash: generatePatchOptionHash('add', '/user1', targetValue),
+            });
+        });
+
+        it('should keep split add behavior when $atomic and $split are both true', () => {
+            const schema: Schema = {
+                $type: 'array',
+                $item: {
+                    $type: 'object',
+                    $pk: 'id',
+                    $atomic: true,
+                    $split: true,
+                    $fields: {
+                        id: { $type: 'string' },
+                        name: { $type: 'string' },
+                    },
+                },
+            };
+
+            const patches = generatePatches(
+                schema,
+                JSON.stringify([]),
+                JSON.stringify([{ id: 'user1', name: '张三' }])
+            );
+
+            expect(patches).toHaveLength(2);
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user1/id',
+                value: 'user1',
+                hash: generatePatchOptionHash('add', '/user1/id', 'user1'),
+            });
+            expect(patches).toContainEqual({
+                op: 'add',
+                path: '/user1/name',
+                value: '张三',
+                hash: generatePatchOptionHash('add', '/user1/name', '张三'),
+            });
+        });
+    });
+
     describe('Object Arrays Without $pk (Index-based)', () => {
         it('should generate patches for top-level object array without $pk using index', () => {
             const schema: Schema = {
